@@ -1,6 +1,4 @@
 #!/bin/bash
-# Auto Install Gotop (Debian/Ubuntu)
-# Author: THEFATKAY
 
 set -e
 

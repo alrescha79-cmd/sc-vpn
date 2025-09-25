@@ -65,17 +65,17 @@ clear
 
 # Domain setup
 if [ -z "$1" ]; then
-    echo -e "${blue}    ┌───────────────────────────────────────────────┐${neutral}"
+    echo -e "${blue}    ┌──────────────────────────────────────────────-----------─┐${neutral}"
     echo -e "${blue}    │       "
     echo -e "${blue}    │   ${green}┌─┐┬ ┬┌┬┐┌─┐┌─┐┌─┐┬─┐┬┌─┐┌┬┐  ┬  ┬┌┬┐┌─┐"
     echo -e "${blue}    │   ${green}├─┤│ │ │ │ │└─┐│  ├┬┘│├─┘ │   │  │ │ ├┤    "
     echo -e "${blue}    │   ${green}┴ ┴└─┘ ┴ └─┘└─┘└─┘┴└─┴┴   ┴   ┴─┘┴ ┴ └─┘   ${neutral}"
     echo -e "${blue}    │   ${yellow}Copyright${reset} (C)${gray} https://t.me/Alrescha79   ${neutral}"
-    echo -e "${blue}    └───────────────────────────────────────────────┘${neutral}"
+    echo -e "${blue}    └──────────────────────────────────────────────-----------─┘${neutral}"
     echo -e "${blue}    ────────────────────────────────────────────────${neutral}"
     echo -e "${yellow}     Masukkan domain Anda untuk memulai instalasi:${neutral}"
     echo -e "${blue}    ────────────────────────────────────────────────${neutral}"
-    read -p "  Enter your domain: " domain
+    read -p "  Masukkan domain Anda: " domain
 else
     domain="$1"
 fi
@@ -83,10 +83,7 @@ fi
 vps_ip=$(curl -s ipinfo.io/ip)
 domain_ip=$(getent ahosts "$domain" | awk '{print $1}' | head -n 1)
 if [ "$domain_ip" != "$vps_ip" ]; then
-    echo -e "${red}Domain is not connected to the VPS IP. Please check again.${neutral}"
-    exit 1
-fi
-
+    echo -e "${red}Domain yang Anda masukkan tidak mengarah ke IP VPS Anda (${vps_ip}).${neutral}"
 # Simpan domain ke file
 echo "$domain" >/etc/xray/domain
 
@@ -118,9 +115,153 @@ isp=$(curl -s ipinfo.io/org | cut -d " " -f 2-10)
 domain=$(cat /etc/xray/domain)
 ip=$(wget -qO- ipinfo.io/ip)
 
-# Mendapatkan data izin dan key
-data=$(curl -s https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin)
-key=$(echo "$data" | grep "$ip" | awk '{print $2}')
+# Mendapatkan data izin dan user info
+echo -e "${blue}Mengunduh data otorisasi...${neutral}"
+data=$(curl -s --connect-timeout 10 --max-time 30 https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin)
+
+# Cek apakah data berhasil diunduh
+if [ -z "$data" ]; then
+    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${red}║                          KONEKSI GAGAL                         ║${neutral}"
+    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${red}║  Gagal mengunduh data otorisasi dari GitHub                    ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Ada beberapa kemungkinan penyebab:                            ║${neutral}"
+    echo -e "${red}║    • Tidak ada koneksi internet                                ║${neutral}"
+    echo -e "${red}║    • Server GitHub tidak dapat dijangkau                       ║${neutral}"
+    echo -e "${red}║    • Firewall memblokir koneksi                                ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Silahkan periksa koneksi Anda dan coba lagi                   ║${neutral}"
+    echo -e "${red}║  Jika masalah berlanjut, hubungi:                              ║${neutral}"
+    echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+    echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${yellow}Instalasi dibatalkan karena gagal mengunduh data.${neutral}"
+    exit 1
+fi
+
+# Cek apakah format data valid (format: ### User Date IP)
+if ! echo "$data" | grep -q "^###.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.*[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+"; then
+    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${red}║                    KESALAHAN FORMAT DATA                       ║${neutral}"
+    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${red}║  Format data otorisasi dari GitHub tidak valid                 ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Jika masalah berlanjut, hubungi:                              ║${neutral}"
+    echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+    echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${yellow}Instalasi dibatalkan karena kesalahan format data.${neutral}"
+    exit 1
+fi
+
+# Parsing data sesuai format baru: ### User Date IP
+user_line=$(echo "$data" | grep "$ip")
+if [ -n "$user_line" ]; then
+    user_id=$(echo "$user_line" | awk '{print $2}')
+    exp_date=$(echo "$user_line" | awk '{print $3}')
+    user_ip=$(echo "$user_line" | awk '{print $4}')
+else
+    user_id=""
+    exp_date=""
+    user_ip=""
+fi
+
+# Validasi IP dalam daftar izin
+echo -e "${blue}Memeriksa otorisasi IP...${neutral}"
+if [ -z "$user_id" ]; then
+    # Log unauthorized access attempt
+    mkdir -p /var/log/setup
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] UNAUTHORIZED ACCESS ATTEMPT - IP: $ip, ISP: $isp, City: $city" >> /var/log/setup/unauthorized.log
+    
+    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${red}║                           AKSES DITOLAK                        ║${neutral}"
+    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${red}║  Alamat IP Anda (${ip}) tidak terdaftar dalam daftar izin      ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Silakan hubungi pengembang untuk mendapatkan akses:           ║${neutral}"
+    echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+    echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Untuk meminta akses, harap berikan informasi:                 ║${neutral}"
+    echo -e "${red}║    • Alamat IP VPS: ${ip}                                      ║${neutral}"
+    echo -e "${red}║    • Tujuan penggunaan script                                  ║${neutral}"
+    echo -e "${red}║    • Lokasi server: ${city}                                    ║${neutral}"
+    echo -e "${red}║    • Provider: ${isp}                                          ║${neutral}"
+    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${yellow}Instalasi dibatalkan karena IP tidak terdaftar.${neutral}"
+    echo -e "${gray}Upaya akses ini telah dicatat untuk tujuan keamanan.${neutral}"
+    echo -e "${gray}Script akan keluar dalam 5 detik...${neutral}"
+    sleep 5
+    exit 1
+fi
+
+# Validasi tanggal kadaluarsa
+current_date=$(date +%Y-%m-%d)
+if [[ "$exp_date" < "$current_date" ]]; then
+    # Log expired access attempt
+    mkdir -p /var/log/setup
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] EXPIRED ACCESS ATTEMPT - User: $user_id, IP: $ip, Expired: $exp_date" >> /var/log/setup/expired.log
+    
+    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
+    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${red}║  Akses untuk IP Anda telah kadaluarsa                          ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Detail akses:                                                 ║${neutral}"
+    echo -e "${red}║    • User ID: ${user_id}                                       ║${neutral}"
+    echo -e "${red}║    • IP Address: ${ip}                                         ║${neutral}"
+    echo -e "${red}║    • Tanggal Kadaluarsa: ${exp_date}                           ║${neutral}"
+    echo -e "${red}║    • Tanggal Hari Ini: ${current_date}                         ║${neutral}"
+    echo -e "${red}║                                                                ║${neutral}"
+    echo -e "${red}║  Untuk memperpanjang akses, hubungi:                           ║${neutral}"
+    echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+    echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${yellow}Instalasi dibatalkan karena akses telah kadaluarsa.${neutral}"
+    echo -e "${gray}Script akan keluar dalam 5 detik...${neutral}"
+    sleep 5
+    exit 1
+fi
+
+# Hitung sisa hari akses
+days_left=$(( ( $(date -d "$exp_date" +%s) - $(date -d "$current_date" +%s) ) / 86400 ))
+
+# Log authorized access
+mkdir -p /var/log/setup
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] AUTHORIZED ACCESS - User: $user_id, IP: $ip, Expires: $exp_date, Days Left: $days_left" >> /var/log/setup/authorized.log
+
+echo -e "${green}╔════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                          AKSES DITERIMA                        ║${neutral}"
+echo -e "${green}╠════════════════════════════════════════════════════════════════╣${neutral}"
+echo -e "${green}║  ✓ Otorisasi IP berhasil diverifikasi                          ║${neutral}"
+echo -e "${green}║  ✓ User ID: ${user_id}                                         ║${neutral}"
+echo -e "${green}║  ✓ IP Address: ${ip}                                           ║${neutral}"
+echo -e "${green}║  ✓ Masa Berlaku: ${exp_date}                                   ║${neutral}"
+echo -e "${green}║  ✓ Sisa Waktu: ${days_left} hari                               ║${neutral}"
+echo -e "${green}║  ✓ Lokasi: ${city}                                             ║${neutral}"
+echo -e "${green}║  ✓ ISP: ${isp}                                                 ║${neutral}"
+echo -e "${green}╚════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""
+
+# Peringatan jika akses akan habis dalam 7 hari
+if [ "$days_left" -le 7 ]; then
+    echo -e "${yellow}╔════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${yellow}║                            PERINGATAN                          ║${neutral}"
+    echo -e "${yellow}╠════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${yellow}║  Akses Anda akan berakhir dalam ${days_left} hari!                         ║${neutral}"
+    echo -e "${yellow}║  Segera hubungi developer untuk perpanjangan akses.            ║${neutral}"
+    echo -e "${yellow}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+    echo -e "${yellow}╚════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+fi
+
+echo -e "${blue}Melanjutkan dengan instalasi...${neutral}"
+sleep 2
 
 # URL sumber konfigurasi dan binary
 nginx_key_url="https://nginx.org/keys/nginx_signing.key"
@@ -149,11 +290,11 @@ shadowsocks_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/VM
 # Info OS
 os_id=$(grep -w ID /etc/os-release | head -n1 | sed 's/ID=//g' | sed 's/"//g')
 os_version=$(grep -w VERSION_ID /etc/os-release | head -n1 | sed 's/VERSION_ID=//g' | sed 's/"//g')
-echo "OS: $os_id, Version: $os_version"
+echo "Sistem Operasi: $os_id, Versi: $os_version"
 
 # Cek jika bukan root
 if [ "$EUID" -ne 0 ]; then
-    echo -e "${red}This script must be run as root${neutral}"
+    echo -e "${red}Script ini harus dijalankan sebagai root${neutral}"
     exit 1
 fi
 # Update package list
@@ -1045,7 +1186,7 @@ cd
 
 clear
 echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}       INSTALLASI plugin HideSSH        ${neutral}"
+echo -e "${green}       INSTALLASI plugin Alrescha79        ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 
 
@@ -1055,7 +1196,7 @@ rm -rf package-gohide.sh
 
 # cd
 # echo -e "${blue}─────────────────────────────────────────${neutral}"
-# echo -e "${green}   INSTALLASI golang bye HIdeSSH       ${neutral}"
+# echo -e "${green}   INSTALLASI golang bye Alrescha79       ${neutral}"
 # echo -e "${blue}─────────────────────────────────────────${neutral}"
 
 

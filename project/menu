@@ -9,11 +9,24 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
 
 # ===============================
-# AMBIL DATA CLIENT
+# AMBIL DATA CLIENT 
 # ===============================
 MYIP=$ipsaya
-username=$(curl -sS $url_izin | grep $MYIP | awk '{print $2}')
-valid=$(curl -sS $url_izin | grep $MYIP | awk '{print $3}')
+
+# URL data izin
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+
+# Ambil data dari GitHub dengan format baru: ### User Date IP
+data_izin=$(curl -sS "$url_izin")
+user_line=$(echo "$data_izin" | grep "$MYIP")
+
+if [ -n "$user_line" ]; then
+    username=$(echo "$user_line" | awk '{print $2}')
+    valid=$(echo "$user_line" | awk '{print $3}')
+else
+    username=""
+    valid=""
+fi
 
 echo "$username" >/usr/bin/user
 echo "$valid" >/usr/bin/e
@@ -37,10 +50,66 @@ datediff() {
 }
 
 # ===============================
+# FUNGSI VALIDASI MASA AKTIF
+# ===============================
+validate_access() {
+    # Cek jika data user tidak ditemukan
+    if [ -z "$username" ] || [ -z "$valid" ]; then
+        clear
+        echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+        echo -e "${red}║                           AKSES DITOLAK                        ║${neutral}"
+        echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+        echo -e "${red}║  IP Anda (${MYIP}) tidak terdaftar dalam sistem           ║${neutral}"
+        echo -e "${red}║                                                                ║${neutral}"
+        echo -e "${red}║  Silakan hubungi administrator untuk mendapatkan akses:        ║${neutral}"
+        echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+        echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+        echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+        echo -e ""
+        echo -e "${yellow}Tekan Enter untuk keluar...${neutral}"
+        read
+        exit 1
+    fi
+    
+    # Cek masa aktif
+    current_date=$(date +%Y-%m-%d)
+    if [[ "$valid" < "$current_date" ]]; then
+        # Hitung berapa hari sudah expired
+        expired_days=$(( ( $(date -d "$current_date" +%s) - $(date -d "$valid" +%s) ) / 86400 ))
+        
+        clear
+        echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
+        echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
+        echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
+        echo -e "${red}║  Masa aktif script Anda telah berakhir!                        ║${neutral}"
+        echo -e "${red}║                                                                ║${neutral}"
+        echo -e "${red}║  Detail Akses:                                                 ║${neutral}"
+        echo -e "${red}║    • User ID: ${username}                                      ║${neutral}"
+        echo -e "${red}║    • IP Address: ${MYIP}                                       ║${neutral}"
+        echo -e "${red}║    • Tanggal Kadaluarsa: ${valid}                              ║${neutral}"
+        echo -e "${red}║    • Sudah Expired: ${expired_days} hari                       ║${neutral}"
+        echo -e "${red}║                                                                ║${neutral}"
+        echo -e "${red}║  Untuk memperpanjang masa aktif, hubungi:                      ║${neutral}"
+        echo -e "${red}║  📱 Telegram: https://t.me/Alrescha79                          ║${neutral}"
+        echo -e "${red}║  📧 Email: anggun@cakson.my.id                                 ║${neutral}"
+        echo -e "${red}║                                                                ║${neutral}"
+        echo -e "${red}║  💰 Informasi Harga & Paket Tersedia                           ║${neutral}"
+        echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
+        echo -e ""
+        echo -e "${yellow}Tekan Enter untuk keluar...${neutral}"
+        read
+        exit 1
+    fi
+}
+
+# ===============================
 # CEK STATUS ACTIVE / EXPIRED
 # ===============================
+# Panggil fungsi validasi sebelum menampilkan menu
+validate_access
+
 Info="(${green}Active${neutral})"
-Error="(${r}Expired${neutral})"
+Error="(${red}Expired${neutral})"
 if [[ "$today" < "$Exp1" ]]; then
     sts="${Info}"
 else
@@ -137,58 +206,73 @@ read -n 1 -s -r -p "Press any key to return to the menu"
             clear
             # Display menu
             display_menu() {
-            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
-echo -e "   ${orange}│ ${dark_blue_bg}${green}           HideSSH-TUNNELING           ${neutral} ${orange}│${neutral}"
-echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
-            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
-
-# Sistem
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mSYSTEM    : $(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' | cut -d '.' -f 1-3 2>/dev/null || echo "Unable to detect system")"
-
-# RAM
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mRAM       : $(free -m | awk 'NR==2 {print $3 "MB / " $2 "MB"}')"
-
-# Uptime
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mUPTIME    : $(uptime -p 2>/dev/null | cut -d ' ' -f 2-10000 || echo "Unable to detect uptime")"
-
-# CPU Core
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mCPU CORE  : $(nproc 2>/dev/null || echo "N/A")"
-
-# ISP
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mISP       : $(curl -s ipinfo.io/org 2>/dev/null | cut -d ' ' -f 2-100 || echo "Unable to detect ISP")"
-
-# City
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mCITY      : $(curl -s ipinfo.io/city 2>/dev/null || echo "Unable to detect city")"
-
-# IP Publik
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mIP        : $(curl -s ipv4.icanhazip.com 2>/dev/null || echo "Unable to detect IP")"
-
-# Domain
-echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mDOMAIN    : $(head -n1 /etc/xray/domain 2>/dev/null || echo "No domain registered")"
-
-echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
-            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
-            echo -e "   ${orange}│ ${neutral}XRAY : "$(cek_status vmess@config)"${neutral} ${orange}│ "${neutral} HAPROXY : "$(cek_status haproxy)"${neutral}" ${orange}│${neutral}  SSHOVPN : "$(cek_status ssh)" ${orange}│${neutral}"
-            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
-            echo -e "        ${dark_purple}┌─────────────────────────────────┐${neutral}"            
-            printf "\e[0m%-13s %-7s %-8s %2s\n" "            SSH/OPENVPN" " : $ssh" "ACCOUNT " 
-            printf "\e[0m%-13s %-7s %-8s %2s\n" "            VMESS XRAY" "  : $vm" " ACCOUNT " 
-            printf "\e[0m%-13s %-7s %-8s %2s\n" "            VLESS XRAY" "  : $vl" " ACCOUNT " 
-            printf "\e[0m%-13s %-7s %-8s %2s\n" "            TRJAN XRAY" "  : $tr" " ACCOUNT " 
-            printf "\e[0m%-13s %-7s %-8s %2s\n" "            SHADOWSOCKS" " : $ss" "ACCOUNT "  
-            echo -e "        ${dark_purple}└─────────────────────────────────┘${neutral}"
-            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
-            echo -e "   ${orange}│${red} • ${neutral}ID CLIENTS : ${neutral}$username ${sts}"            
-            echo -e "   ${orange}│${red} • ${neutral}SC EXPIRED : ${neutral}$(datediff "$Exp1" "$today")"
-            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
-            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
-            echo -e "   ${orange}│ ${green}[1]${neutral} SERVICE SSH      ${green}[5]${neutral} SERVICE SHDWSCKS ${orange}│${neutral}"
-            echo -e "   ${orange}│ ${green}[2]${neutral} SERVICE VMESS    ${green}[6]${neutral} NOTIF BOT        ${orange}│${neutral}"
-            echo -e "   ${orange}│ ${green}[3]${neutral} SERVICE VLESS    ${green}[7]${neutral} BOT TELEGRAM     ${orange}│${neutral}"
-            echo -e "   ${orange}│ ${green}[4]${neutral} SERVICE TROJAN   ${green}[8]${neutral} MENU FEATURES    ${orange}│${neutral}"
-            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
-            echo -e "             ${green}SCRIPT VERSION: V3.8 LTS${neutral}"
-            echo -e "                ${orange}───${green}───${yellow}───${blue}───${purple}───${red}───${neutral}"
+            
+            # Hitung sisa hari
+            days_left=$(( ( $(date -d "$valid" +%s) - $(date -d "$today" +%s) ) / 86400 ))
+            
+            echo -e "${green}╔═══════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${green}║                    ALRESCHA79 VPN PANEL                       ║${neutral}"
+            echo -e "${green}╚═══════════════════════════════════════════════════════════════╝${neutral}"
+            
+            # Peringatan jika masa aktif akan berakhir dalam 7 hari
+            if [ "$days_left" -le 7 ] && [ "$days_left" -gt 0 ]; then
+                echo -e "${yellow}╔═══════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${yellow}║                            PERINGATAN                         ║${neutral}"
+                echo -e "${yellow}╠═══════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${yellow}║  ⚠️  Masa aktif script akan berakhir dalam ${days_left} hari!            ║${neutral}"
+                echo -e "${yellow}║  Segera hubungi developer untuk perpanjangan akses.           ║${neutral}"
+                echo -e "${yellow}║  📱 Telegram: https://t.me/Alrescha79                         ║${neutral}"
+                echo -e "${yellow}╚═══════════════════════════════════════════════════════════════╝${neutral}"
+                echo ""
+            fi
+            
+            echo -e "${orange}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${orange}║                        INFORMASI SISTEM                       ║${neutral}"
+            echo -e "${orange}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${orange}║${green} • SISTEM    :${neutral} $(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' | head -c25)${orange}║${neutral}"
+            echo -e "${orange}║${green} • RAM       :${neutral} $(free -m | awk 'NR==2 {printf "%-4s / %-4s MB", $3, $2}')${orange}        ║${neutral}"
+            echo -e "${orange}║${green} • UPTIME    :${neutral} $(uptime -p 2>/dev/null | cut -d ' ' -f 2-4 | head -c20)${orange}    ║${neutral}"
+            echo -e "${orange}║${green} • CPU CORE  :${neutral} $(nproc 2>/dev/null || echo "N/A") Core${orange}                               ║${neutral}"
+            echo -e "${orange}║${green} • ISP       :${neutral} $(curl -s ipinfo.io/org 2>/dev/null | cut -d ' ' -f 2-3 | head -c25)${orange}║${neutral}"
+            echo -e "${orange}║${green} • KOTA      :${neutral} $(curl -s ipinfo.io/city 2>/dev/null | head -c25)${orange}          ║${neutral}"
+            echo -e "${orange}║${green} • IP PUBLIK :${neutral} $(curl -s ipv4.icanhazip.com 2>/dev/null || echo "Unable to detect")${orange} ║${neutral}"
+            echo -e "${orange}║${green} • DOMAIN    :${neutral} $(head -n1 /etc/xray/domain 2>/dev/null | head -c25)${orange}       ║${neutral}"
+            echo -e "${orange}└───────────────────────────────────────────────────────────────┘${neutral}"
+            
+            echo -e "${blue}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${blue}║                        STATUS LAYANAN                         ║${neutral}"
+            echo -e "${blue}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${blue}║${neutral} XRAY      : $(cek_status vmess@config) ${blue}│${neutral} HAPROXY   : $(cek_status haproxy) ${blue}│${neutral} SSH/OVPN  : $(cek_status ssh) ${blue}║${neutral}"
+            echo -e "${blue}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${blue}║                        JUMLAH AKUN                            ║${neutral}"
+            echo -e "${blue}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${blue}║${neutral} SSH/OPENVPN : ${green}$ssh${neutral} Account   ${blue}│${neutral} SHADOWSOCKS : ${green}$ss${neutral} Account${blue}    ║${neutral}"
+            echo -e "${blue}║${neutral} VMESS XRAY  : ${green}$vm${neutral} Account   ${blue}│${neutral} TROJAN XRAY : ${green}$tr${neutral} Account${blue}    ║${neutral}"
+            echo -e "${blue}║${neutral} VLESS XRAY  : ${green}$vl${neutral} Account   ${blue}│${neutral}                            ${blue}║${neutral}"
+            echo -e "${blue}└───────────────────────────────────────────────────────────────┘${neutral}"
+            
+            echo -e "${purple}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${purple}║                        INFORMASI AKSES                        ║${neutral}"
+            echo -e "${purple}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${purple}║${green} • USER ID   :${neutral} $username ${sts}${purple}                                  ║${neutral}"
+            echo -e "${purple}║${green} • MASA AKTIF :${neutral} $(datediff "$valid" "$today")${purple}                    ║${neutral}"
+            echo -e "${purple}└───────────────────────────────────────────────────────────────┘${neutral}"            
+            
+            echo -e "${dark_purple}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${dark_purple}║                           MENU UTAMA                          ║${neutral}"
+            echo -e "${dark_purple}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${dark_purple}║${green} [1]${neutral} Kelola SSH/OpenVPN    ${dark_purple}║${green} [5]${neutral} Kelola Shadowsocks    ${dark_purple}║${neutral}"
+            echo -e "${dark_purple}║${green} [2]${neutral} Kelola VMess          ${dark_purple}║${green} [6]${neutral} Setup Bot Notifikasi  ${dark_purple}║${neutral}"
+            echo -e "${dark_purple}║${green} [3]${neutral} Kelola VLess          ${dark_purple}║${green} [7]${neutral} Menu Bot Telegram     ${dark_purple}║${neutral}"
+            echo -e "${dark_purple}║${green} [4]${neutral} Kelola Trojan         ${dark_purple}║${green} [8]${neutral} Menu Features         ${dark_purple}║${neutral}"
+            echo -e "${dark_purple}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${dark_purple}║${green} [x]${neutral} Keluar dari Panel                                        ${dark_purple}║${neutral}"
+            echo -e "${dark_purple}└───────────────────────────────────────────────────────────────┘${neutral}"
+            
+            echo -e ""
+            echo -e "${light_gray}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${light_gray}║ ${green}SCRIPT VERSION:${neutral} 4.0.1  ${light_gray}║${neutral} ${green}AUTHOR:${neutral} Alrescha79               ${light_gray}║${neutral}"
+            echo -e "${light_gray}└───────────────────────────────────────────────────────────────┘${neutral}"
             echo -e ""
 read -p "Pick a number (1-8) or hit 'x' to bail: " choice
     echo -e ""

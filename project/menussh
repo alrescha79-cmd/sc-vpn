@@ -5,6 +5,10 @@ ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
+# Validasi masa aktif sebelum mengakses menu
+source /home/son/Projects/sclite/project/validate_access.sh
+validate_user_access
+
 
         # Color variables
         green="\e[38;5;87m"
@@ -452,25 +456,23 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
         # Function to display SSH menu
         display_ssh_menu() {
             clear
-            echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${neutral}  ${bold}${green}       MENU SSH/OVPN MANAGER ${neutral}         ${orange}│"
-            echo -e "${orange}└────────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${neutral}  ${green} [1]${neutral} Create SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [2]${neutral} Delete SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [3]${neutral} Renew SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [4]${neutral} Check SSH OVPN Account Login"
-            echo -e "${orange}│${neutral}  ${green} [5]${neutral} List SSH OVPN Members"
-            echo -e "${orange}│${neutral}  ${green} [6]${neutral} Change SSH OVPN Account Limit"
-            echo -e "${orange}│${neutral}  ${green} [7]${neutral} Lock SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [8]${neutral} Unlock SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [9]${neutral} SSH OVPN Account Details"
-            echo -e "${orange}│${neutral}  ${green}[10]${neutral} Autokill SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green}[11]${neutral} Create Trial SSH OVPN Account"
-            echo -e "${orange}│${neutral}  ${green} [x]${neutral} Exit SSH Manager"
-            echo -e "${orange}└────────────────────────────────────────┘${neutral}"            
+            echo -e "${green}╔═══════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${green}║                      MENU SSH/OPENVPN MANAGER                 ║${neutral}"
+            echo -e "${green}╚═══════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
-            read -p "Pick a number (11) or hit 'x' to bail: " ssh_choice
+            echo -e "${orange}┌───────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${orange}║                        MENU UTAMA                             ║${neutral}"
+            echo -e "${orange}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${orange}║${green} [1]${neutral}  Buat Akun SSH/OpenVPN       ${orange}║${green} [7]${neutral}  Kunci Akun SSH/OpenVPN   ${orange}║${neutral}"
+            echo -e "${orange}║${green} [2]${neutral}  Hapus Akun SSH/OpenVPN      ${orange}║${green} [8]${neutral}  Buka Kunci Akun SSH/OVPN ${orange}║${neutral}"
+            echo -e "${orange}║${green} [3]${neutral}  Perpanjang Akun SSH/OpenVPN ${orange}║${green} [9]${neutral}  Detail Akun SSH/OpenVPN  ${orange}║${neutral}"
+            echo -e "${orange}║${green} [4]${neutral}  Cek Login Akun SSH/OpenVPN  ${orange}║${green} [10]${neutral} Autokill SSH/OpenVPN     ${orange}║${neutral}"
+            echo -e "${orange}║${green} [5]${neutral}  Daftar Member SSH/OpenVPN   ${orange}║${green} [11]${neutral} Buat Trial SSH/OpenVPN   ${orange}║${neutral}"
+            echo -e "${orange}║${green} [6]${neutral}  Ubah Limit Akun SSH/OpenVPN ${orange}║${green} [x]${neutral}  Kembali ke Menu Utama    ${orange}║${neutral}"
+            echo -e "${orange}└───────────────────────────────────────────────────────────────┘${neutral}"
+            echo -e ""
+            echo -e "${yellow}Pilih menu [1-11] atau tekan [x] untuk kembali:${neutral}"
+            read -p "Masukkan pilihan Anda: " ssh_choice
 
             case $ssh_choice in
             1) addssh ;;
@@ -486,12 +488,14 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
             11) trialssh ;;
             x | X)
                 echo -e ""
-                echo -e "   ${green}Thank you for using our services.${neutral}"
-                exit 0
+                echo -e "${green}Kembali ke menu utama...${neutral}"
+                menu
                 ;;
             *)
-                echo -e "   ${red}Invalid option. Please try again.${neutral}"
-                sleep 2
+                echo -e ""
+                echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
+                echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
+                read
                 display_ssh_menu
                 ;;
             esac

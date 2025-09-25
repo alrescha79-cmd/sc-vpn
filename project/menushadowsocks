@@ -5,6 +5,10 @@ ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
+# Validasi masa aktif sebelum mengakses menu
+source /home/son/Projects/sclite/project/validate_access.sh
+validate_user_access
+
         # Variables
         green="\e[38;5;87m"
         red="\e[38;5;196m"
@@ -408,23 +412,25 @@ custom_uuid_shadowsocks() {
         # Function to display Shadowsocks menu
         display_shadowsocks_menu() {
             clear
-    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-    echo -e "${orange}│${neutral}  ${bold}${green}     MENU SHADOWSOCKS MANAGER ${neutral}        ${orange}│"
-    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
-    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-    echo -e "${orange}│${neutral}  ${green} [1]${neutral} Create Shadowsocks Account"
-    echo -e "${orange}│${neutral}  ${green} [2]${neutral} Delete Shadowsocks Account"
-    echo -e "${orange}│${neutral}  ${green} [3]${neutral} Renew Shadowsocks Account"
-    echo -e "${orange}│${neutral}  ${green} [4]${neutral} Check Shadowsocks Login Account"
-    echo -e "${orange}│${neutral}  ${green} [5]${neutral} List Shadowsocks Members"
-    echo -e "${orange}│${neutral}  ${green} [6]${neutral} Change Shadowsocks Account Limit"
-    echo -e "${orange}│${neutral}  ${green} [7]${neutral} View Shadowsocks Account Details"
-    echo -e "${orange}│${neutral}  ${green} [8]${neutral} Create Trial Shadowsocks Account"
-    echo -e "${orange}│${neutral}  ${green} [9]${neutral} Custom Shadowsocks UUID"
-    echo -e "${orange}│${neutral}  ${green} [x]${neutral} Exit Shadowsocks Manager"
-    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
-    echo -e ""
-            read -p "Pick a number (1-9) or hit 'x' to bail: " shadowsocks_choice
+            echo -e ""
+            echo -e "${magenta}╔══════════════════════════════════════════════════╗${neutral}"
+            echo -e "${magenta}║             ${cyan}SHADOWSOCKS MANAGEMENT${magenta}             ║${neutral}"
+            echo -e "${magenta}╚══════════════════════════════════════════════════╝${neutral}"
+            echo -e ""
+            echo -e "${cyan}┌────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${cyan}│                    MENU OPTIONS                    │${neutral}"
+            echo -e "${cyan}├────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${cyan}│${neutral} ${green}[1]${neutral}  Buat Akun SS                 ${green}[6]${neutral} Ubah Limit     ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral} ${green}[2]${neutral}  Hapus Akun SS                ${green}[7]${neutral} Detail Akun    ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral} ${green}[3]${neutral}  Perpanjang SS                ${green}[8]${neutral} Trial SS       ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral} ${green}[4]${neutral}  Cek User Login               ${green}[9]${neutral} Custom UUID    ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral} ${green}[5]${neutral}  List Member SS                               ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral}                                                   ${cyan}│${neutral}"
+            echo -e "${cyan}│${neutral} ${red}[x]${neutral}  Kembali ke Menu Utama                        ${cyan}│${neutral}"
+            echo -e "${cyan}└────────────────────────────────────────────────────┘${neutral}"
+            echo -e ""
+            echo -ne "${yellow}Pilih menu [1-9 atau x]: ${neutral}"
+            read shadowsocks_choice
 
             case $shadowsocks_choice in
             1) addshadowsocks ;;
@@ -438,12 +444,14 @@ custom_uuid_shadowsocks() {
             9) custom_uuid_shadowsocks ;;
             x | X)
                 echo -e ""
-                echo -e "   ${green}Thank you for using our service.${neutral}"
-                exit 0
+                echo -e "${green}Kembali ke menu utama...${neutral}"
+                menu
                 ;;
             *)
-                echo -e "   ${red}Invalid choice. Please try again.${neutral}"
-                sleep 2
+                echo -e ""
+                echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
+                echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
+                read
                 display_shadowsocks_menu
                 ;;
             esac

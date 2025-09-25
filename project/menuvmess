@@ -5,6 +5,10 @@ ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
+# Validasi masa aktif sebelum mengakses menu
+source /home/son/Projects/sclite/project/validate_access.sh
+validate_user_access
+
 
     
 # Variables
@@ -411,23 +415,25 @@ custom_vmess_uuid() {
 # Function to display VMESS menu
 display_vmess_menu() {
     clear
-    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-    echo -e "${orange}│${neutral}  ${bold}${green}         MENU VMEES MANAGER ${neutral}          ${orange}│"
-    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
-    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-    echo -e "${orange}│${neutral}  ${green} [1]${neutral} Create Vmess Account"
-    echo -e "${orange}│${neutral}  ${green} [2]${neutral} Delete Vmess Account"
-    echo -e "${orange}│${neutral}  ${green} [3]${neutral} Renew Vmess Account"
-    echo -e "${orange}│${neutral}  ${green} [4]${neutral} Check Vmess Login Account"
-    echo -e "${orange}│${neutral}  ${green} [5]${neutral} List Vmess Members"
-    echo -e "${orange}│${neutral}  ${green} [6]${neutral} Change Vmess Account Limit"
-    echo -e "${orange}│${neutral}  ${green} [7]${neutral} View Vmess Account Details"
-    echo -e "${orange}│${neutral}  ${green} [8]${neutral} Create Trial Vmess Account"
-    echo -e "${orange}│${neutral}  ${green} [9]${neutral} Custom Vmess UUID"
-    echo -e "${orange}│${neutral}  ${green} [x]${neutral} Exit Vmess Manager"
-    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
     echo -e ""
-    read -p "Pick a number (1-9) or hit 'x' to bail: " vmess_choice
+    echo -e "${magenta}╔══════════════════════════════════════════════════╗${neutral}"
+    echo -e "${magenta}║               ${cyan}VMESS MANAGEMENT${magenta}                 ║${neutral}"
+    echo -e "${magenta}╚══════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${cyan}┌────────────────────────────────────────────────────┐${neutral}"
+    echo -e "${cyan}│                    MENU OPTIONS                    │${neutral}"
+    echo -e "${cyan}├────────────────────────────────────────────────────┤${neutral}"
+    echo -e "${cyan}│${neutral} ${green}[1]${neutral}  Buat Akun VMess              ${green}[6]${neutral} Ubah Limit     ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral} ${green}[2]${neutral}  Hapus Akun VMess             ${green}[7]${neutral} Detail Akun    ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral} ${green}[3]${neutral}  Perpanjang VMess             ${green}[8]${neutral} Trial VMess    ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral} ${green}[4]${neutral}  Cek User Login               ${green}[9]${neutral} Custom UUID    ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral} ${green}[5]${neutral}  List Member VMess                             ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral}                                                   ${cyan}│${neutral}"
+    echo -e "${cyan}│${neutral} ${red}[x]${neutral}  Kembali ke Menu Utama                        ${cyan}│${neutral}"
+    echo -e "${cyan}└────────────────────────────────────────────────────┘${neutral}"
+    echo -e ""
+    echo -ne "${yellow}Pilih menu [1-9 atau x]: ${neutral}"
+    read vmess_choice
 
     case $vmess_choice in
     1) addvmess ;;
@@ -441,12 +447,14 @@ display_vmess_menu() {
     9) custom_vmess_uuid ;;
     x | X)
         echo -e ""
-        echo -e "   ${green}Thank you for using our service.${neutral}"
-        exit 0
+        echo -e "${green}Kembali ke menu utama...${neutral}"
+        menu
         ;;
     *)
-        echo -e "   ${red}Invalid choice. Please try again.${neutral}"
-        sleep 2
+        echo -e ""
+        echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
+        echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
+        read
         display_vmess_menu
         ;;
     esac

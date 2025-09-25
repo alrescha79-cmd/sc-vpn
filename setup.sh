@@ -84,6 +84,11 @@ vps_ip=$(curl -s ipinfo.io/ip)
 domain_ip=$(getent ahosts "$domain" | awk '{print $1}' | head -n 1)
 if [ "$domain_ip" != "$vps_ip" ]; then
     echo -e "${red}Domain yang Anda masukkan tidak mengarah ke IP VPS Anda (${vps_ip}).${neutral}"
+    echo -e "${yellow}Pastikan domain sudah di-pointing ke IP VPS: ${vps_ip}${neutral}"
+    echo -e "${gray}Script akan tetap melanjutkan instalasi...${neutral}"
+    sleep 3
+fi
+
 # Simpan domain ke file
 echo "$domain" >/etc/xray/domain
 
@@ -1219,4 +1224,3 @@ echo -e "${gray}Silakan reboot server Anda dengan 'enter'.${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 read -p "Tekan enter untuk reboot server..."
 reboot
-

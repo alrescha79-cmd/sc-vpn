@@ -1,0 +1,1 @@
+0 23 * * * root node /root/BotVPN2/report/dailyReport.js >> /var/log/bot-daily.log 2>&1

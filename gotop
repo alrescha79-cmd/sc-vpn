@@ -1,0 +1,32 @@
+#!/bin/bash
+# Auto Install Gotop (Debian/Ubuntu)
+# Author: THEFATKAY
+
+set -e
+
+echo -e "\e[0;32mUpdating system...\e[0m"
+apt update -y && apt upgrade -y
+
+# Detect arsitektur CPU
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)   FILE="gotop_v4.1.2_linux_amd64.tgz" ;;
+    aarch64)  FILE="gotop_v4.1.2_linux_arm64.tgz" ;;
+    armv7l)   FILE="gotop_v4.1.2_linux_armv7.tgz" ;;
+    *) echo -e "\e[1;31mArsitektur tidak didukung: $ARCH\e[0m"; exit 1 ;;
+esac
+
+echo -e "\e[0;32mDownloading gotop for $ARCH...\e[0m"
+wget -q https://github.com/xxxserxxx/gotop/releases/download/v4.1.2/$FILE -O /tmp/$FILE
+
+echo -e "\e[0;32mExtracting...\e[0m"
+tar -xvzf /tmp/$FILE -C /tmp >/dev/null
+
+echo -e "\e[0;32mInstalling...\e[0m"
+mv /tmp/gotop /usr/local/bin/
+chmod +x /usr/local/bin/gotop
+
+# Bersihkan file sementara
+rm -f /tmp/$FILE
+
+echo -e "\e[0;32mGotop berhasil diinstall! Jalankan dengan perintah: gotop\e[0m"

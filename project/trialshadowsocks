@@ -1,0 +1,368 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+    
+
+# Colors
+red="\e[91m"
+green="\e[92m"
+yellow="\e[93m"
+blue="\e[94m"
+purple="\e[95m"
+cyan="\e[96m"
+white="\e[97m"
+reset="\e[0m"
+
+# Function to print rainbow text
+print_rainbow() {
+    local text="$1"
+    local length=${#text}
+    local start_color=(255 255 0) # yellow
+    local mid_color=(0 255 0)     # green
+    local end_color=(255 255 0)   # yellow
+
+    for ((i = 0; i < length; i++)); do
+        local progress=$((i * 100 / (length - 1)))
+
+        if [ $progress -lt 50 ]; then
+            local factor=$((progress * 2))
+            r=$((start_color[0] * (100 - factor) / 100 + mid_color[0] * factor / 100))
+            g=$((start_color[1] * (100 - factor) / 100 + mid_color[1] * factor / 100))
+            b=$((start_color[2] * (100 - factor) / 100 + mid_color[2] * factor / 100))
+        else
+            local factor=$(((progress - 50) * 2))
+            r=$((mid_color[0] * (100 - factor) / 100 + end_color[0] * factor / 100))
+            g=$((mid_color[1] * (100 - factor) / 100 + end_color[1] * factor / 100))
+            b=$((mid_color[2] * (100 - factor) / 100 + end_color[2] * factor / 100))
+        fi
+
+        printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
+    done
+    echo -e "$reset"
+}
+# Variables
+ip=$(wget -qO- ipv4.icanhazip.com)
+srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date=$(date +"%Y-%m-%d" -d "$srv_date")
+ip_url="https://ip.yha.my.id/ip"
+city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
+pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
+ns_domain=$(cat /etc/xray/dns 2>/dev/null || echo "NS domain not set")
+domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+uuid=$(cat /proc/sys/kernel/random/uuid)
+password=$(openssl rand -base64 16)
+
+# Loading animation
+echo ""
+echo -ne "${yellow}Preparing Premium Account${reset}"
+for i in {1..2}; do
+    for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
+        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
+        sleep 0.1
+    done
+done
+echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
+sleep 1
+clear
+
+# User data input
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│        Script by XTRIMER-TUNNEL         │"
+print_rainbow "│   Input xray/ssocks account dependency  │"
+print_rainbow "│            Enter User Data              │"
+print_rainbow "└─────────────────────────────────────────┘"
+
+# Generate random username
+user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+
+echo "   Username : $user"
+until [[ $duration =~ ^[0-9]+$ ]]; do
+    read -p "   Active period (minutes): " duration
+    if [[ -z "$duration" ]]; then
+        echo -e "${red}   Active period cannot be empty${reset}"
+    fi
+done
+exp=$(date -d "$duration days" +"%Y-%m-%d")
+method="aes-256-gcm"
+password=$(cat /proc/sys/kernel/random/uuid)
+
+# Add user to configuration file
+sed -i '/#ssws$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+
+# Generate Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/shadowsocks;host=${domain};tls;network=ws;host=$domain#${user}-WS"
+ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
+
+# Create JSON configuration file
+cat >/var/www/html/shadowsocks-$user.txt <<-END
+---------------------
+# Shadowsocks WS Format
+---------------------
+
+{
+ "dns": {
+    "servers": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ]
+  },
+ "inbounds": [
+   {
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": [
+          "http",
+          "tls"
+        ],
+        "enabled": true
+      },
+      "tag": "socks"
+    },
+    {
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "userLevel": 8
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "none"
+  },
+  "outbounds": [
+    {
+      "mux": {
+        "enabled": true
+      },
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "$domain",
+            "level": 8,
+            "method": "$method",
+            "password": "$uuid",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "$domain"
+        },
+        "wsSettings": {
+          "headers": {
+            "Host": "$domain"
+          },
+          "path": "/whatever/shadowsocks"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {},
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
+      "tag": "block"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "routing": {
+    "domainStrategy": "Asls",
+"rules": []
+  },
+  "stats": {}
+ }
+
+---------------------
+# Shadowsocks gRPC Format
+---------------------
+
+{
+    "dns": {
+    "servers": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ]
+  },
+ "inbounds": [
+   {
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": [
+          "http",
+          "tls"
+        ],
+        "enabled": true
+      },
+      "tag": "socks"
+    },
+    {
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "userLevel": 8
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "none"
+  },
+  "outbounds": [
+    {
+      "mux": {
+        "enabled": true
+      },
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "$domain",
+            "level": 8,
+            "method": "$method",
+            "password": "$uuid",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "multiMode": true,
+          "serviceName": "ss-grpc"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "$domain"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {},
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
+      "tag": "block"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "routing": {
+    "domainStrategy": "Asls",
+"rules": []
+  },
+  "stats": {}
+}
+
+---------------------
+# Shadowsocks Account Links
+---------------------
+TLS Link : ${ss_link_ws}
+---------------------
+gRPC Link : ${ss_link_grpc}
+---------------------
+
+END
+
+# Restart service
+if ! systemctl restart shadowsocks@config > /dev/null 2>&1; then
+    echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+    exit 1
+fi
+
+# Exception if configuration file doesn't exist
+tmux new-session -d -s "trial_shadowsocks_$user" "trial trialss $user $duration"
+
+# Display account information
+clear -x
+print_rainbow "───────────────────────────"
+print_rainbow " Xray/Shadowsocks Account  "
+print_rainbow "───────────────────────────"
+echo -e "Description : ${user}"
+echo -e "Host Server : ${domain}"
+echo -e "Host XrayDNS: ${ns_domain}"
+echo -e "Location    : $city"
+echo -e "Port        : 443"
+echo -e "Method      : ${method}"
+echo -e "Password    : ${password}"
+echo -e "Path WS     : /whatever/shadowsocks"
+echo -e "ServiceName : ss-grpc"
+echo -e "Public Key  : ${pubkey}"
+print_rainbow "───────────────────────────"
+echo -e "SS WS Link  : ${ss_link_ws}"
+print_rainbow "───────────────────────────"
+echo -e "SS gRPC Link: ${ss_link_grpc}"
+print_rainbow "───────────────────────────"
+echo -e "OpenClash Format: https://${domain}:81/shadowsocks-$user.txt"
+print_rainbow "───────────────────────────"
+echo -e "Expires On  : $exp"
+echo -e ""
+

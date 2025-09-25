@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# ========== Color Setup ==========
+green="\e[38;5;87m"
+red="\e[38;5;196m"
+neutral="\e[0m"
+blue="\e[38;5;130m"
+orange="\e[38;5;99m"
+yellow="\e[38;5;226m"
+bold_white="\e[1;37m"
+reset="\e[0m"
+
+# ========== Remove Previous Bot ==========
+hapus_bot_lama() {
+  echo -e "${orange}Menghapus bot lama...${neutral}"
+  systemctl stop sellvpn.service 2>/dev/null
+  systemctl disable sellvpn.service 2>/dev/null
+  rm -f /etc/systemd/system/sellvpn.service
+  rm -f /usr/bin/sellvpn /usr/bin/server_sellvpn /etc/cron.d/server_sellvpn
+  rm -rf /root/BotVPN2
+
+  if command -v pm2 &> /dev/null; then
+    pm2 delete sellvpn &> /dev/null
+    pm2 save &> /dev/null
+  fi
+
+  systemctl daemon-reload
+  echo -e "${green}Bot lama berhasil dihapus.${neutral}"
+}
+
+# ========== Install Dependencies ==========
+pasang_package() {
+  echo -e "${blue}Install dependensi...${reset}"
+
+  apt update -y
+  apt install -y npm nodejs curl dos2unix jq tmux git \
+    build-essential libcairo2-dev libpango1.0-dev libjpeg-dev \
+    libgif-dev librsvg2-dev pkg-config libpixman-1-dev
+
+  npm install -g pm2
+}
+
+# ========== Setup Bot ==========
+setup_bot() {
+  timedatectl set-timezone Asia/Jakarta
+
+  if [ -d /root/BotVPN2/.git ]; then
+    echo -e "${yellow}Update dari Git...${reset}"
+    cd /root/BotVPN2 && git pull
+  else
+    echo -e "${green}Clone repo bot...${reset}"
+    git clone https://github.com/joytun21/BhotVpn.git /root/BotVPN2
+  fi
+
+  echo -e "${yellow}Convert semua script ke format Unix (LF)...${reset}"
+  find /root/BotVPN2/scripts -type f -name "*.sh" -exec dos2unix {} \;
+
+  echo -e "${yellow}Install NPM packages...${reset}"
+  npm install --prefix /root/BotVPN2 sqlite3 express crypto telegraf axios dotenv node-cron
+
+  chmod +x /root/BotVPN2/*
+}
+
+# ========== Konfigurasi Firewalld/UFW ==========
+set_firewall() {
+  echo -e "${yellow}Mengaktifkan firewall...${reset}"
+  ufw allow 22
+  ufw allow 80
+  ufw allow 443
+  ufw allow 50123
+  ufw --force enable
+}
+
+# ========== Konfigurasi Bot ==========
+server_app() {
+  clear
+  echo -e "${orange}──────────────────────────────────────────────${neutral}"
+  echo -e "   ${green}::: KONFIGURASI BOT VPN TELEGRAM :::${neutral}"
+  echo -e "${orange}──────────────────────────────────────────────${neutral}"
+
+  read -p "Masukkan Token Bot      : " token
+  read -p "Masukkan Admin ID       : " adminid
+  read -p "Masukkan ID Grup Telegram : " groupid
+  read -p "Masukkan Nama Store     : " namastore
+  read -p "Masukkan DATA QRIS      : " dataqris
+  read -p "Masukkan MERCHANT ID    : " merchantid
+  read -p "Masukkan API KEY        : " apikey
+
+  cat <<EOF > /root/BotVPN2/.vars.json
+{
+  "BOT_TOKEN": "$token",
+  "USER_ID": "$adminid",
+  "GROUP_ID": "$groupid",
+  "NAMA_STORE": "$namastore",
+  "PORT": "50123",
+  "DATA_QRIS": "$dataqris",
+  "MERCHANT_ID": "$merchantid",
+  "API_KEY": "$apikey"
+}
+EOF
+
+  if ! jq empty /root/BotVPN2/.vars.json 2>/dev/null; then
+    echo -e "${red}❌ Gagal membuat file .vars.json. Cek input atau format.${neutral}"
+    exit 1
+  fi
+
+  cat >/etc/cron.d/server_sellvpn <<EOF
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+*/30 * * * * root curl -s -F chat_id="$adminid" -F document=@"/root/BotVPN2/sellvpn.db" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+EOF
+
+
+  # 🚀 Start PM2 bot
+    
+  sleep 2
+  pm2 start app.js --name sellvpn --cwd /root/BotVPN2 --log /var/log/sellvpn.log
+  pm2 save
+  pm2 startup
+
+  # 📩 Notifikasi awal ke Admin
+  curl -s -X POST https://api.telegram.org/bot$token/sendMessage \
+    -d chat_id="$adminid" \
+    -d text="✅ Bot VPN berhasil diaktifkan!\nGunakan /start untuk mulai."
+
+  echo -e "${green}Bot VPN telah aktif. Cek Telegram!${neutral}"
+}
+
+# ========== EXECUTOR ==========
+if [[ ${1} == "sellvpn" ]]; then
+  hapus_bot_lama
+  pasang_package
+  setup_bot
+  set_firewall
+  server_app
+else
+  echo -e "${red}Gunakan perintah: ${yellow}start sellvpn${neutral}"
+  exit 1
+fi

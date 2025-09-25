@@ -1,0 +1,98 @@
+#!/bin/bash
+source /root/.vars
+TODAY=$(date +%Y-%m-%d)
+TODAY_EPOCH=$(date -d "$TODAY" +%s)
+EXPIRED_USERS=""
+TOTAL_EXPIRED=0
+
+# === Fungsi kirim notifikasi ===
+send_notification() {
+  if [[ -n "$EXPIRED_USERS" ]]; then
+    TEXT="🚫 NOTIFIKASI AKUN EXPIRED (Auto Remove)
+📅 Tanggal: $TODAY
+━━━━━━━━━━━━━━━━━━━━━━
+$EXPIRED_USERS📊 Total akun expired: $TOTAL_EXPIRED"
+
+    curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
+      -d "chat_id=${telegram_id}" \
+      --data-urlencode "text=$TEXT"
+  fi
+}
+
+# === Fungsi hapus akun expired ===
+check_and_remove() {
+  local FILE="$1"
+  local SERVICE="$2"
+  local CONFIG="$3"
+  local LOGDIR="$4"
+  shift 4
+  local FILES=("$@")
+
+  [[ ! -f "$FILE" ]] && return
+  while read -r line; do
+    if [[ $line =~ ^###\ ([a-zA-Z0-9_]+)\ ([0-9-]+) ]]; then
+      user="${BASH_REMATCH[1]}"
+      exp="${BASH_REMATCH[2]}"
+      exp_epoch=$(date -d "$exp" +%s)
+
+      if [[ $exp_epoch -le $TODAY_EPOCH ]]; then
+        # Tambah ke daftar notif
+        EXPIRED_USERS+="👤 User     : $user
+🔑 Service  : $SERVICE
+📆 Expired  : $exp
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_EXPIRED++))
+
+        # Hapus dari DB & config
+        sed -i "/^### $user $exp/,/^},{/d" "$CONFIG"
+        sed -i "/^### $user $exp/d" "$FILE"
+
+        # Hapus log & file user
+        if [ -d "$LOGDIR" ]; then
+          rm -f "$LOGDIR/log-create-${user}.log"
+          for f in "${FILES[@]}"; do
+            rm -f "$LOGDIR/${user}-${f}.json"
+          done
+        fi
+      fi
+    fi
+  done < <(grep '^### ' "$FILE")
+}
+
+# === Jalankan untuk tiap service ===
+check_and_remove "/etc/xray/vmess/.vmess.db" "VMESS" "/etc/xray/vmess/config.json" "/etc/xray/vmess" "non" "tls" "grpc"
+check_and_remove "/etc/xray/vless/.vless.db" "VLESS" "/etc/xray/vless/config.json" "/etc/xray/vless" "non" "tls" "grpc"
+check_and_remove "/etc/xray/trojan/.trojan.db" "TROJAN" "/etc/xray/trojan/config.json" "/etc/xray/trojan" "non" "tls" "grpc"
+check_and_remove "/etc/xray/shadowsocks/.shadowsocks.db" "SHADOWSOCKS" "/etc/xray/shadowsocks/config.json" "/etc/xray/shadowsocks" "non" "tls" "grpc"
+
+# === SSH ===
+if [[ -f /etc/ssh/.ssh.db ]]; then
+  while read -r line; do
+    if [[ $line =~ ^###\ ([a-zA-Z0-9_]+)\ ([0-9-]+) ]]; then
+      user="${BASH_REMATCH[1]}"
+      exp="${BASH_REMATCH[2]}"
+      exp_epoch=$(date -d "$exp" +%s)
+
+      if [[ $exp_epoch -le $TODAY_EPOCH ]]; then
+        EXPIRED_USERS+="👤 User     : $user
+🔑 Service  : SSH
+📆 Expired  : $exp
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_EXPIRED++))
+
+        userdel -f "$user" 2>/dev/null
+        sed -i "/^### $user $exp/d" /etc/ssh/.ssh.db
+        rm -f /etc/xray/log-createssh-$user.log
+      fi
+    fi
+  done < <(grep '^### ' /etc/ssh/.ssh.db)
+fi
+
+# Restart service setelah remove
+systemctl restart sshd
+systemctl restart xray
+
+# Kirim notif
+send_notification

@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+        # color configuration
+        dark_purple="\e[38;5;54m"
+        green="\e[38;5;82m"
+        red="\e[38;5;196m"
+        neutral="\e[0m"
+        blue="\e[38;5;130m"
+        orange="\e[38;5;99m"
+        yellow="\e[38;5;226m"
+        purple="\e[38;5;141m"
+        bold_white="\e[1;37m"
+        normal="\e[0m"
+        pink="\e[38;5;205m"
+
+        # Menentukan file log
+        if [ -e "/var/log/auth.log" ]; then
+            LOG_FILE="/var/log/auth.log"
+        elif [ -e "/var/log/secure" ]; then
+            LOG_FILE="/var/log/secure"
+        else
+            echo "File not exist"
+            exit 1
+        fi
+
+        # Membuat file temporary
+        touch /tmp/ssh_login_user
+
+        clear
+
+        # Fungsi untuk menampilkan informasi login SSH dan Dropbear
+        tampilkan_info_ssh_dropbear() {
+
+            echo -e "${orange}─────────────────────────────────────────${neutral}"
+            echo -e "${green}         SSH USER LOGIN ACCOUNTS ${neutral}"
+            echo -e "${orange}─────────────────────────────────────────${neutral}"
+
+            cat $LOG_FILE | grep -i sshd | grep -i "Accepted password for" >/tmp/login-db-ssh.txt
+            cat $LOG_FILE | grep -i dropbear | grep -i "Password auth succeeded" >/tmp/login-db-dropbear.txt
+
+            ssh_pids=($(pgrep sshd))
+            dropbear_pids=($(pgrep dropbear))
+
+            for ssh_pid in "${ssh_pids[@]}"; do
+                if grep -q "sshd\[$ssh_pid\]" /tmp/login-db-ssh.txt; then
+                    grep "sshd\[$ssh_pid\]" /tmp/login-db-ssh.txt >/tmp/login-db-pid-ssh.txt
+                    ssh_num=$(wc -l </tmp/login-db-pid-ssh.txt)
+                    ssh_user=$(grep -oP '(?<=for )\w+' /tmp/login-db-pid-ssh.txt)
+                    ssh_ip=$(grep -oP '(?<=from )\d+\.\d+\.\d+\.\d+' /tmp/login-db-pid-ssh.txt)
+                    echo "$ssh_pid $ssh_user $ssh_ip" >>/tmp/ssh_login_user
+                fi
+            done
+
+            for dropbear_pid in "${dropbear_pids[@]}"; do
+                if grep -q "dropbear\[$dropbear_pid\]" /tmp/login-db-dropbear.txt; then
+                    grep "dropbear\[$dropbear_pid\]" /tmp/login-db-dropbear.txt >/tmp/login-db-pid-dropbear.txt
+                    dropbear_num=$(wc -l </tmp/login-db-pid-dropbear.txt)
+                    dropbear_user=$(grep -oP "(?<=for ')\w+(?=' from)" /tmp/login-db-pid-dropbear.txt | sed "s/'//g")
+                    dropbear_ip=$(grep -oP '(?<=from )\d+\.\d+\.\d+\.\d+' /tmp/login-db-pid-dropbear.txt | cut -d ':' -f 1)
+                    echo "$dropbear_pid $dropbear_user $dropbear_ip" >>/tmp/ssh_login_user
+                fi
+            done
+
+            tampilkan_info_pengguna "/tmp/ssh_login_user"
+        }
+
+        tampilkan_info_pengguna() {
+    local file=$1
+    user_list=($(grep '^###' /etc/ssh/.ssh.db | cut -d ' ' -f 2 | sort | uniq))
+
+    echo -e "${dark_purple}─────────────────────────────────────────${neutral}"
+    printf " %-12s | %-7s | %-7s\n" "Username" "LoginIP" "LimitIP"
+    echo -e "${dark_purple}─────────────────────────────────────────${neutral}"
+
+    total_online=0
+    for user in "${user_list[@]}"; do
+        login_ip=$(grep -w "$user" "$file" | awk '{print $3}' | sort -u | wc -l)
+        [[ -e /etc/ssh/$user ]] && limit_ip=$(cat /etc/ssh/$user) || limit_ip="0"
+
+        # kalau limit_ip=0 artinya unlimited
+        if [[ "$limit_ip" -eq 0 ]]; then
+            limit_ip="∞"
+        fi
+
+        # tampilkan hanya jika ada login aktif
+        if [[ $login_ip -gt 0 ]]; then
+            printf " %-12s | %-7s | %-7s\n" "$user" "$login_ip" "$limit_ip"
+            ((total_online++))
+        fi
+    done
+
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green} Total User Online : $total_online"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+}
+
+        # Menampilkan informasi
+        tampilkan_info_ssh_dropbear
+
+        # Membersihkan file temporary
+        rm -rf /tmp/ssh_login_user /tmp/login-db-ssh.txt /tmp/login-db-dropbear.txt /tmp/login-db-pid-ssh.txt /tmp/login-db-pid-dropbear.txt
+        echo " "
+        read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+        menu
+    

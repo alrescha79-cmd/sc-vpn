@@ -1,0 +1,439 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+# Variables
+ip=$(wget -qO- ipv4.icanhazip.com)
+srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date=$(date +"%Y-%m-%d" -d "$srv_date")
+ip_url="https://ip.yha.my.id/ip"
+city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
+pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
+domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+uuid=$(cat /proc/sys/kernel/random/uuid)
+password=$(openssl rand -base64 16)
+
+# Exception handling if config file doesn't exist
+if [ ! -f "/etc/xray/shadowsocks/config.json" ]; then
+  echo "Shadowsocks config file not found. Creating a new file..."
+  mkdir -p /etc/xray/shadowsocks
+  echo '{"inbounds": []}' >/etc/xray/shadowsocks/config.json
+fi
+
+# Exception handling if shadowsocks directory doesn't exist
+if [ ! -d "/etc/xray/shadowsocks" ]; then
+  echo "Directory /etc/xray/shadowsocks not found. Creating directory..."
+  mkdir -p /etc/xray/shadowsocks
+fi
+
+clear
+
+# User data input
+echo -e "————————————————————————————————————————————————————"
+echo -e "             Add Xray Shadowsocks Account"
+echo -e "————————————————————————————————————————————————————"
+
+while true; do
+    read -p "   Name: " user
+    if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        printf "\033[1A\033[0J"
+        echo -e "${red}   Username cannot be empty${reset}"
+        continue
+    fi
+    if grep -q "^### $user " /etc/xray/shadowsocks/config.json; then
+        random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
+        user="${random_number}${user}"
+        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+        break
+    else
+        break
+    fi
+done
+echo ""
+echo -e "—————————————————————————————————————"
+echo "   Username : $user"
+until [[ $duration =~ ^[0-9]+$ ]]; do
+  read -p "   Active period (days): " duration
+done
+until [[ $quota =~ ^[0-9]+$ ]]; do
+  read -p "   User Limit (GB): " quota
+done
+until [[ $ip_limit =~ ^[0-9]+$ ]]; do
+  read -p "   User Limit (IP): " ip_limit
+done
+
+exp=$(date -d "$duration days" +"%Y-%m-%d")
+method="aes-256-gcm"
+password=$(cat /proc/sys/kernel/random/uuid)
+
+# Add user to config file
+sed -i '/#ssws$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+
+# Generate Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/ss-ws;host=${domain};tls;network=ws;host=$domain#${user}-WS"
+ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
+
+# Create JSON config file
+cat >/var/www/html/shadowsocks-$user.txt <<-END
+---------------------
+# Shadowsocks WS Format
+---------------------
+
+{
+ "dns": {
+    "servers": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ]
+  },
+ "inbounds": [
+   {
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": [
+          "http",
+          "tls"
+        ],
+        "enabled": true
+      },
+      "tag": "socks"
+    },
+    {
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "userLevel": 8
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "none"
+  },
+  "outbounds": [
+    {
+      "mux": {
+        "enabled": true
+      },
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "$domain",
+            "level": 8,
+            "method": "$method",
+            "password": "$uuid",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "$domain"
+        },
+        "wsSettings": {
+          "headers": {
+            "Host": "$domain"
+          },
+          "path": "/whatever/ss-ws"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {},
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
+      "tag": "block"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "routing": {
+    "domainStrategy": "Asls",
+"rules": []
+  },
+  "stats": {}
+ }
+
+---------------------
+# Shadowsocks gRPC Format
+---------------------
+
+{
+    "dns": {
+    "servers": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ]
+  },
+ "inbounds": [
+   {
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": [
+          "http",
+          "tls"
+        ],
+        "enabled": true
+      },
+      "tag": "socks"
+    },
+    {
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "userLevel": 8
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "none"
+  },
+  "outbounds": [
+    {
+      "mux": {
+        "enabled": true
+      },
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "$domain",
+            "level": 8,
+            "method": "$method",
+            "password": "$uuid",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "multiMode": true,
+          "serviceName": "ss-grpc"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "$domain"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {},
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
+      "tag": "block"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "routing": {
+    "domainStrategy": "Asls",
+"rules": []
+  },
+  "stats": {}
+}
+
+---------------------
+# Shadowsocks Account Links
+---------------------
+TLS Link : ${ss_link_ws}
+---------------------
+gRPC Link : ${ss_link_grpc}
+---------------------
+
+END
+
+# Restart service
+if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then
+  echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+  exit 1
+fi
+
+# Exception handling if config file doesn't exist
+if [ ! -f "/etc/xray/shadowsocks/config.json" ]; then
+  echo "Warning: Shadowsocks config file not found. Creating a new file..."
+  mkdir -p /etc/xray/shadowsocks
+  echo '{"server":["::1", "0.0.0.0"],"mode":"tcp_and_udp"}' >/etc/xray/shadowsocks/config.json
+  systemctl restart shadowsocks@config
+fi
+
+# Create directory if it doesn't exist
+if [ ! -d "/etc/xray/shadowsocks" ]; then
+  echo "Directory /etc/xray/shadowsocks not found. Creating directory..."
+  mkdir -p /etc/xray/shadowsocks
+  if [ $? -ne 0 ]; then
+    echo "Failed to create directory /etc/xray/shadowsocks. Make sure you have sufficient permissions."
+    exit 1
+  fi
+fi
+
+# Set default values if empty
+[ -z ${ip_limit} ] && ip_limit="0"
+[ -z ${quota} ] && quota="0"
+
+# Convert Quota to bytes
+quota_bytes=$((${quota} * 1024 * 1024 * 1024))
+
+# Save quota and IP limit data
+if [[ ${quota} != "0" ]]; then
+  echo "${quota_bytes}" >/etc/xray/shadowsocks/${user}
+  echo "${ip_limit}" >/etc/xray/shadowsocks/${user}IP
+fi
+
+# Update database
+db_file="/etc/xray/shadowsocks/.shadowsocks.db"
+temp_file="/etc/xray/shadowsocks/.shadowsocks.db.tmp"
+
+# Exception handling if database file doesn't exist
+if [ ! -f "$db_file" ]; then
+  echo "Database file not found. Creating a new file..."
+  touch "$db_file"
+fi
+
+# Remove old entry if exists
+grep -v "^### ${user} " "$db_file" >"$temp_file"
+mv "$temp_file" "$db_file"
+
+# Add new entry
+echo "### ${user} ${exp} ${password}" >>"$db_file"
+
+# Display account information
+clear -x
+echo -e "—————————————————————————————————————"
+echo -e "  Xray/Shadowsocks Account "
+echo -e "—————————————————————————————————————"
+echo -e "Description  : ${user}"
+echo -e "Server Host  : ${domain}"
+echo -e "Location     : ${city}"
+echo -e "Port         : 443"
+echo -e "Method       : ${method}"
+echo -e "Password     : ${password}"
+echo -e "WS Path      : /whatever/ss-ws"
+echo -e "ServiceName  : ss-grpc"
+echo -e "Public Key   : ${pubkey}"
+echo -e "—————————————————————————————————————"
+echo -e "SS WS Link   : ${ss_link_ws}"
+echo -e "—————————————————————————————————————"
+echo -e "SS gRPC Link : ${ss_link_grpc}"
+echo -e "—————————————————————————————————————"
+echo -e "OpenClash Format : https://${domain}:81/shadowsocks-${user}.txt"
+echo -e "—————————————————————————————————————"
+echo -e "Expires On   : ${exp}"
+
+
+# Save log
+{
+  echo "───────────────────────────"
+  echo "  Xray/Shadowsocks Account "
+  echo "───────────────────────────"
+  echo "Description  : ${user}"
+  echo "Server Host  : ${domain}"  
+  echo "Location     : ${city}"
+  echo "Port         : 443"
+  echo "Method       : ${method}"
+  echo "Password     : ${password}"
+  echo "WS Path      : /whatever/ss-ws"
+  echo "ServiceName  : ss-grpc"
+  echo "Public Key   : ${pubkey}"
+  echo "───────────────────────────"
+  echo "SS WS Link   : ${ss_link_ws}"
+  echo "───────────────────────────"
+  echo "SS gRPC Link : ${ss_link_grpc}"
+  echo "───────────────────────────"
+  echo "OpenClash Format : https://${domain}:81/shadowsocks-${user}.txt"
+  echo "───────────────────────────"
+  echo "Expires On   : ${exp}"
+  echo ""
+} >> "/etc/xray/shadowsocks/log-create-${user}.log"
+# Display account information
+
+clear 
+echo -e "—————————————————————————————————————"
+echo -e "  Xray/Shadowsocks Account "
+echo -e "—————————————————————————————————————"
+echo -e "Description  : ${user}"
+echo -e "Server Host  : ${domain}"
+echo -e "Location     : ${city}"
+echo -e "Port         : 443"
+echo -e "Method       : ${method}"
+echo -e "Password     : ${password}"
+echo -e "WS Path      : /whatever/ss-ws"
+echo -e "ServiceName  : ss-grpc"
+echo -e "Public Key   : ${pubkey}"
+echo -e "—————————————————————————————————————"
+echo -e "SS WS Link   : ${ss_link_ws}"
+echo -e "—————————————————————————————————————"
+echo -e "SS gRPC Link : ${ss_link_grpc}"
+echo -e "—————————————————————————————————————"
+echo -e "OpenClash Format : https://${domain}:81/shadowsocks-${user}.txt"
+echo -e "—————————————————————————————————————"
+echo -e "Expires On   : ${exp}"
+

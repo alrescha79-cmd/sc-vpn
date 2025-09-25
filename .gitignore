@@ -1,0 +1,77 @@
+# Dependencies
+vendor/
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Development environment
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js dependencies (for bot)
+bot/node_modules/
+bot/npm-debug.log*
+bot/npm-error.log*
+bot/npm-error.log
+bot/yarn-debug.log*
+bot/yarn-error.log*
+
+# Build artifacts
+backend/
+
+# Backup files
+*.bak
+*.backup
+
+# Compressed files
+*.zip
+*.rar
+*.7z
+
+# Project specific files to ignore
+backend.zip
+gotop
+izin
+update
+
+# Ignore all shadowsocks config files (they contain sensitive data)
+VMess-VLESS-Trojan+Websocket+gRPC/shadowsocks/config.json
+VMess-VLESS-Trojan+Websocket+gRPC/trojan/config.json
+VMess-VLESS-Trojan+Websocket+gRPC/vless/config.json
+VMess-VLESS-Trojan+Websocket+gRPC/vmess/config.json

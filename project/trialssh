@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+    
+# Colors
+red="\e[91m"
+green="\e[92m"
+yellow="\e[93m"
+blue="\e[94m"
+purple="\e[95m"
+cyan="\e[96m"
+white="\e[97m"
+reset="\e[0m"
+
+# Function to print rainbow text
+print_rainbow() {
+    local text="$1"
+    local length=${#text}
+    local start_color=(255 255 0) # yellow
+    local mid_color=(0 255 0)     # green
+    local end_color=(255 255 0)   # yellow
+
+    for ((i = 0; i < length; i++)); do
+        local progress=$((i * 100 / (length - 1)))
+
+        if [ $progress -lt 50 ]; then
+            local factor=$((progress * 2))
+            r=$((start_color[0] * (100 - factor) / 100 + mid_color[0] * factor / 100))
+            g=$((start_color[1] * (100 - factor) / 100 + mid_color[1] * factor / 100))
+            b=$((start_color[2] * (100 - factor) / 100 + mid_color[2] * factor / 100))
+        else
+            local factor=$(((progress - 50) * 2))
+            r=$((mid_color[0] * (100 - factor) / 100 + end_color[0] * factor / 100))
+            g=$((mid_color[1] * (100 - factor) / 100 + end_color[1] * factor / 100))
+            b=$((mid_color[2] * (100 - factor) / 100 + end_color[2] * factor / 100))
+        fi
+
+        printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
+    done
+    echo -e "$reset"
+}
+
+# Variables
+ip=$(wget -qO- ipv4.icanhazip.com)
+server_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date=$(date +"%Y-%m-%d" -d "$server_date")
+ip_url="https://ip.yha.my.id/ip"
+city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
+public_key=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Public key not available")
+ns_domain=$(cat /etc/xray/dns 2>/dev/null || echo "NS domain not set")
+domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+
+# Loading animation
+echo ""
+echo -ne "${yellow}Preparing Premium Account${reset}"
+for i in {1..2}; do
+    for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
+        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
+        sleep 0.1
+    done
+done
+echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
+sleep 1
+clear
+
+# User data input
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│        Script by XTRIMER-TUNNEL         │"
+print_rainbow "│     Input SSH trial account data        │"
+print_rainbow "│            Enter User Data              │"
+print_rainbow "└─────────────────────────────────────────┘"
+
+# Generate random username
+user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+
+echo "   Username : $user"
+until [[ $duration =~ ^[0-9]+$ ]]; do
+    read -p "   Active period (minutes): " duration
+    if [[ -z "$duration" ]]; then
+        echo -e "${red}   Active period cannot be empty${reset}"
+    fi
+done
+
+# Account creation process
+expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
+
+# Create SSH account
+useradd -e $(date -d "+$duration minutes" +"%Y-%m-%d") -s /bin/false -M $user
+echo "$user:$user" | chpasswd
+
+# Run tmux session to delete account after duration expires
+tmux new-session -d -s "trial_ssh_$user" "trial trialssh $user $duration"
+
+print_rainbow "───────────────────────────"
+print_rainbow "     SSH OVPN Account      "
+print_rainbow "───────────────────────────"
+echo -e "Username         : $user"
+echo -e "Password         : $user"
+print_rainbow "───────────────────────────"
+echo -e "IP               : $ip"
+echo -e "Host             : $domain"
+echo -e "Slowdns Host     : ${ns_domain}"
+echo -e "Location         : $city"
+echo -e "OpenSSH Port     : 443, 80, 22"
+echo -e "UdpSSH Port      : 1-65535"
+echo -e "DNS Port         : 443, 53, 22"
+echo -e "Dropbear Port    : 443, 109"
+echo -e "SSH WS Port      : 80, 8080"
+echo -e "SSH SSL WS Port  : 443"
+echo -e "SSL/TLS Port     : 443"
+echo -e "OVPN SSL Port    : 443"
+echo -e "OVPN TCP Port    : 1194"
+echo -e "OVPN UDP Port    : 2200"
+echo -e "BadVPN UDP       : 7100, 7300, 7300"
+echo -e "SlowDns Public Key: ${public_key}"
+print_rainbow "───────────────────────────"
+echo -e "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
+print_rainbow "───────────────────────────"
+echo -e "OpenVPN Link     : https://$domain:81/allovpn.zip"
+print_rainbow "───────────────────────────"
+echo -e "Save Account Link: https://$domain:81/ssh-$user.txt"
+print_rainbow "───────────────────────────"
+echo -e "Expiration       : $expiration"
+echo -e ""
+read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+menu

@@ -1,0 +1,217 @@
+#!/bin/bash
+
+# ===============================
+# DAPATKAN IP DAN TANGGAL
+# ===============================
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+# ===============================
+# AMBIL DATA CLIENT
+# ===============================
+MYIP=$ipsaya
+username=$(curl -sS $url_izin | grep $MYIP | awk '{print $2}')
+valid=$(curl -sS $url_izin | grep $MYIP | awk '{print $3}')
+
+echo "$username" >/usr/bin/user
+echo "$valid" >/usr/bin/e
+
+# ===============================
+# TANGGAL HARI INI DAN EXPIRY
+# ===============================
+today=$(date +'%Y-%m-%d')
+Exp1="$valid"  # tanggal expiry
+
+# ===============================
+# FUNGSI HITUNG SELISIH HARI & FORMAT TANGGAL
+# ===============================
+datediff() {
+    local d1=$(date -d "$1" +%s)
+    local d2=$(date -d "$2" +%s)
+    local diff=$(( (d1 - d2) / 86400 ))
+    diff=${diff#-}  # selalu positif
+    local formatted=$(date -d "$1" +'%d-%m-%Y')
+    echo "$diff day | $formatted"
+}
+
+# ===============================
+# CEK STATUS ACTIVE / EXPIRED
+# ===============================
+Info="(${green}Active${neutral})"
+Error="(${r}Expired${neutral})"
+if [[ "$today" < "$Exp1" ]]; then
+    sts="${Info}"
+else
+    sts="${Error}"
+fi
+
+# Colors
+green="\e[38;5;87m"
+red="\e[38;5;196m"
+neutral="\e[0m"
+blue="\e[38;5;130m"
+orange="\e[38;5;99m"
+yellow="\e[38;5;226m"
+purple="\e[38;5;141m"
+bold_white="\e[1;37m"
+reset="\e[0m"
+pink="\e[38;5;205m"
+
+# warna gelap
+dark_gray="\e[38;5;240m"
+dark_blue="\e[38;5;18m"
+dark_red="\e[38;5;88m"
+dark_green="\e[38;5;22m"
+dark_orange="\e[38;5;94m"
+dark_purple="\e[38;5;54m"
+dark_cyan="\e[38;5;30m"
+dark_blue_bg="\e[48;5;18m"
+
+# warna terang
+light_gray="\e[38;5;250m"
+light_blue="\e[38;5;81m"
+light_red="\e[38;5;210m"
+light_green="\e[38;5;120m"
+light_orange="\e[38;5;215m"
+light_purple="\e[38;5;177m"
+light_cyan="\e[38;5;159m"
+light_yellow="\e[38;5;229m"
+
+        # Function to count accounts
+        count_accounts() {
+            if [ ! -e "/etc/xray/$1/.$1.db" ]; then
+                mkdir -p "/etc/xray/$1"
+                touch "/etc/xray/$1/.$1.db"
+            fi
+
+            accounts=$(cat "/etc/xray/$1/.$1.db")
+            if [[ $accounts = "" ]]; then
+                echo "0"
+            else
+                cat "/etc/xray/$1/.$1.db" | grep "###" | wc -l
+            fi
+        }
+
+        # Count accounts
+        vm=$(count_accounts "vmess")
+        vl=$(count_accounts "vless")
+        tr=$(count_accounts "trojan")
+        ss=$(count_accounts "shadowsocks")
+        ssh=$(cat "/etc/ssh/.ssh.db" | grep "###" | wc -l)
+        
+        # Check service status
+        cek_status() {
+            status=$(systemctl is-active --quiet $1 && echo "aktif" || echo "nonaktif")
+            if [ "$status" = "aktif" ]; then
+                echo -e "${green}ON${neutral}"
+            else
+                echo -e "${red}OFF${neutral}"
+            fi
+        }
+
+setup_bot_telegram() {
+clear
+echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${green}           SETUP BOT TELEGRAM         ${neutral}"
+echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e ""
+read -p "Masukkan token bot telegram Anda: " bot_token
+read -p "Masukkan chat ID Anda: " chat_id
+if [[ -z "$bot_token" || -z "$chat_id" ]]; then
+echo -e "${red}Token bot atau chat ID tidak boleh kosong.${neutral}"
+return
+fi
+if [ -f /root/.vars ]; then
+rm -f /root/.vars
+fi
+echo "bot_token=\"$bot_token\"" >> /root/.vars
+echo "telegram_id=\"$chat_id\"" >> /root/.vars
+systemctl restart limitip > /dev/null 2>&1
+echo -e "${dark_purple}─────────────────────────────────────────"
+echo -e "${green}Token bot dan chat ID telah disimpan di /root/.vars${neutral}"
+read -n 1 -s -r -p "Press any key to return to the menu"
+}
+      
+            clear
+            # Display menu
+            display_menu() {
+            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
+echo -e "   ${orange}│ ${dark_blue_bg}${green}           HideSSH-TUNNELING           ${neutral} ${orange}│${neutral}"
+echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
+            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
+
+# Sistem
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mSYSTEM    : $(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' | cut -d '.' -f 1-3 2>/dev/null || echo "Unable to detect system")"
+
+# RAM
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mRAM       : $(free -m | awk 'NR==2 {print $3 "MB / " $2 "MB"}')"
+
+# Uptime
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mUPTIME    : $(uptime -p 2>/dev/null | cut -d ' ' -f 2-10000 || echo "Unable to detect uptime")"
+
+# CPU Core
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mCPU CORE  : $(nproc 2>/dev/null || echo "N/A")"
+
+# ISP
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mISP       : $(curl -s ipinfo.io/org 2>/dev/null | cut -d ' ' -f 2-100 || echo "Unable to detect ISP")"
+
+# City
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mCITY      : $(curl -s ipinfo.io/city 2>/dev/null || echo "Unable to detect city")"
+
+# IP Publik
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mIP        : $(curl -s ipv4.icanhazip.com 2>/dev/null || echo "Unable to detect IP")"
+
+# Domain
+echo -e "   \e[38;5;99m│ \e[38;5;196m• \e[0mDOMAIN    : $(head -n1 /etc/xray/domain 2>/dev/null || echo "No domain registered")"
+
+echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
+            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
+            echo -e "   ${orange}│ ${neutral}XRAY : "$(cek_status vmess@config)"${neutral} ${orange}│ "${neutral} HAPROXY : "$(cek_status haproxy)"${neutral}" ${orange}│${neutral}  SSHOVPN : "$(cek_status ssh)" ${orange}│${neutral}"
+            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
+            echo -e "        ${dark_purple}┌─────────────────────────────────┐${neutral}"            
+            printf "\e[0m%-13s %-7s %-8s %2s\n" "            SSH/OPENVPN" " : $ssh" "ACCOUNT " 
+            printf "\e[0m%-13s %-7s %-8s %2s\n" "            VMESS XRAY" "  : $vm" " ACCOUNT " 
+            printf "\e[0m%-13s %-7s %-8s %2s\n" "            VLESS XRAY" "  : $vl" " ACCOUNT " 
+            printf "\e[0m%-13s %-7s %-8s %2s\n" "            TRJAN XRAY" "  : $tr" " ACCOUNT " 
+            printf "\e[0m%-13s %-7s %-8s %2s\n" "            SHADOWSOCKS" " : $ss" "ACCOUNT "  
+            echo -e "        ${dark_purple}└─────────────────────────────────┘${neutral}"
+            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
+            echo -e "   ${orange}│${red} • ${neutral}ID CLIENTS : ${neutral}$username ${sts}"            
+            echo -e "   ${orange}│${red} • ${neutral}SC EXPIRED : ${neutral}$(datediff "$Exp1" "$today")"
+            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
+            echo -e "   ${orange}┌───────────────────────────────────────────┐${neutral}"
+            echo -e "   ${orange}│ ${green}[1]${neutral} SERVICE SSH      ${green}[5]${neutral} SERVICE SHDWSCKS ${orange}│${neutral}"
+            echo -e "   ${orange}│ ${green}[2]${neutral} SERVICE VMESS    ${green}[6]${neutral} NOTIF BOT        ${orange}│${neutral}"
+            echo -e "   ${orange}│ ${green}[3]${neutral} SERVICE VLESS    ${green}[7]${neutral} BOT TELEGRAM     ${orange}│${neutral}"
+            echo -e "   ${orange}│ ${green}[4]${neutral} SERVICE TROJAN   ${green}[8]${neutral} MENU FEATURES    ${orange}│${neutral}"
+            echo -e "   ${orange}└───────────────────────────────────────────┘${neutral}"            
+            echo -e "             ${green}SCRIPT VERSION: V3.8 LTS${neutral}"
+            echo -e "                ${orange}───${green}───${yellow}───${blue}───${purple}───${red}───${neutral}"
+            echo -e ""
+read -p "Pick a number (1-8) or hit 'x' to bail: " choice
+    echo -e ""
+    case $choice in
+        1 | 01) menussh ;;
+        2 | 02) menuvmess ;;
+        3 | 03) menuvless ;;
+        4 | 04) menutrojan ;;
+        5 | 05) menushadowsocks ;;
+        6 | 06) setup_bot_telegram ;;
+        7 | 07) bot server ;;
+        8 | 08) features ;;
+        x | X)
+            echo -e "${green}Thank you for using our service.${neutral}"
+            exit 0
+            ;;
+        *)
+            echo -e "${red}Invalid choice. Please try again.${neutral}"
+            sleep 2
+            display_menu
+            ;;
+    esac
+}
+
+# === CALL MENU ===
+display_menu

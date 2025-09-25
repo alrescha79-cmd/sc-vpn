@@ -1,0 +1,181 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+# Variables
+ip=$(wget -qO- ipv4.icanhazip.com)
+city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
+pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
+domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+
+clear
+
+
+while true; do
+    read -p "   Name: " user
+    if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        printf "\033[1A\033[0J"
+        echo -e "${red}   Username cannot be empty${reset}"
+        continue
+    fi
+    if grep -q "^### $user " /etc/ssh/.ssh.db; then
+        random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
+        user="${random_number}${user}"
+        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+        break
+    else
+        break
+    fi
+done
+echo ""
+echo -e "—————————————————————————————————————"
+echo "   Username : $user"
+while true; do
+    read -p "   Password: " passwd
+    if [[ -z "$passwd" ]]; then
+        echo -e "${red}   Password cannot be empty${reset}"
+    else
+        break
+    fi
+done
+
+while true; do
+    read -p "   Active period (days): " expired
+    if [[ -z "$expired" ]]; then
+        echo -e "${red}   Active period cannot be empty${reset}"
+    elif ! [[ $expired =~ ^[0-9]+$ ]]; then
+        echo -e "${red}   Active period must be a number${reset}"
+    elif [[ $expired -lt 1 ]]; then
+        echo -e "${red}   Active period must be at least 1 day${reset}"
+    else
+        break
+    fi
+done
+
+while true; do
+    read -p "   IP limit: " iplim
+    if [[ -z "$iplim" ]]; then
+        echo -e "${red}   IP limit cannot be empty${reset}"
+    elif ! [[ $iplim =~ ^[0-9]+$ ]]; then
+        echo -e "${red}   IP limit must be a number${reset}"
+    elif [[ $iplim -lt 1 ]]; then
+        echo -e "${red}   IP limit must be at least 1${reset}"
+    else
+        break
+    fi
+done
+
+# Account creation process
+useradd -e $(date -d "$expired days" +"%Y-%m-%d") -s /bin/false -M $user
+exp="$(chage -l $user | grep "Account expires" | awk -F": " '{print $2}')"
+echo -e "$passwd\n$passwd\n" | passwd $user &>/dev/null
+
+if [[ $iplim != "0" ]]; then
+    echo "${iplim}" >/etc/ssh/${user}
+fi
+echo "### ${user} $(date -d "$expired days" +"%Y-%m-%d")" >>/etc/ssh/.ssh.db
+
+# Create configuration file
+cat >/var/www/html/ssh-$user.txt <<END
+---------------------
+SSH OVPN Account Details
+---------------------
+Username         : $user
+Password         : $passwd
+---------------------
+IP               : $ip
+Host             : $domain
+Public Key       : ${pubkey}
+Location         : $city
+OpenSSH Port     : 443, 80, 22
+UdpSSH Port      : 1-65535
+Dropbear Port    : 443, 109
+Dropbear WS Port : 443, 109
+SSH WS Port      : 80
+SSH SSL WS Port  : 443
+SSL/TLS Port     : 443
+OVPN WS SSL Port : 443
+OVPN SSL Port    : 443
+OVPN TCP Port    : 443, 1194
+OVPN UDP Port    : 2200
+BadVPN UDP       : 7100, 7300, 7300
+---------------------
+WSS Payload: GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf] 
+---------------------
+OpenVPN Link     : http://$domain:85
+---------------------
+Expiration       : $exp
+END
+
+
+
+# Save log
+{
+    echo "───────────────────────────"
+    echo "     SSH OVPN Account     "
+    echo "───────────────────────────"
+    echo "Username         : $user"
+    echo "Password         : $passwd"
+    echo "───────────────────────────"
+    echo "IP               : $ip"
+    echo "Host             : $domain"    
+    echo "Location         : $city"
+    echo "OpenSSH Port     : 443, 80, 22"
+    echo "UdpSSH Port      : 1-65535"
+    echo "DNS Port         : 443, 53, 22"
+    echo "Dropbear Port    : 443, 109"
+    echo "SSH WS Port      : 80, 8080"
+    echo "SSH SSL WS Port  : 443"
+    echo "SSL/TLS Port     : 443"
+    echo "OVPN SSL Port    : 443"
+    echo "OVPN TCP Port    : 1194"
+    echo "OVPN UDP Port    : 2200"
+    echo "Squid Proxy      : 3128"
+    echo "BadVPN UDP       : 7100, 7300, 7300"
+    echo "SlowDns Public Key: ${pubkey}"
+    echo "───────────────────────────"
+    echo "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
+    echo "───────────────────────────"
+    echo "OpenVPN Link     : https://$domain:81/allovpn.zip"
+    echo "───────────────────────────"
+    echo "Save Account Link: https://$domain:81/ssh-$user.txt"
+    echo "───────────────────────────"
+    echo "Expiration       : $exp"
+    echo ""
+} >>/etc/xray/log-createssh-${user}.log
+
+clear
+echo -e "—————————————————————————————————————"
+echo -e "     SSH OVPN Account      "
+echo -e "───────────────────────────"
+echo -e "Username         : $user"
+echo -e "Password         : $passwd"
+echo -e "—————————————————————————————————————"
+echo -e "IP               : $ip"
+echo -e "Host             : $domain"
+echo -e "Location         : $city"
+echo -e "OpenSSH Port     : 443, 80, 22"
+echo -e "UdpSSH Port      : 1-65535"
+echo -e "DNS Port         : 443, 53, 22"
+echo -e "Dropbear Port    : 443, 109"
+echo -e "SSH WS Port      : 80"
+echo -e "SSH SSL WS Port  : 443"
+echo -e "SSL/TLS Port     : 443"
+echo -e "OVPN SSL Port    : 443"
+echo -e "OVPN TCP Port    : 1194"
+echo -e "OVPN UDP Port    : 2200"
+echo -e "BadVPN UDP       : 7100, 7300, 7300"
+echo -e "SlowDns Public Key: ${pubkey}"
+echo -e "—————————————————————————————————————"
+echo -e "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
+echo -e "—————————————————————————————————————"
+echo -e "OpenVPN Link     : https://$domain:81/allovpn.zip"
+echo -e "—————————————————————————————————————"
+echo -e "Save Account Link: https://$domain:81/ssh-$user.txt"
+echo -e "—————————————————————————————————————"
+echo -e "Expiration       : $exp"
+echo -e ""

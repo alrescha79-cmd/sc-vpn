@@ -1,0 +1,443 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+# Variables
+green="\e[38;5;87m"
+        red="\e[38;5;196m"
+        neutral="\e[0m"
+        blue="\e[38;5;130m"
+        orange="\e[38;5;99m"
+        yellow="\e[38;5;226m"
+        purple="\e[38;5;141m"
+        bold_white="\e[1;37m"
+        reset="\e[0m"
+        pink="\e[38;5;205m"
+
+convert_size() {
+    local -i bytes=$1
+    if [[ $bytes -lt 1024 ]]; then
+        echo "${bytes}B"
+    elif [[ $bytes -lt 1048576 ]]; then
+        echo "$(((bytes + 1023) / 1024))KB"
+    elif [[ $bytes -lt 1073741824 ]]; then
+        echo "$(((bytes + 1048575) / 1048576))MB"
+    else
+        echo "$(((bytes + 1073741823) / 1073741824))GB"
+    fi
+}
+
+# Function to print rainbow text
+        print_rainbow() {
+            local text="$1"
+            local length=${#text}
+            local start_color=(0 5 0)
+            local mid_color=(0 200 0)
+            local end_color=(0 5 0)
+
+            for ((i = 0; i < length; i++)); do
+                local progress=$((i * 100 / (length - 1)))
+
+                if [ $progress -lt 50 ]; then
+                    local factor=$((progress * 2))
+                    r=$(( (start_color[0] * (100 - factor) + mid_color[0] * factor) / 100 ))
+                    g=$(( (start_color[1] * (100 - factor) + mid_color[1] * factor) / 100 ))
+                    b=$(( (start_color[2] * (100 - factor) + mid_color[2] * factor) / 100 ))
+                else
+                    local factor=$(((progress - 50) * 2))
+                    r=$(( (mid_color[0] * (100 - factor) + end_color[0] * factor) / 100 ))
+                    g=$(( (mid_color[1] * (100 - factor) + end_color[1] * factor) / 100 ))
+                    b=$(( (mid_color[2] * (100 - factor) + end_color[2] * factor) / 100 ))
+                fi
+
+                printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
+            done
+            echo -e "$reset" # Reset color at the end
+        }
+
+trojan_members() {
+    clear
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "      ${green}.::::. TROJAN MEMBERS .::::.${neutral}"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+
+    if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
+        echo -e "   ${red}No Trojan accounts registered.${neutral}"
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    echo -e " List of Trojan Accounts:"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo "┌──┬────────────┬──────┬──────┬───┬──────┐"
+    echo "│no│ username   │ exp  │quota │ip │usage │"
+    echo "├──┼────────────┼──────┼──────┼───┼──────┤"
+
+    grep -E "^### " "/etc/xray/trojan/.trojan.db" | nl -s ' ' | while read -r line; do
+        no=$(echo "$line" | awk '{print $1}')
+        user=$(echo "$line" | awk '{print $3}')
+        exp=$(echo "$line" | awk '{print $4}')
+        current_timestamp=$(date +%s)
+        exp_timestamp=$(date -d "$exp" +%s)
+        days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
+        if [ $days_left -lt 0 ]; then
+            days_left=0
+        fi
+        exp="${days_left}d"
+
+        quota_file="/etc/xray/trojan/${user}"
+        ip_limit_file="/etc/xray/trojan/${user}IP"
+        usage_file="/etc/xray/trojan/usage/${user}"
+
+        quota="Unltd"
+        if [ -f "$quota_file" ]; then
+            quota=$(cat "$quota_file")
+            if [ "$quota" != "" ] && [ "$quota" != "0" ]; then
+                quota=$(convert_size "$quota")
+            else
+                quota="Unltd"
+            fi
+        fi
+
+        ip_limit="Unltd"
+        if [ -f "$ip_limit_file" ]; then
+            ip_limit=$(cat "$ip_limit_file")
+            if [ "$ip_limit" = "" ] || [ "$ip_limit" = "0" ]; then
+                ip_limit="Unltd"
+            fi
+        fi
+
+        usage="0GB"
+        if [ -f "$usage_file" ]; then
+            usage=$(cat "$usage_file")
+            if [ "$usage" != "" ] && [ "$usage" != "0" ]; then
+                usage=$(convert_size "$usage")
+            else
+                usage="0GB"
+            fi
+        fi
+
+        printf "│%-2s│%-12s│%-6s│%-6s│%-3s│%-6s│\n" "$no" "$user" "$exp" "$quota" "$ip_limit" "$usage"
+    done
+    echo "└──┴────────────┴──────┴──────┴───┴──────┘"
+
+    echo -e "   Press enter to return to menu"
+    read
+
+}
+
+change_trojan_limit() {
+    clear
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "    ${green}.::::. CHANGE TROJAN LIMIT .::::.${neutral}"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+
+
+    account_count=$(grep -cE "^### " "/etc/xray/trojan/.trojan.db")
+    if [ $account_count -eq 0 ]; then
+        echo -e "   ${red}No active TROJAN accounts.${neutral}"
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+    echo -e " List of Trojan Accounts:"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo "┌────┬────────────────────┬─────────────┐"
+    echo "│ no │ username           │     exp     │"
+    echo "├────┼────────────────────┼─────────────┤"
+    grep -E "^### " "/etc/xray/trojan/.trojan.db" | awk '{
+        cmd = "date -d \"" $3 "\" +%s"
+        cmd | getline exp_timestamp
+        close(cmd)
+        current_timestamp = systime()
+        days_left = int((exp_timestamp - current_timestamp) / 86400)
+        if (days_left < 0) days_left = 0
+        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+    }'
+    echo "└────┴────────────────────┴─────────────┘"
+
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    read -p "   Select the account number : " account_number
+    
+    # Check if input is a number
+    if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
+        echo -e "   ${red}Error: Input must be a number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+    
+    # Check if account number is valid
+    if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
+        echo -e "   ${red}Error: Invalid account number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    username=$(grep -E "^### " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
+
+    if [ -z "$username" ]; then
+        echo -e "   ${red}Invalid account number.${neutral}"
+        echo -e "   Press enter to return to menu"
+        read
+        return
+    fi
+
+    echo -e "Changing limit for account: ${green}$username${neutral}"
+    read -p "Enter new quota limit (in GB, 0 for unlimited): " new_quota
+    read -p "Enter new IP limit (0 for unlimited): " new_ip_limit
+
+    # Validate input
+    if ! [[ "$new_quota" =~ ^[0-9]+$ ]]; then
+        echo -e "${red}Error: Quota limit must be a number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    if ! [[ "$new_ip_limit" =~ ^[0-9]+$ ]]; then
+        echo -e "${red}Error: IP limit must be a number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    # Convert quota to bytes
+    new_quota_bytes=$((new_quota * 1024 * 1024 * 1024))
+
+    # Update quota and IP limit files
+    echo "${new_quota_bytes}" >"/etc/xray/trojan/${username}"
+    echo "${new_ip_limit}" >"/etc/xray/trojan/${username}IP"
+
+    # Check if update was successful
+    if [ $? -eq 0 ]; then
+        echo -e "${green}Limit for account $username successfully changed.${neutral}"
+        echo -e "New quota: ${new_quota} GB"
+        echo -e "New IP limit: ${new_ip_limit}"
+    else
+        echo -e "${red}Failed to change limit for account $username.${neutral}"
+        echo -e "Please ensure you have sufficient permissions and try again."
+    fi
+
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "   Press enter to return to menu"
+    read
+}
+trojan_details() {
+    clear
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "      ${green}      TROJAN DETAIL  ${neutral}"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+
+    if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
+        echo -e "   ${red}No Trojan accounts registered.${neutral}"
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "   Press enter to return to menu"
+        read
+        return
+    fi
+
+    echo -e " List of Trojan Accounts:"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+
+    while IFS= read -r line; do
+        user=$(echo $line | cut -d ' ' -f 2 | sort -u)
+        exp=$(echo $line | cut -d ' ' -f 3 | sort -u)
+        uuid=$(echo $line | cut -d ' ' -f 4 | sort -u)
+
+        echo -e "   Username      : ${green}$user${neutral}"
+        echo -e "   Expired Date  : ${green}$exp${neutral}"
+        echo -e "   UUID          : ${green}$uuid${neutral}"
+
+        if [ -f "/etc/xray/trojan/${user}" ]; then
+            quota=$(cat /etc/xray/trojan/${user})
+            if [ -n "$quota" ] && [ "$quota" != "0" ]; then
+                quota_readable=$(convert_size $quota)
+                echo -e "   Quota         : ${green}$quota_readable${neutral}"
+            else
+                echo -e "   Quota         : ${green}Unlimited${neutral}"
+            fi
+        else
+            echo -e "   Quota         : ${green}Unlimited${neutral}"
+        fi
+
+        if [ -f "/etc/xray/trojan/${user}IP" ]; then
+            ip_limit=$(cat /etc/xray/trojan/${user}IP)
+            if [ -n "$ip_limit" ] && [ "$ip_limit" != "0" ]; then
+                echo -e "   IP Limit      : ${green}$ip_limit${neutral}"
+            else
+                echo -e "   IP Limit      : ${green}Unlimited${neutral}"
+            fi
+        else
+            echo -e "   IP Limit      : ${green}Unlimited${neutral}"
+        fi
+
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+    done <"/etc/xray/trojan/.trojan.db"
+
+    echo -e "   Press enter to return to menu"
+    read
+}
+custom_uuid_trojan() {
+    clear
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "    ${green}       CUSTOM TROJAN UUID ${neutral}"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
+        echo -e "   ${red}No Trojan accounts registered.${neutral}"
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    account_count=$(grep -cE "^### " "/etc/xray/trojan/.trojan.db")
+    if [ $account_count -eq 0 ]; then
+        echo -e "   ${red}No active Trojan accounts.${neutral}"
+        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+    echo -e " List of Trojan Accounts:"
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo "┌────┬────────────────────┬─────────────┐"
+    echo "│ no │ username           │     exp     │"
+    echo "├────┼────────────────────┼─────────────┤"
+    grep -E "^### " "/etc/xray/trojan/.trojan.db" | awk '{
+        cmd = "date -d \"" $3 "\" +%s"
+        cmd | getline exp_timestamp
+        close(cmd)
+        current_timestamp = systime()
+        days_left = int((exp_timestamp - current_timestamp) / 86400)
+        if (days_left < 0) days_left = 0
+        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+    }'
+    echo "└────┴────────────────────┴─────────────┘"
+
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    read -p "   Select the account number : " account_number
+    
+    # Check if input is a number
+    if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
+        echo -e "   ${red}Error: Input must be a number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+    
+    # Check if account number is valid
+    if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
+        echo -e "   ${red}Error: Invalid account number.${neutral}"
+        echo -e "   Press enter to return to the menu"
+        read
+        return
+    fi
+
+    user=$(grep -E "^### " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
+
+    if [ -z "$user" ]; then
+        echo -e "   ${red}Invalid account number.${neutral}"
+        echo -e "   Press enter to return to menu"
+        read
+        return
+    fi
+    while true; do
+        read -p "   UUID (min 6 characters): " new_uuid
+        if [[ ${#new_uuid} -ge 6 && "$new_uuid" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            break
+        else
+            printf "\033[1A\033[0J"
+            echo -e "${red}   UUID must be at least 6 characters${neutral}"
+        fi
+    done
+    if [ -z "$new_uuid" ]; then
+        echo -e "${red}Error: UUID cannot be empty.${neutral}"
+        echo -e "   Press enter to return to menu"
+        read
+        return
+    fi
+
+    # Update UUID in config.json
+    user_data=$(cat /etc/xray/trojan/.trojan.db | grep "^### $user")
+    exp=$(echo "$user_data" | awk '{print $3}')
+    config_file="/etc/xray/trojan/config.json"
+    db_file="/etc/xray/trojan/.trojan.db"
+
+    sed -i "/^### $user $exp/,/^},{/d" "$config_file"
+
+    # Add configuration back to config_file
+    sed -i '/#trojan$/a\### '"$user $exp"'\
+},{"password": "'""$new_uuid""'","email": "'""$user""'"'  "$config_file"
+
+    sed -i '/#trojangrpc$/a\### '"$user $exp"'\
+},{"password": "'""$new_uuid""'","email": "'""$user""'"'  "$config_file"
+  
+    sed -i "/^### $user/d" "$db_file"
+    echo "### $user $exp $new_uuid" >> "$db_file"
+    systemctl restart trojan@config
+    if [ $? -eq 0 ]; then
+        echo -e "UUID for account $user successfully changed.${neutral}"
+    else
+        echo -e "UUID for account ${green}$user${neutral} successfully changed."
+        echo -e "Please ensure you have sufficient permissions and try again."
+    fi
+
+    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "   Press enter to return to menu"
+    read
+}
+# Function to display Trojan menu
+display_trojan_menu() {
+    clear
+    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
+    echo -e "${orange}│${neutral}  ${bold}${green}        MENU TROJAN MANAGER ${neutral}          ${orange}│"
+    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
+    echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
+    echo -e "${orange}│${neutral}  ${green} [1]${neutral} Create Trojan Account"
+    echo -e "${orange}│${neutral}  ${green} [2]${neutral} Delete Trojan Account"
+    echo -e "${orange}│${neutral}  ${green} [3]${neutral} Renew Trojan Account"
+    echo -e "${orange}│${neutral}  ${green} [4]${neutral} Check Trojan Login Account"
+    echo -e "${orange}│${neutral}  ${green} [5]${neutral} List Trojan Members"
+    echo -e "${orange}│${neutral}  ${green} [6]${neutral} Change Trojan Account Limit"
+    echo -e "${orange}│${neutral}  ${green} [7]${neutral} View Trojan Account Details"
+    echo -e "${orange}│${neutral}  ${green} [8]${neutral} Create Trial Trojan Account"
+    echo -e "${orange}│${neutral}  ${green} [9]${neutral} Custom Trojan UUID"
+    echo -e "${orange}│${neutral}  ${green} [x]${neutral} Exit Trojan Manager"
+    echo -e "${orange}└────────────────────────────────────────┘${neutral}"
+    echo -e ""
+    read -p "Pick a number (1-9) or hit 'x' to bail: " trojan_choice
+
+    case $trojan_choice in
+    1) addtrojan ;;
+    2) delltrojan ;;
+    3) renewtrojan ;;
+    4) checktrojan ;;
+    5) trojan_members ;;
+    6) change_trojan_limit ;;
+    7) trojan_details ;;
+    8) trialtrojan ;;
+    9) custom_uuid_trojan ;;
+    x | X)
+        echo -e ""
+        echo -e "   ${green}Thank you for using our service.${neutral}"
+        exit 0
+        ;;
+    *)
+        echo -e "   ${red}Invalid choice. Please try again.${neutral}"
+        sleep 2
+        display_trojan_menu
+        ;;
+    esac
+}
+
+# Call function to display menu
+display_trojan_menu

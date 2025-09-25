@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# Valid Script
+ipsaya=$(curl -sS ipv4.icanhazip.com)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+
+
+# colors
+red="\e[91m"
+green="\e[92m"
+yellow="\e[93m"
+blue="\e[94m"
+purple="\e[95m"
+cyan="\e[96m"
+white="\e[97m"
+reset="\e[0m"
+
+# Function to print rainbow text
+print_rainbow() {
+    local text="$1"
+    local length=${#text}
+    local start_color=(255 255 0) # yellow
+    local mid_color=(0 255 0)     # green
+    local end_color=(255 255 0)   # yellow
+
+    for ((i = 0; i < length; i++)); do
+        local progress=$((i * 100 / (length - 1)))
+
+        if [ $progress -lt 50 ]; then
+            local factor=$((progress * 2))
+            r=$((start_color[0] * (100 - factor) / 100 + mid_color[0] * factor / 100))
+            g=$((start_color[1] * (100 - factor) / 100 + mid_color[1] * factor / 100))
+            b=$((start_color[2] * (100 - factor) / 100 + mid_color[2] * factor / 100))
+        else
+            local factor=$(((progress - 50) * 2))
+            r=$((mid_color[0] * (100 - factor) / 100 + end_color[0] * factor / 100))
+            g=$((mid_color[1] * (100 - factor) / 100 + end_color[1] * factor / 100))
+            b=$((mid_color[2] * (100 - factor) / 100 + end_color[2] * factor / 100))
+        fi
+
+        printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
+    done
+    echo -e "$reset"
+}
+# variables
+domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+clear
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
+print_rainbow "└─────────────────────────────────────────┘"
+
+account_count=$(grep -c -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
+if [[ ${account_count} == '0' ]]; then
+    echo ""
+    echo "  no customer names available"
+    echo ""
+    exit 0
+fi
+
+echo -e "${yellow}Select account to delete:${reset}"
+echo -e "${green}1) Choose by number${reset}"
+echo -e "${green}2) Type username manually${reset}"
+read -p "your choice [1-2]: " delete_choice
+if [[ $delete_choice == "1" ]]; then
+    clear
+    print_rainbow "┌─────────────────────────────────────────┐"
+    print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
+    print_rainbow "└─────────────────────────────────────────┘"
+            echo " ┌────┬────────────────────┬─────────────┐"
+            echo " │ no │ username           │     exp     │"
+            echo " ├────┼────────────────────┼─────────────┤"
+    grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | awk '{
+        cmd = "date -d \"" $3 "\" +%s"
+        cmd | getline exp_timestamp
+        close(cmd)
+        current_timestamp = systime()
+        days_left = int((exp_timestamp - current_timestamp) / 86400)
+        if (days_left < 0) days_left = 0
+        printf " │ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+    }'
+    echo " └────┴────────────────────┴─────────────┘"
+    
+fi
+
+case $delete_choice in
+    1)
+        until [[ ${account_number} -ge 1 && ${account_number} -le ${account_count} ]]; do
+            read -rp "Choose account number [1-${account_count}]: " account_number
+        done
+        user=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
+        exp=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3 | sed -n "${account_number}p")
+        echo ""
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│            SELECTED ACCOUNT             │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo -e "Username     : ${green}$user${reset}"
+        echo -e "Expiry       : ${yellow}$exp${reset}"
+        echo ""
+        sleep 2
+        ;;
+    2)
+        read -rp "enter username: " user
+        if ! grep -qE "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db"; then
+            echo "username not found"
+            exit 1
+        fi
+        exp=$(grep -E "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3)
+        echo "You selected: $user (Expiry: $exp)"
+        ;;
+    *)
+        echo "invalid choice"
+        exit 1
+        ;;
+esac
+
+sed -i "/^### $user $exp/,/^},{/d" /etc/xray/shadowsocks/config.json
+sed -i "/^### $user $exp/d" /etc/xray/shadowsocks/.shadowsocks.db
+if [ -f "/etc/xray/shadowsocks/log-create-${user}.log" ]; then
+    rm -f "/etc/xray/shadowsocks/log-create-${user}.log"
+    rm -f "/etc/xray/shadowsocks/${user}-non.json"
+    rm -f "/etc/xray/shadowsocks/${user}-tls.json"
+    rm -f "/etc/xray/shadowsocks/${user}-grpc.json"
+fi
+
+if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then
+    echo "Warning: Failed to restart shadowsocks service. Please check system logs for more information."
+    echo "However, the account has been successfully removed from the database."
+fi
+
+clear
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
+print_rainbow "└─────────────────────────────────────────┘"
+echo -e "username     : ${green}$user${reset}"
+echo -e "account has been permanently deleted"
+echo ""
+read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+menu

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  vpn-api:
+    image: hidessh99/vpn-rest:latest
+    container_name: vpn-api
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - API_KEY=your_api_key_here
+      - AllowOrigins=*
+    restart: unless-stopped

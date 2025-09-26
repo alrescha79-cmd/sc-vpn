@@ -65,16 +65,20 @@ clear
 
 # Domain setup
 if [ -z "$1" ]; then
-    echo -e "${blue}    ┌──────────────────────────────────────────────-----------─┐${neutral}"
-    echo -e "${blue}    │       "
-    echo -e "${blue}    │   ${green}┌─┐┬ ┬┌┬┐┌─┐┌─┐┌─┐┬─┐┬┌─┐┌┬┐  ┬  ┬┌┬┐┌─┐"
-    echo -e "${blue}    │   ${green}├─┤│ │ │ │ │└─┐│  ├┬┘│├─┘ │   │  │ │ ├┤    "
-    echo -e "${blue}    │   ${green}┴ ┴└─┘ ┴ └─┘└─┘└─┘┴└─┴┴   ┴   ┴─┘┴ ┴ └─┘   ${neutral}"
-    echo -e "${blue}    │   ${yellow}Copyright${reset} (C)${gray} https://t.me/Alrescha79   ${neutral}"
-    echo -e "${blue}    └──────────────────────────────────────────────-----------─┘${neutral}"
-    echo -e "${blue}    ────────────────────────────────────────────────${neutral}"
-    echo -e "${yellow}     Masukkan domain Anda untuk memulai instalasi:${neutral}"
-    echo -e "${blue}    ────────────────────────────────────────────────${neutral}"
+    echo -e "${blue}┌──────────────────────────────────────────────────────────────────┐${reset}"
+    echo -e "${blue}│                                                                  │${reset}"
+    echo -e "${blue}│   ${green}    _    _      _                        _   ___ ___         ${blue}│${reset}"
+    echo -e "${blue}│   ${green}   / \\  | |    | | ___  ___  ___  _ __ __| | / _ \\_ _|        ${blue}│${reset}"
+    echo -e "${blue}│   ${green}  / _ \\ | |    | |/ _ \\/ __|/ _ \\| '__/ _\` || | | | |         ${blue}│${reset}"
+    echo -e "${blue}│   ${green} / ___ \\| |___ | | (_) \\__ \\ (_) | | | (_| || |_| | |         ${blue}│${reset}"
+    echo -e "${blue}│   ${green}/_/   \\_\\_____||_|\\___/|___/\\___/|_|  \\__,_| \\___/___|        ${blue}│${reset}"
+    echo -e "${blue}│                                                                  │${reset}"
+    echo -e "${blue}│               ${yellow}Copyright${reset} (C)${gray} https://t.me/Alrescha79              ${blue}│${reset}"
+    echo -e "${blue}└──────────────────────────────────────────────────────────────────┘${reset}"
+    echo ""
+    echo -e "${blue}    ─────────────────────────────────────────────────────────${neutral}"
+    echo -e "${yellow}     Masukkan domain Anda untuk memulai instalasi:         ${neutral}"
+    echo -e "${blue}    ─────────────────────────────────────────────────────────${neutral}"
     read -p "  Masukkan domain Anda: " domain
 else
     domain="$1"

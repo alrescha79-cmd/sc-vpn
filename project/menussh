@@ -618,7 +618,7 @@ fi
             clear
             echo -e ""
             echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
-            echo -e "${magenta}║                              ${blue}SSH MANAGEMENT${magenta}                       ║${neutral}"
+            echo -e "${magenta}║                         ${blue}SSH/OPENVPN MANAGEMENT${magenta}                       ║${neutral}"
             echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
             echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"

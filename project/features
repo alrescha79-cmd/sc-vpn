@@ -6,15 +6,15 @@ data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date |
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
 green="\e[38;5;87m"
-        red="\e[38;5;196m"
-        neutral="\e[0m"
-        blue="\e[38;5;130m"
-        orange="\e[38;5;99m"
-        yellow="\e[38;5;226m"
-        purple="\e[38;5;141m"
-        bold_white="\e[1;37m"
-        reset="\e[0m"
-        pink="\e[38;5;205m"
+red="\e[38;5;196m"
+neutral="\e[0m"
+blue="\e[38;5;130m"
+orange="\e[38;5;99m"
+yellow="\e[38;5;226m"
+purple="\e[38;5;141m"
+bold_white="\e[1;37m"
+reset="\e[0m"
+pink="\e[38;5;205m"
 print_rainbow() {
 local text="$1"
 local length=${#text}
@@ -126,9 +126,9 @@ check_bw
 }
 info_port() {
 clear
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
 echo -e "${green}         PORT INFORMATION   ${neutral}"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e "  ${green}• SSH                : ${neutral}22, 443, 80"
 echo -e "  ${green}• Dropbear           : ${neutral}443, 109, 143"
 echo -e "  ${green}• SSH Websocket      : ${neutral}80, 443"
@@ -266,9 +266,9 @@ print_info() {
 printf "   ${yellow}%-19s${neutral} : %-25s\n" "$1" "$2"
 }
 clear
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
 echo -e "${green}           SYSTEM INFORMATION         ${neutral}"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 service_info=(
 "OpenSSH" "${ssh}"
 "Dropbear" "${dropbear}"
@@ -367,17 +367,17 @@ esac
 
 dropbear_update() {
 clear
-echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${green}        UPDATE VERSI DROPBEAR         ${orange}│${neutral}"
-echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${neutral} 1) Dropbear (2017)"
-echo -e "${orange}│${neutral} 2) Dropbear (2019)"
-echo -e "${orange}│${neutral} 3) Dropbear (2022)"
-echo -e "${orange}│${neutral} 4) Dropbear (2024)"
-echo -e "${orange}│${neutral} 5) Dropbear (2025)"
-echo -e "${orange}│${neutral} x) Exit to menu"
-echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+echo -e "╔═══════════════════════════════════════════════════════════════════════╗"
+echo -e "║                       UPDATE VERSI DROPBEAR                           ║"
+echo -e "╚═══════════════════════════════════════════════════════════════════════╝"
+echo -e "╔═══════════════════════════════════════════════════════════════════════╗"
+echo -e "║ 1) Dropbear (2017)                                                    ║"
+echo -e "║ 2) Dropbear (2019)                                                    ║"
+echo -e "║ 3) Dropbear (2022)                                                    ║"
+echo -e "║ 4) Dropbear (2024)                                                    ║"
+echo -e "║ 5) Dropbear (2025)                                                    ║"
+echo -e "║ x) Exit to menu                                                       ║"
+echo -e "╚═══════════════════════════════════════════════════════════════════════╝"
 read -p "Choose an option [1-5 or x]: " pilihan
 case $pilihan in
 1) wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2017.75.tar.bz2
@@ -447,9 +447,9 @@ esac
 
 setting_reboot_jam_reboot() {
 clear
-echo -e "${orange}─────────────────────────────────────────${neutral}"
-echo -e "${green}           SETTING AUTO REBOOT              ${neutral}"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║           SETTING AUTO REBOOT"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
 read -p "Enter Autoreboot (24-hour, ex: 02 for 2 AM): " reboot_hour
 if [[ -z "$reboot_hour" || ! "$reboot_hour" =~ ^[0-9]{2}$ || "$reboot_hour" -lt 0 || "$reboot_hour" -gt 23 ]]; then
@@ -459,11 +459,11 @@ fi
 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n0 $reboot_hour * * * root /sbin/reboot" > /etc/cron.d/daily_reboot
 systemctl restart cron
 clear
-echo -e "${orange}─────────────────────────────────────────${neutral}"
-echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoReboot Every: Hour $reboot_hour"
-echo -e "${orange}│${neutral}"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${orange}║${neutral}"
+echo -e "${orange}║${neutral}      AutoReboot Every: Hour $reboot_hour"
+echo -e "${orange}║${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 read -n 1 -s -r -p "Press any key to return to the menu"
 }
 update_script() {
@@ -520,17 +520,17 @@ echo "Proses instalasi selesai."
 }
 xray_update() {
 clear
-echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${green}           UPDATE VERSI XRAY          ${orange}│${neutral}"
-echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${neutral} 1) Xray (V1.8.3)"
-echo -e "${orange}│${neutral} 2) Xray (V1.8.17)"
-echo -e "${orange}│${neutral} 3) Xray (V24.10.31)"
-echo -e "${orange}│${neutral} 4) Xray (V25.1.1)"
-echo -e "${orange}│${neutral} 5) Xray (V25.2.18)"
-echo -e "${orange}│${neutral} x) Exit to menu"
-echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${orange}║                               ${green} UPDATE VERSI XRAY ${orange}                     ║${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "       ${neutral} 1) Xray (V1.8.3)"
+echo -e "       ${neutral} 2) Xray (V1.8.17)"
+echo -e "       ${neutral} 3) Xray (V24.10.31)"
+echo -e "       ${neutral} 4) Xray (V25.1.1)"
+echo -e "       ${neutral} 5) Xray (V25.2.18)"
+echo -e "       ${neutral} x) Exit to menu"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 read -p "Choose an option [1-5 or x]: " pilihan
 case $pilihan in
 1) sudo mv /usr/local/bin/xray /usr/local/bin/xray.bak && \
@@ -582,28 +582,28 @@ esac
 
 display_features() {
 clear
-echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${neutral}  ${bold}${green} SYSTEM SETTINGS & FEATURES MENU ${neutral}     ${orange}│"
-echo -e "${orange}└────────────────────────────────────────┘${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${orange}║                      ${green} SYSTEM SETTINGS & FEATURES MENU ${orange}                ║${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 
-echo -e "${orange}┌────────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${neutral}  ${green} [1]${neutral}  Check Running System"
-echo -e "${orange}│${neutral}  ${green} [2]${neutral}  Check Bandwidth Usage"
-echo -e "${orange}│${neutral}  ${green} [3]${neutral}  Auto Backup Server"
-echo -e "${orange}│${neutral}  ${green} [4]${neutral}  Backup/Restore Server"
-echo -e "${orange}│${neutral}  ${green} [5]${neutral}  Port Information"
-echo -e "${orange}│${neutral}  ${green} [6]${neutral}  Restart All Services"
-echo -e "${orange}│${neutral}  ${green} [7]${neutral}  Change Server Domain"
-echo -e "${orange}│${neutral}  ${green} [8]${neutral}  Change Server Banner"
-echo -e "${orange}│${neutral}  ${green} [9]${neutral}  Update Dropbear"
-echo -e "${orange}│${neutral}  ${green}[10]${neutral}  Update Script"
-echo -e "${orange}│${neutral}  ${green}[11]${neutral}  Load Server System"
-echo -e "${orange}│${neutral}  ${green}[12]${neutral}  Update Versi X-ray"
-echo -e "${orange}│${neutral}  ${green}[13]${neutral}  Info Api Service Bot"
-echo -e "${orange}│${neutral}  ${green}[14]${neutral}  Setting Auto Reboot"
-echo -e "${orange}│${neutral}  ${green}[15]${neutral}  Reboot Server"
-echo -e "${orange}│${neutral}  ${green} [x]${neutral}  Exit System Setting"
-echo -e "${orange}└────────────────────────────────────────┘${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "       ${neutral}  ${green} [1]${neutral}  Check Running System"
+echo -e "       ${neutral}  ${green} [2]${neutral}  Check Bandwidth Usage"
+echo -e "       ${neutral}  ${green} [3]${neutral}  Auto Backup Server"
+echo -e "       ${neutral}  ${green} [4]${neutral}  Backup/Restore Server"
+echo -e "       ${neutral}  ${green} [5]${neutral}  Port Information"
+echo -e "       ${neutral}  ${green} [6]${neutral}  Restart All Services"
+echo -e "       ${neutral}  ${green} [7]${neutral}  Change Server Domain"
+echo -e "       ${neutral}  ${green} [8]${neutral}  Change Server Banner"
+echo -e "       ${neutral}  ${green} [9]${neutral}  Update Dropbear"
+echo -e "       ${neutral}  ${green}[10]${neutral}  Update Script"
+echo -e "       ${neutral}  ${green}[11]${neutral}  Load Server System"
+echo -e "       ${neutral}  ${green}[12]${neutral}  Update Versi X-ray"
+echo -e "       ${neutral}  ${green}[13]${neutral}  Info Api Service Bot"
+echo -e "       ${neutral}  ${green}[14]${neutral}  Setting Auto Reboot"
+echo -e "       ${neutral}  ${green}[15]${neutral}  Reboot Server"
+echo -e "       ${neutral}  ${red} [x]${neutral}  Exit System Setting"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
 read -p " Choose an option (1-15) or type 'x' to exit: " menu
 case $menu in

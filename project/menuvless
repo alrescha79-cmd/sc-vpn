@@ -576,7 +576,7 @@ display_vless_menu() {
     echo -e "   ${neutral} ${green}[1]${neutral}  Buat Akun Vless           ${green}[6]${neutral} Ubah Limit   "
     echo -e "   ${neutral} ${green}[2]${neutral}  Hapus Akun Vless          ${green}[7]${neutral} Detail Akun  "
     echo -e "   ${neutral} ${green}[3]${neutral}  Perpanjang Vless          ${green}[8]${neutral} Trial Vless "
-    echo -e "   ${neutral} ${green}[4]${neutral}  Cek User Login             ${green}[9]${neutral} Custom UUID  "
+    echo -e "   ${neutral} ${green}[4]${neutral}  Cek User Login            ${green}[9]${neutral} Custom UUID  "
     echo -e "   ${neutral} ${green}[5]${neutral}  List Member Vless         ${red}[x]${neutral}  Kembali ke Menu Utama"
     echo -e ""
     echo -e "${cyan}╚══════════════════════════════════════════════════════════════════════╝${neutral}"

@@ -223,6 +223,7 @@ rm -rf /tmp/cron.txt
 - nscd
 
 Pastikan VPS Anda:
+
 - Akses IPv4 publik
 - Storage bebas cukup (≥ 2 GB disarankan)
 - RAM minimal 512 MB (lebih tinggi lebih stabil untuk multi-protokol)

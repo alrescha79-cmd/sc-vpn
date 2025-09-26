@@ -25,6 +25,20 @@ Tujuan proyek ini:
 
 ---
 
+## 💻 Instalasi
+
+```bash
+apt-get update && \
+apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd && \
+wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
+chmod +x setup.sh && \
+screen -S setup ./setup.sh
+```
+
+Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
+
+---
+
 ## ✨ Fitur Utama
 
 | Fitur | Deskripsi Ringkas |
@@ -102,31 +116,6 @@ Lihat bagian [Kebutuhan Sistem](./install.md#️-kebutuhan-sistem) untuk daftar 
 ## ⏰ Auto Reboot
 
 Tidak aktif default. Lihat [Konfigurasi Auto Reboot](./install.md#-konfigurasi-auto-reboot).
-
----
-
-## ♻️ Hapus Instalasi
-
-### Langkah Cepat
-
-```bash
-wget -O uninstall.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/uninstall.sh
-chmod +x uninstall.sh
-sudo ./uninstall.sh
-```
-
-Saat diminta konfirmasi, ketik:
-```
-YES
-```
-
-### Menjalankan dengan Mode Debug
-Jika ingin melihat perintah yang dieksekusi:
-```bash
-bash -x ./uninstall.sh
-```
-
-Atau lihat panduan lengkap [Hapus Instalasi](./uninstall.md).
 
 ---
 

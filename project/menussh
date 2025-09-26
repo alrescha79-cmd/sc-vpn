@@ -616,9 +616,14 @@ fi
         # Function to display SSH menu
         display_ssh_menu() {
             clear
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e "${green}║                      ${blue}MENU SSH/OPENVPN MANAGER${green}                      ║${neutral}"
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${magenta}║                              ${blue}SSH MANAGEMENT${magenta}                       ║${neutral}"
+            echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
+            echo -e ""
+            echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${cyan}║                               ${blue}PILIHAN MENU${cyan}                           ║${neutral}"
+            echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"
             echo -e ""
             echo -e " ${green}[1]${neutral}  Buat Akun SSH/OpenVPN        ${green}[7]${neutral}  Kunci Akun SSH/OpenVPN"
             echo -e " ${green}[2]${neutral}  Hapus Akun SSH/OpenVPN       ${green}[8]${neutral}  Buka Kunci Akun SSH/OVPN"
@@ -627,9 +632,10 @@ fi
             echo -e " ${green}[5]${neutral}  Daftar Member SSH/OpenVPN    ${green}[11]${neutral} Buat Trial SSH/OpenVPN"
             echo -e " ${green}[6]${neutral}  Ubah Limit Akun SSH/OpenVPN  ${red}[x]${neutral}  Kembali ke Menu Utama"
             echo -e ""
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${cyan}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
-            read -p " Masukkan pilihan Anda [1-11/x]: " ssh_choice
+            echo -ne "${yellow}Pilih menu [1-9 atau x]: ${neutral}"
+            read ssh_choice
 
             case $ssh_choice in
             1) addssh ;;

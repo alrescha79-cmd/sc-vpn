@@ -212,7 +212,7 @@ display_menu() {
     
     echo -e ""
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${cyan}║                      ${yellow}ALRESCHA79 VPN PANEL${cyan}             ║${neutral}"
+    echo -e "${cyan}║                               ${yellow}ALRESCHA79 VPN PANEL                    ${cyan}║${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     
@@ -249,8 +249,8 @@ display_menu() {
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "    ${white}WEBSOCKET: $(cek_status ws-stunnel)  │  NGINX: $(cek_status nginx)  │  DROPBEAR: $(cek_status dropbear)${neutral}"
-    echo -e "    ${white}XRAY: $(cek_status vmess@config)  │  HAPROXY: $(cek_status haproxy)  │  SSH/OVPN: $(cek_status ssh)${neutral}"
+    echo -e "    ${white}WEBSOCKET: $(cek_status ws-stunnel)  │  NGINX: $(cek_status nginx)     │  DROPBEAR: $(cek_status dropbear)${neutral}"
+    echo -e "    ${white}XRAY: $(cek_status vmess@config)   │  HAPROXY: $(cek_status haproxy) │  SSH/OVPN: $(cek_status ssh)${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
@@ -268,8 +268,8 @@ display_menu() {
     echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "           ${white}USER ID   : $username ${sts}${neutral}"
-    echo -e "           ${white}MASA AKTIF : $(datediff "$valid" "$today")${neutral}"            
+    echo -e "                   ${white}USER ID   : $username ${sts}${neutral}"
+    echo -e "                   ${white}MASA AKTIF : $(datediff "$valid" "$today")${neutral}"            
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e ""
     
@@ -283,7 +283,7 @@ display_menu() {
     echo -e "       ${green}[3]${neutral} Kelola VLess             │  ${green}[7]${neutral} Menu Bot Telegram"
     echo -e "       ${green}[4]${neutral} Kelola Trojan            │  ${green}[8]${neutral} Menu Features"
     echo -e ""
-    echo -e "                                  ${red}[x]${neutral} Keluar dari Panel"
+    echo -e "                                 ${red}[x]${neutral} Keluar dari Panel"
     echo -e "${magenta}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     

@@ -6,7 +6,7 @@ data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date |
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
 # Validasi masa aktif sebelum mengakses menu
-source /home/son/Projects/sclite/project/validate_access.sh
+source /usr/bin/validate_access.sh
 validate_user_access
 
         # Variables

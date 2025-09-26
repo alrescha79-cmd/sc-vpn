@@ -1,151 +1,159 @@
-# 🚀 Script SSH/VPN Auto Setup
+# ⚡ Panel VPN Auto Installer (Xray / OVPN / SSH / SlowDNS)
 
-Automated setup script for deploying SSH/VPN services on Linux-based VPS. Simplifies the installation and configuration of various tunneling protocols such as SSH, Shadowsocks, Trojan, VLESS, and VMess.
+![Panel VPN Auto Installer: Xray | OVPN | SSH | SlowDNS](https://readme-typing-svg.demolab.com?font=Capriola&size=40&duration=4000&pause=450&color=F70069&background=FFFFAA00&center=true&random=false&width=600&height=100&lines=Panel+VPN+Auto+Installer;Xray+%7C+OVPN+%7C+SSH+%7C+SlowDNS;by+Alrescha79)
 
-## 📋 Table of Contents
-- [Installation](#-installation)
-- [Features](#-features)
-- [Supported Protocols](#-supported-protocols)
-- [API Management](#-api-management)
-- [Auto Reboot Configuration](#-auto-reboot-configuration)
-- [System Requirements](#-system-requirements)
-- [Support](#-support)
+(EN) This repository provides an automated multi-protocol VPN & SSH account management system with modular scripts, Go-based REST API, and account lifecycle utilities.
 
-## 🚀 Installation
+(ID) Repositori ini menyediakan sistem otomatis untuk instalasi & manajemen akun VPN/SSH multi-protokol, lengkap dengan skrip modular, API REST berbasis Go, serta utilitas pembuatan / pengecekan / perpanjangan / penghapusan akun.
 
-### Step 1: Run the Setup Script
+---
+
+> [!NOTE]  
+> Script ini tidak gratis, Anda dapat mengghubungi saya di [Telegram](https://t.me/Alrescha79) untuk akses lebih lanjut.
+
+> [!CAUTION]
+> Penggunaan skrip ini untuk tujuan ilegal adalah dilarang. Penulis tidak bertanggung jawab atas penyalahgunaan yang dilakukan oleh pengguna.
+
+## 🧭 Ringkasan (Overview)
+
+Tujuan proyek ini:
+
+- Mempermudah penyebaran layanan tunneling (VMess, VLESS, Trojan, Shadowsocks, SSH, dll).
+- Menstandarkan perintah manajemen akun di `/usr/local/bin/`.
+- Menyediakan API untuk integrasi panel eksternal / bot Telegram / dashboard.
+- Meminimalkan konfigurasi manual yang rawan kesalahan.
+
+---
+
+## ✨ Fitur Utama
+
+| Fitur | Deskripsi Ringkas |
+|-------|-------------------|
+| Multi Protokol | VMess, VLESS, Trojan, Shadowsocks, SSH (+ opsi SlowDNS / OVPN jika skrip aktif) |
+| Manajemen Akun | add / del / check / renew untuk tiap protokol |
+| Notifikasi Telegram | (Jika token & chat ID disediakan) Setiap kali ada perubahan akun |
+| API Go (Opsional) | REST endpoint untuk automasi (instal via `rest-go.sh`) |
+| Trial Accounts | Mendukung akun uji coba terbatas waktu |
+| Konfigurasi Cron | Auto reboot (opsional) |
+| Backup / Restore | (Jika modul tersedia dalam skrip) |
+| Optimasi Kernel | Dukungan BBR & tweak jaringan (bila diaktifkan) |
+| Modular | Mudah menambah protokol / handler baru |
+
+---
+
+## 📂 Struktur
+
+| Path / File | Fungsi |
+|-------------|--------|
+| `setup.sh` | Skrip utama instalasi & orchestrator |
+| `golang/rest-go.sh` | Instalasi dan setup service API Go |
+| `package-gohide.sh` | Instalasi utilitas tambahan & symlink perintah manajemen akun |
+| `install.md` | Panduan instalasi (Bahasa Indonesia) |
+| `LICENSE` | Lisensi MIT |
+| `README.md` | Dokumentasi utama (Bahasa Indonesia & Inggris) |
+
+---
+
+## 🧪 Contoh Alur Kerja
+
+1. Jalankan instalasi dasar (lihat [install.md](./install.md)).
+2. Verifikasi service (misal: `systemctl status xray` atau `ss -tulpn`).
+3. Masuk ke menu utama jika tidak otomatis muncul:
+   ```bash
+   menu
+   ```
+4. Tampilkan detail akun & link / JSON konfigurasi.
+5. (Opsional) Instal API:
+   ```bash
+   bash golang/rest-go.sh
+   ```
+6. Integrasikan dengan panel / bot.
+
+---
+
+## 🛡️ Keamanan (Rekomendasi)
+
+- Ganti port default (Xray / Trojan / Shadowsocks) bila perlu.
+- Aktifkan firewall dasar (UFW / nftables).
+- Batasi API hanya untuk IP tepercaya (reverse proxy + basic auth / token).
+- Monitor log:
+  - `/var/log/xray/`
+  - Log API (cek definisi di `rest-go.sh`)
+
+---
+
+## 🔌 Manajemen Akun (Ringkas)
+
+| Aksi | VMess | VLESS | Trojan | Shadowsocks | SSH |
+|------|-------|-------|--------|-------------|-----|
+| Tambah | `add-vmess` | `add-vless` | `add-trojan` | `add-shadowsocks` | `add-ssh` |
+| Hapus | `del-vmess` | `del-vless` | `del-trojan` | `del-shadowsocks` | `del-ssh` |
+| Cek | `check-vmess` | `check-vless` | `check-trojan` | `check-shadowsocks` | `check-ssh` |
+| Perpanjang | `renew-vmess` | `renew-vless` | `renew-trojan` | `renew-shadowsocks` | `renew-ssh` |
+
+---
+
+## 📦 Kebutuhan Sistem
+
+Lihat bagian [Kebutuhan Sistem](./install.md#️-kebutuhan-sistem) untuk daftar OS & paket wajib.
+
+---
+
+## ⏰ Auto Reboot
+
+Tidak aktif default. Lihat [Konfigurasi Auto Reboot](./install.md#-konfigurasi-auto-reboot).
+
+---
+
+## ♻️ Hapus Instalasi
+
+### Langkah Cepat
 
 ```bash
-apt-get update && \
-apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd && \
-wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
-chmod +x setup.sh && \
-screen -S setup ./setup.sh
+wget -O uninstall.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/uninstall.sh
+chmod +x uninstall.sh
+sudo ./uninstall.sh
 ```
 
-### ⚠️ Important Information
+Saat diminta konfirmasi, ketik:
+```
+YES
+```
 
-- If during the installation process in [Step 1](#-installation), a disconnection occurs in the terminal, do not re-enter the installation command. Please use the command `screen -r setup` to view the ongoing process.
-- To view the installation log, check `/root/syslog.log`.
-- Report bugs to the [hidessh Telegram account](https://t.me/hidessh).
-
-## ✨ Features
-
-- Automated installation of SSH/VPN services
-- Support for multiple protocols (Shadowsocks, Trojan, VLESS, VMess)
-- User account creation, renewal, and deletion
-- Auto-reboot configuration via cron
-- Modular structure for extensibility
-- Web-based backup and restore interface
-- BBR congestion control optimization
-- Trial account management system
-
-## 🔌 Supported Protocols
-
-This script supports the following tunneling protocols:
-
-1. **SSH** - Secure Shell protocol for secure network services
-2. **VMess** - Encrypted transmission protocol for high-performance scenarios
-3. **VLESS** - Next-generation proxy protocol with simplified design
-4. **Trojan** - Stealthy proxy protocol that mimics HTTPS traffic
-5. **Shadowsocks** - Secure socks5 proxy for circumventing censorship
-
-## 🌐 API Management
-
-The project includes a Go-based REST API for managing VPN accounts:
-
-### Installation
-
+### Menjalankan dengan Mode Debug
+Jika ingin melihat perintah yang dieksekusi:
 ```bash
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/golang/rest-go.sh
-chmod +x rest-go.sh
-bash rest-go.sh
+bash -x ./uninstall.sh
 ```
 
-### Package Installation (from package-gohide.sh)
+Atau lihat panduan lengkap [Hapus Instalasi](./uninstall.md).
 
-The [package-gohide.sh](package-gohide.sh) script installs essential command-line tools for account management:
+---
 
-#### Account Creation Commands:
-- `/usr/local/bin/add-vmess` - Create VMess accounts
-- `/usr/local/bin/add-vless` - Create VLESS accounts
-- `/usr/local/bin/add-trojan` - Create Trojan accounts
-- `/usr/local/bin/add-shadowsocks` - Create Shadowsocks accounts
-- `/usr/local/bin/add-ssh` - Create SSH accounts
+## 🆘 Dukungan
 
-#### Account Deletion Commands:
-- `/usr/local/bin/del-vmess` - Delete VMess accounts
-- `/usr/local/bin/del-trojan` - Delete Trojan accounts
-- `/usr/local/bin/del-vless` - Delete VLESS accounts
-- `/usr/local/bin/del-shadowsocks` - Delete Shadowsocks accounts
-- `/usr/local/bin/del-ssh` - Delete SSH accounts
+| Kanal | Link |
+|-------|------|
+| Telegram | [Hubungi di Telegram](https://t.me/Alrescha79) |
+| Email | [Kirim Email](mailto:anggun@cakson.my.id) |
 
-#### Account Check Commands:
-- `/usr/local/bin/check-vless` - Check VLESS account status
-- `/usr/local/bin/check-trojan` - Check Trojan account status
-- `/usr/local/bin/check-shadowsocks` - Check Shadowsocks account status
-- `/usr/local/bin/check-ssh` - Check SSH account status
-- `/usr/local/bin/check-vmess` - Check VMess account status
+---
 
-#### Account Renewal Commands:
-- `/usr/local/bin/renew-vmess` - Renew VMess accounts
-- `/usr/local/bin/renew-ssh` - Renew SSH accounts
-- `/usr/local/bin/renew-vless` - Renew VLESS accounts
-- `/usr/local/bin/renew-trojan` - Renew Trojan accounts
-- `/usr/local/bin/renew-shadowsocks` - Renew Shadowsocks accounts
+## 🤝 Kontribusi
 
-## ⏰ Auto Reboot Configuration
+1. Fork repository
+2. Buat branch fitur: `git checkout -b fitur-baru`
+3. Commit: `git commit -m "Tambah fitur X"`
+4. Push: `git push origin fitur-baru`
+5. Buka Pull Request
 
-By default, this script does not include an auto-reboot system because not all users need it. If you want to install auto-reboot on your VPS, use the following command:
+---
 
-```bash
-crontab -l > /tmp/cron.txt
-sed -i "/reboot$/d" /tmp/cron.txt
-echo -e "\n"'0 4 * * * '"$(which reboot)" >> /tmp/cron.txt
-crontab /tmp/cron.txt
-rm -rf /tmp/cron.txt
-```
+## 📜 Lisensi
 
-The above command will install an auto-reboot every day at 04:00.
+MIT License – lihat [LICENSE](./LICENSE).
 
-### To Cancel Auto Reboot:
+Copyright © 2025  
+[Alrescha79](https://github.com/alrescha79-cmd)
 
-```bash
-crontab -l > /tmp/cron.txt
-sed -i "/reboot$/d" /tmp/cron.txt
-crontab /tmp/cron.txt
-rm -rf /tmp/cron.txt
-```
-
-## 🖥️ System Requirements
-
-### Supported Operating Systems:
-- Ubuntu 22.04 LTS (Jammy Jellyfish)
-- Ubuntu 24.04.3 LTS (Noble)
-
-### Required Packages:
-- whois
-- bzip2
-- gzip
-- coreutils
-- wget
-- screen
-- nscd
-
-## 🆘 Support
-
-For support and bug reporting, please contact:
-- Telegram: [@hidessh](https://t.me/hidessh)
-
-### Project Structure:
-```
-scAUTO/
-├── bot/                 # Node.js bot for trial account management
-├── fodder/              # Configuration files and utilities
-├── golang/              # Go-based REST API for account management
-├── project/             # Core automation scripts
-├── setup.sh             # Main installation script
-├── menu.sh              # User interface for managing services
-├── package-gohide.sh    # Package installation script
-└── bbr.sh               # BBR congestion control setup
-```
+---

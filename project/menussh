@@ -67,67 +67,67 @@ validate_user_access
         function autokill_ssh() {
             local sts=$(grep -qE "^SHELL" /etc/cron.d/autokill && echo -e "\033[32m[ON]\033[0m" || echo -e "\033[31m[OFF]\033[0m")
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
             echo -e "${orange}│${green}         SSH OVPN AUTO KILL           ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
+            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
             echo -e "${orange}│${neutral} Autokill Status: $sts"
             echo -e "${orange}│${neutral} 1) AutoKill After 5 Minutes"
             echo -e "${orange}│${neutral} 2) AutoKill After 10 Minutes"
             echo -e "${orange}│${neutral} 3) AutoKill After 15 Minutes"
             echo -e "${orange}│${neutral} 4) Disable AutoKill/MultiLogin"
             echo -e "${orange}│${neutral} x) Exit"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
 
             read -p "Choose an option [1-4 or x]: " pilihan
             case $pilihan in
             1)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/5 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 echo -e "${orange}│${neutral}"
                 echo -e "${orange}│${neutral}      AutoKill: Every 5 Minutes"
                 echo -e "${orange}│${neutral}"
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 service cron restart >/dev/null 2>&1
                 ;;
             2)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/10 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 echo -e "${orange}│${neutral}"
                 echo -e "${orange}│${neutral}      AutoKill: Every 10 Minutes"
                 echo -e "${orange}│${neutral}"
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 service cron restart >/dev/null 2>&1
                 ;;
             3)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/15 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 echo -e "${orange}│${neutral}"
                 echo -e "${orange}│${neutral}      AutoKill: Every 15 Minutes"
                 echo -e "${orange}│${neutral}"
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 service cron restart >/dev/null 2>&1
                 ;;
             4)
                 if [ ! -f /etc/cron.d/autokill ]; then
                     clear
-                    print_rainbow "────────────────────────────────────────"
+                    print_rainbow "───────────────────────────────────────────────────────"
                     echo -e "${orange}│${neutral}"
                     echo -e "${orange}│${neutral} AutoKill Already ${red}Disabled${neutral}"
                     echo -e "${orange}│${neutral}"
-                    print_rainbow "────────────────────────────────────────"
+                    print_rainbow "───────────────────────────────────────────────────────"
                     return
                 fi
                 rm -f /etc/cron.d/autokill
                 clear
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 echo -e "${orange}│${neutral}"
                 echo -e "${orange}│${neutral}      AutoKill ${red}Disabled${neutral}"
                 echo -e "${orange}│${neutral}"
-                print_rainbow "────────────────────────────────────────"
+                print_rainbow "───────────────────────────────────────────────────────"
                 service cron restart >/dev/null 2>&1
                 return
                 ;;
@@ -146,22 +146,22 @@ validate_user_access
         # Function to lock SSH account
         function lock_ssh() {
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
             echo -e "${orange}│${green}        LOCK SSH OVPN Account         ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
+            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
             NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
             if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
                 echo -e "${orange}│${neutral}         No registered clients!       ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+                echo -e "${orange}└───────────────────────────────────────────────────┘${neutral}"
                 exit 0
             fi
             echo -e "${orange}│ ${green}NO  USERNAME         EXPIRY DATE"
-            echo -e "${orange}│ ${neutral}----------------------------------"
+            echo -e "${orange}│ ${neutral}-----------------------------------"
             grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf "%-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
                 echo -e "${orange}│ ${neutral}$line"
             done
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+            echo -e "${orange}└───────────────────────────────────────┘${neutral}"
             print_rainbow "─────────────────────────────────────────"
 
             until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
@@ -460,16 +460,16 @@ validate_user_access
             echo -e "${green}║                      MENU SSH/OPENVPN MANAGER                 ║${neutral}"
             echo -e "${green}╚═══════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
-            echo -e "${orange}┌───────────────────────────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}║                        MENU UTAMA                             ║${neutral}"
-            echo -e "${orange}├───────────────────────────────────────────────────────────────┤${neutral}"
+            echo -e "${orange}┌────────────────────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${orange}║                             MENU UTAMA                             ║${neutral}"
+            echo -e "${orange}├────────────────────────────────────────────────────────────────────┤${neutral}"
             echo -e "${orange}║${green} [1]${neutral}  Buat Akun SSH/OpenVPN       ${orange}║${green} [7]${neutral}  Kunci Akun SSH/OpenVPN   ${orange}║${neutral}"
             echo -e "${orange}║${green} [2]${neutral}  Hapus Akun SSH/OpenVPN      ${orange}║${green} [8]${neutral}  Buka Kunci Akun SSH/OVPN ${orange}║${neutral}"
             echo -e "${orange}║${green} [3]${neutral}  Perpanjang Akun SSH/OpenVPN ${orange}║${green} [9]${neutral}  Detail Akun SSH/OpenVPN  ${orange}║${neutral}"
             echo -e "${orange}║${green} [4]${neutral}  Cek Login Akun SSH/OpenVPN  ${orange}║${green} [10]${neutral} Autokill SSH/OpenVPN     ${orange}║${neutral}"
             echo -e "${orange}║${green} [5]${neutral}  Daftar Member SSH/OpenVPN   ${orange}║${green} [11]${neutral} Buat Trial SSH/OpenVPN   ${orange}║${neutral}"
             echo -e "${orange}║${green} [6]${neutral}  Ubah Limit Akun SSH/OpenVPN ${orange}║${green} [x]${neutral}  Kembali ke Menu Utama    ${orange}║${neutral}"
-            echo -e "${orange}└───────────────────────────────────────────────────────────────┘${neutral}"
+            echo -e "${orange}└────────────────────────────────────────────────────────────────────┘${neutral}"
             echo -e ""
             echo -e "${yellow}Pilih menu [1-11] atau tekan [x] untuk kembali:${neutral}"
             read -p "Masukkan pilihan Anda: " ssh_choice

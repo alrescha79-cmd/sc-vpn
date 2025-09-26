@@ -1,13 +1,109 @@
 #!/bin/bash
 
-# Valid Script
+# ===============================
+# DAPATKAN IP DAN TANGGAL
+# ===============================
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
-# Validasi masa aktif sebelum mengakses menu
-source /usr/bin/validate_access.sh
-validate_user_access
+# ===============================
+# AMBIL DATA CLIENT 
+# ===============================
+MYIP=$ipsaya
+
+# URL data izin
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+
+# Ambil data dari GitHub dengan format baru: ### User Date IP
+data_izin=$(curl -sS "$url_izin")
+user_line=$(echo "$data_izin" | grep "$MYIP")
+
+if [ -n "$user_line" ]; then
+    username=$(echo "$user_line" | awk '{print $2}')
+    valid=$(echo "$user_line" | awk '{print $3}')
+else
+    username=""
+    valid=""
+fi
+
+echo "$username" >/usr/bin/user
+echo "$valid" >/usr/bin/e
+
+# ===============================
+# TANGGAL HARI INI DAN EXPIRY
+# ===============================
+today=$(date +'%Y-%m-%d')
+Exp1="$valid"  # tanggal expiry
+
+# ===============================
+# FUNGSI VALIDASI MASA AKTIF
+# ===============================
+validate_access() {
+    # Cek jika data user tidak ditemukan
+    if [ -z "$username" ] || [ -z "$valid" ]; then
+        clear
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "${red}║                           AKSES DITOLAK                            ║${neutral}"
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e ""
+        echo -e " IP Anda (${MYIP}) tidak terdaftar dalam sistem"
+        echo -e ""
+        echo -e " Silakan hubungi administrator untuk mendapatkan akses:"
+        echo -e " 📱 Telegram: https://t.me/Alrescha79"
+        echo -e " 📧 Email: anggun@cakson.my.id"
+        echo -e ""
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk keluar..."
+        read
+        exit 1
+    fi
+    
+    # Cek masa aktif
+    current_date=$(date +%Y-%m-%d)
+    if [[ "$valid" < "$current_date" ]]; then
+        # Hitung berapa hari sudah expired
+        expired_days=$(( ( $(date -d "$current_date" +%s) - $(date -d "$valid" +%s) ) / 86400 ))
+        
+        clear
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "${red}║                        AKSES KADALUARSA                           ║${neutral}"
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e ""
+        echo -e " Masa aktif script Anda telah berakhir!"
+        echo -e ""
+        echo -e " Detail Akses:"
+        echo -e "   • User ID: ${username}"
+        echo -e "   • IP Address: ${MYIP}"
+        echo -e "   • Tanggal Kadaluarsa: ${valid}"
+        echo -e "   • Sudah Expired: ${expired_days} hari"
+        echo -e ""
+        echo -e " Untuk memperpanjang masa aktif, hubungi:"
+        echo -e " 📱 Telegram: https://t.me/Alrescha79"
+        echo -e " 📧 Email: anggun@cakson.my.id"
+        echo -e " 💰 Informasi Harga & Paket Tersedia"
+        echo -e ""
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk keluar..."
+        read
+        exit 1
+    fi
+}
+
+# ===============================
+# CEK STATUS ACTIVE / EXPIRED
+# ===============================
+# Panggil fungsi validasi sebelum menampilkan menu
+validate_access
+
+Info="(${green}Active${neutral})"
+Error="(${red}Expired${neutral})"
+if [[ "$today" < "$Exp1" ]]; then
+    sts="${Info}"
+else
+    sts="${Error}"
+fi
+
 
         # Color variables
         green="\e[38;5;87m"
@@ -66,67 +162,83 @@ validate_user_access
         function autokill_ssh() {
             local sts=$(grep -qE "^SHELL" /etc/cron.d/autokill && echo -e "\033[32m[ON]\033[0m" || echo -e "\033[31m[OFF]\033[0m")
             clear
-            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${green}         SSH OVPN AUTO KILL           ${orange}│${neutral}"
-            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${neutral} Autokill Status: $sts"
-            echo -e "${orange}│${neutral} 1) AutoKill After 5 Minutes"
-            echo -e "${orange}│${neutral} 2) AutoKill After 10 Minutes"
-            echo -e "${orange}│${neutral} 3) AutoKill After 15 Minutes"
-            echo -e "${orange}│${neutral} 4) Disable AutoKill/MultiLogin"
-            echo -e "${orange}│${neutral} x) Exit"
-            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                    ${green}SSH OVPN AUTO KILL MANAGER${orange}                    ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e " Autokill Status: $sts"
+            echo -e ""
+            echo -e " ${green}[1]${neutral} AutoKill After 5 Minutes"
+            echo -e " ${green}[2]${neutral} AutoKill After 10 Minutes"
+            echo -e " ${green}[3]${neutral} AutoKill After 15 Minutes"
+            echo -e " ${green}[4]${neutral} Disable AutoKill/MultiLogin"
+            echo -e " ${red}[x]${neutral} Exit"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             read -p "Choose an option [1-4 or x]: " pilihan
             case $pilihan in
             1)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/5 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "───────────────────────────────────────────────────────"
-                echo -e "${orange}│${neutral}"
-                echo -e "${orange}│${neutral}      AutoKill: Every 5 Minutes"
-                echo -e "${orange}│${neutral}"
-                print_rainbow "───────────────────────────────────────────────────────"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${green}║                        ${blue}AUTOKILL ACTIVATED${green}                        ║${neutral}"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} AutoKill: Every 5 Minutes"
+                echo -e " ${green}✓${neutral} Cron service restarted successfully"
+                echo -e ""
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
                 service cron restart >/dev/null 2>&1
                 ;;
             2)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/10 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "───────────────────────────────────────────────────────"
-                echo -e "${orange}│${neutral}"
-                echo -e "${orange}│${neutral}      AutoKill: Every 10 Minutes"
-                echo -e "${orange}│${neutral}"
-                print_rainbow "───────────────────────────────────────────────────────"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${green}║                        ${blue}AUTOKILL ACTIVATED${green}                        ║${neutral}"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} AutoKill: Every 10 Minutes"
+                echo -e " ${green}✓${neutral} Cron service restarted successfully"
+                echo -e ""
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
                 service cron restart >/dev/null 2>&1
                 ;;
             3)
                 echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n*/15 * * * * root /usr/bin/autokill" >/etc/cron.d/autokill
                 clear
-                print_rainbow "───────────────────────────────────────────────────────"
-                echo -e "${orange}│${neutral}"
-                echo -e "${orange}│${neutral}      AutoKill: Every 15 Minutes"
-                echo -e "${orange}│${neutral}"
-                print_rainbow "───────────────────────────────────────────────────────"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${green}║                        ${blue}AUTOKILL ACTIVATED${green}                        ║${neutral}"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} AutoKill: Every 15 Minutes"
+                echo -e " ${green}✓${neutral} Cron service restarted successfully"
+                echo -e ""
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
                 service cron restart >/dev/null 2>&1
                 ;;
             4)
                 if [ ! -f /etc/cron.d/autokill ]; then
                     clear
-                    print_rainbow "───────────────────────────────────────────────────────"
-                    echo -e "${orange}│${neutral}"
-                    echo -e "${orange}│${neutral} AutoKill Already ${red}Disabled${neutral}"
-                    echo -e "${orange}│${neutral}"
-                    print_rainbow "───────────────────────────────────────────────────────"
+                    echo -e "${yellow}══════════════════════════════════════════════════════════════════════${neutral}"
+                    echo -e "${yellow}║                       ${blue}AUTOKILL STATUS${yellow}                        ║${neutral}"
+                    echo -e "${yellow}══════════════════════════════════════════════════════════════════════${neutral}"
+                    echo -e ""
+                    echo -e " ${yellow}⚠${neutral} AutoKill Already ${red}Disabled${neutral}"
+                    echo -e ""
+                    echo -e "${yellow}══════════════════════════════════════════════════════════════════════${neutral}"
                     return
                 fi
                 rm -f /etc/cron.d/autokill
                 clear
-                print_rainbow "───────────────────────────────────────────────────────"
-                echo -e "${orange}│${neutral}"
-                echo -e "${orange}│${neutral}      AutoKill ${red}Disabled${neutral}"
-                echo -e "${orange}│${neutral}"
-                print_rainbow "───────────────────────────────────────────────────────"
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${red}║                        ${blue}AUTOKILL DISABLED${red}                        ║${neutral}"
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} AutoKill ${red}Disabled${neutral} successfully"
+                echo -e " ${green}✓${neutral} Cron service restarted"
+                echo -e ""
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
                 service cron restart >/dev/null 2>&1
                 return
                 ;;
@@ -145,23 +257,26 @@ validate_user_access
         # Function to lock SSH account
         function lock_ssh() {
             clear
-            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${green}        LOCK SSH OVPN Account         ${orange}│${neutral}"
-            echo -e "${orange}└───────────────────────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌───────────────────────────────────────────────────────┐${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                      ${green}LOCK SSH OVPN ACCOUNT${orange}                      ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
             NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
             if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-                echo -e "${orange}│${neutral}         No registered clients!       ${orange}│${neutral}"
-                echo -e "${orange}└───────────────────────────────────────────────────┘${neutral}"
-                exit 0
+                echo -e " ${red}No registered clients found!${neutral}"
+                echo -e ""
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press Enter to return to menu"
+                read
+                return
             fi
-            echo -e "${orange}│ ${green}NO  USERNAME         EXPIRY DATE"
-            echo -e "${orange}│ ${neutral}-----------------------------------"
-            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf "%-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
-                echo -e "${orange}│ ${neutral}$line"
+            echo -e " ${green}NO  USERNAME         EXPIRY DATE${neutral}"
+            echo -e " ───────────────────────────────────"
+            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf " %-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
+                echo -e "$line"
             done
-            echo -e "${orange}└───────────────────────────────────────┘${neutral}"
-            print_rainbow "─────────────────────────────────────────"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
                 if [[ ${NUMBER_OF_CLIENTS} == '1' ]]; then
@@ -199,42 +314,57 @@ validate_user_access
 
             if passwd -l "$username"; then
                 clear
-                print_rainbow "─────────────────────────────────────────"
-                echo -e "${green}Username $username successfully LOCKED!${reset}"
-                echo -e "${yellow}Login access for username $username${reset}"
-                echo -e "${yellow}has been locked.${reset}"
-                print_rainbow "─────────────────────────────────────────"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${green}║                        ${blue}ACCOUNT LOCKED${green}                           ║${neutral}"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} Username ${green}$username${neutral} successfully LOCKED!"
+                echo -e " ${green}✓${neutral} Login access has been disabled"
+                echo -e ""
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
 
                 # Add locking log
                 echo "$(date): Account $username locked" >>/var/log/ssh_account_actions.log
 
-                read -n 1 -s -r -p "Press any key to return to menu"
+                echo -e " Press any key to return to menu"
+                read -n 1 -s -r
             else
-                echo "Failed to lock account $username."
-                read -n 1 -s -r -p "Press any key to return to menu"
+                clear
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${red}║                           ${blue}LOCK FAILED${red}                           ║${neutral}"
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${red}✗${neutral} Failed to lock account $username"
+                echo -e ""
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press any key to return to menu"
+                read -n 1 -s -r
             fi
         }
 
         # Function to unlock SSH account
         function unlock_ssh() {
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${green}        UNLOCK SSH OVPN ACOUNT        ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                     ${green}UNLOCK SSH OVPN ACCOUNT${orange}                     ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
             NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
             if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-                echo -e "${orange}│${neutral}         No registered clients!       ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-                exit 0
+                echo -e " ${red}No registered clients found!${neutral}"
+                echo -e ""
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press Enter to return to menu"
+                read
+                return
             fi
-            echo -e "${orange}│ ${green}NO  USERNAME         EXPIRY DATE"
-            echo -e "${orange}│ ${neutral}----------------------------------"
-            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf "%-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
-                echo -e "${orange}│ ${neutral}$line"
+            echo -e " ${green}NO  USERNAME         EXPIRY DATE${neutral}"
+            echo -e " ───────────────────────────────────"
+            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf " %-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
+                echo -e "$line"
             done
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            print_rainbow "─────────────────────────────────────────"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
                 if [[ ${NUMBER_OF_CLIENTS} == '1' ]]; then
@@ -265,37 +395,50 @@ validate_user_access
 
             if passwd -u "$username"; then
                 clear
-                print_rainbow "─────────────────────────────────────────"
-                echo -e "${green}Username ${blue}$username${green} successfully UNLOCKED! ${reset}"
-                echo -e "${green}Access for Username ${blue}$username${green}"
-                echo -e "${green}has been restored.${reset}"
-                print_rainbow "─────────────────────────────────────────"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${green}║                       ${blue}ACCOUNT UNLOCKED${green}                        ║${neutral}"
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${green}✓${neutral} Username ${green}$username${neutral} successfully UNLOCKED!"
+                echo -e " ${green}✓${neutral} Login access has been restored"
+                echo -e ""
+                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
             else
-                echo "Failed to unlock account $username. Please try again."
+                clear
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${red}║                          ${blue}UNLOCK FAILED${red}                          ║${neutral}"
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e ""
+                echo -e " ${red}✗${neutral} Failed to unlock account $username"
+                echo -e ""
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
             fi
-            print_rainbow "─────────────────────────────────────────"
-            read -n 1 -s -r -p "Press any key to return to the menu"
+            echo -e " Press any key to return to menu"
+            read -n 1 -s -r
         }
         # Function to display SSH account details
         function detail_ssh() {
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│       ${green}SSH OVPN ACCOUNT DETAILS${neutral}       ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                     ${green}SSH OVPN ACCOUNT DETAILS${orange}                     ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
             NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
             if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-                echo -e "${orange}│${neutral}         No registered clients!       ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-                exit 0
+                echo -e " ${red}No registered clients found!${neutral}"
+                echo -e ""
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press Enter to return to menu"
+                read
+                return
             fi
-            echo -e "${orange}│ ${green}NO  USERNAME         EXPIRY DATE"
-            echo -e "${orange}│ ${neutral}----------------------------------"
-            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf "%-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
-                echo -e "${orange}│ ${neutral}$line"
+            echo -e " ${green}NO  USERNAME         EXPIRY DATE${neutral}"
+            echo -e " ───────────────────────────────────"
+            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf " %-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
+                echo -e "$line"
             done
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            print_rainbow "─────────────────────────────────────────"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
                 if [[ ${NUMBER_OF_CLIENTS} == '1' ]]; then
@@ -313,37 +456,47 @@ validate_user_access
 
             username=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2 | sed -n "${CLIENT_NUMBER}"p)
             clear
+            echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${blue}║                    ${green}ACCOUNT DETAILS: $username${blue}                     ║${neutral}"
+            echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            
             # Add exception handling for missing log file
             if [ -f "/etc/xray/log-createssh-${username}.log" ]; then
                 cat "/etc/xray/log-createssh-${username}.log"
             else
-                echo "  Log file not found for this user."
+                echo -e " ${yellow}⚠${neutral} Log file not found for this user."
+                echo -e " ${yellow}⚠${neutral} This might be a manually created account."
             fi
-
-            print_rainbow "───────────────────────────"
-            read -n 1 -s -r -p "Press any key to return to the menu"
+            echo -e ""
+            echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e " Press any key to return to menu"
+            read -n 1 -s -r
         }
 
         # Function to change SSH account limit
         function changelimit() {
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│    ${green}CHANGE SSH OVPN ACCOUNT LIMIT${neutral}     ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                   ${green}CHANGE SSH OVPN ACCOUNT LIMIT${orange}                   ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
             NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
             if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-                echo -e "${orange}│${neutral}         No registered clients!       ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-                exit 0
+                echo -e " ${red}No registered clients found!${neutral}"
+                echo -e ""
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press Enter to return to menu"
+                read
+                return
             fi
-            echo -e "${orange}│ ${green}NO  USERNAME         EXP DATE"
-            echo -e "${orange}│ ${neutral} ----------------------------------"
-            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf "%-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
-                echo -e "${orange}│ ${neutral}$line"
+            echo -e " ${green}NO  USERNAME         EXPIRY DATE${neutral}"
+            echo -e " ────────────────────────────────────"
+            grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2-3 | awk '{printf " %-3s %-15s %s\n", NR")", $1, $2}' | while read line; do
+                echo -e "$line"
             done
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            print_rainbow "─────────────────────────────────────────"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
                 if [[ ${NUMBER_OF_CLIENTS} == '1' ]]; then
@@ -356,13 +509,14 @@ validate_user_access
             user=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2 | sed -n "${CLIENT_NUMBER}"p)
 
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│ ${green}       ENTER LIMIT FOR ACCOUNT       ${orange}│${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            print_rainbow "─────────────────────────────────────────"
-            echo -e "  USERNAME : ${user}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                      ${green}ENTER LIMIT FOR ACCOUNT${orange}                      ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e " USERNAME : ${green}${user}${neutral}"
+            echo -e ""
             while true; do
-                read -p "  IP LIMIT (MINIMUM 1): " iplim
+                read -p " IP LIMIT (MINIMUM 1): " iplim
                 if [[ $iplim == "x" ]]; then
                     echo "Cancelled."
                     return
@@ -374,28 +528,32 @@ validate_user_access
             done
             echo "${iplim}" >/etc/ssh/${user}
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│   ${green}ACCOUNT LIMIT CHANGE SUCCESSFUL    ${orange}│${neutral}"
-            echo -e "${orange}├──────────────────────────────────────┤${neutral}"
-            echo -e "${orange}│ ${neutral}Username: ${green}$user${neutral}"
-            echo -e "${orange}│ ${neutral}IP Limit: ${green}$iplim${neutral} devices"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-            echo ""
-            read -n 1 -s -r -p "Press any key to return to menu"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                   ${green}ACCOUNT LIMIT CHANGE SUCCESSFUL${orange}                   ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e " Username: ${green}$user${neutral}"
+            echo -e " IP Limit: ${green}$iplim${neutral} devices"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e " Press any key to return to menu"
+            read -n 1 -s -r
         }
 
         # Function to display SSH members
         function member_ssh() {
             clear
-            echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-            echo -e "${orange}│${green}      SSH OVPN ACCOUNT DETAILS        ${orange}│${neutral}"
-            echo -e "${orange}├──────────────────────────────────────┤${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}║                     ${green}SSH OVPN ACCOUNT DETAILS${orange}                     ║${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
 
             if [ ! -f "/etc/ssh/.ssh.db" ]; then
-                echo -e "${orange}│${neutral} Database file not found           ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+                echo -e " ${red}Database file not found${neutral}"
                 echo -e ""
-                read -n 1 -s -r -p "Press any key to return to menu"
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press any key to return to menu"
+                read -n 1 -s -r
                 return
             fi
 
@@ -403,10 +561,11 @@ validate_user_access
             now=$(date +"%Y-%m-%d")
 
             if [ -z "$data" ]; then
-                echo -e "${orange}│${neutral} No SSH accounts registered       ${orange}│${neutral}"
-                echo -e "${orange}└──────────────────────────────────────┘${neutral}"
+                echo -e " ${red}No SSH accounts registered${neutral}"
                 echo -e ""
-                read -n 1 -s -r -p "Press any key to return to menu"
+                echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Press any key to return to menu"
+                read -n 1 -s -r
                 return
             fi
 
@@ -415,7 +574,7 @@ validate_user_access
                 exp=$(echo $line | cut -d ' ' -f 2)
 
                 if [ -z "$exp" ]; then
-                    echo -e "${orange}│${neutral} Error: Expiration date not found for $user"
+                    echo -e " ${red}Error: Expiration date not found for $user${neutral}"
                     continue
                 fi
 
@@ -425,7 +584,7 @@ validate_user_access
 
                 status="$(passwd -S $user 2>/dev/null | awk '{print $2}')"
                 if [ $? -ne 0 ]; then
-                    echo -e "${orange}│${neutral} Error: Failed to get status for $user"
+                    echo -e " ${red}Error: Failed to get status for $user${neutral}"
                     continue
                 fi
 
@@ -437,41 +596,40 @@ validate_user_access
                     wf="${green}Active ${neutral}"
                 fi
 
-                echo -e "${orange}│${neutral} USERNAME : $user"
-                echo -e "${orange}│${neutral} STATUS   : $wf"
-                echo -e "${orange}│${neutral} IP LIMIT : $iplimit"
-                echo -e "${orange}│${neutral} DAYS LEFT: $dayleft DAYS"
-                echo -e "${orange}│${neutral} EXPIRES  : $exp"
-                echo -e "${orange}├──────────────────────────────────────┤${neutral}"
+                echo -e " USERNAME : ${green}$user${neutral}"
+                echo -e " STATUS   : $wf"
+                echo -e " IP LIMIT : ${blue}$iplimit${neutral}"
+                echo -e " DAYS LEFT: ${yellow}$dayleft DAYS${neutral}"
+                echo -e " EXPIRES  : ${orange}$exp${neutral}"
+                echo -e " ────────────────────────────────────────────────────────────────────"
             done <<<"$data"
 
             total=$(echo "$data" | wc -l)
-            echo -e "${orange}│${neutral} Total Accounts: ${green}$total${neutral}"
-            echo -e "${orange}└──────────────────────────────────────┘${neutral}"
             echo -e ""
-            read -n 1 -s -r -p "Press any key to return to menu"
+            echo -e " Total Accounts: ${green}$total${neutral}"
+            echo -e ""
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e " Press any key to return to menu"
+            read -n 1 -s -r
         }
 
         # Function to display SSH menu
         display_ssh_menu() {
             clear
-            echo -e "${green}╔═══════════════════════════════════════════════════════════════╗${neutral}"
-            echo -e "${green}║                      MENU SSH/OPENVPN MANAGER                 ║${neutral}"
-            echo -e "${green}╚═══════════════════════════════════════════════════════════════╝${neutral}"
+            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${green}║                      ${blue}MENU SSH/OPENVPN MANAGER${green}                      ║${neutral}"
+            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
             echo -e ""
-            echo -e "${orange}┌────────────────────────────────────────────────────────────────────┐${neutral}"
-            echo -e "${orange}║                             MENU UTAMA                             ║${neutral}"
-            echo -e "${orange}├────────────────────────────────────────────────────────────────────┤${neutral}"
-            echo -e "${orange}║${green} [1]${neutral}  Buat Akun SSH/OpenVPN       ${orange}║${green} [7]${neutral}  Kunci Akun SSH/OpenVPN   ${orange} ║${neutral}"
-            echo -e "${orange}║${green} [2]${neutral}  Hapus Akun SSH/OpenVPN      ${orange}║${green} [8]${neutral}  Buka Kunci Akun SSH/OVPN ${orange} ║${neutral}"
-            echo -e "${orange}║${green} [3]${neutral}  Perpanjang Akun SSH/OpenVPN ${orange}║${green} [9]${neutral}  Detail Akun SSH/OpenVPN  ${orange} ║${neutral}"
-            echo -e "${orange}║${green} [4]${neutral}  Cek Login Akun SSH/OpenVPN  ${orange}║${green} [10]${neutral} Autokill SSH/OpenVPN     ${orange} ║${neutral}"
-            echo -e "${orange}║${green} [5]${neutral}  Daftar Member SSH/OpenVPN   ${orange}║${green} [11]${neutral} Buat Trial SSH/OpenVPN   ${orange} ║${neutral}"
-            echo -e "${orange}║${green} [6]${neutral}  Ubah Limit Akun SSH/OpenVPN ${orange}║${green} [x]${neutral}  Kembali ke Menu Utama    ${orange} ║${neutral}"
-            echo -e "${orange}└────────────────────────────────────────────────────────────────────┘${neutral}"
+            echo -e " ${green}[1]${neutral}  Buat Akun SSH/OpenVPN        ${green}[7]${neutral}  Kunci Akun SSH/OpenVPN"
+            echo -e " ${green}[2]${neutral}  Hapus Akun SSH/OpenVPN       ${green}[8]${neutral}  Buka Kunci Akun SSH/OVPN"
+            echo -e " ${green}[3]${neutral}  Perpanjang Akun SSH/OpenVPN  ${green}[9]${neutral}  Detail Akun SSH/OpenVPN"
+            echo -e " ${green}[4]${neutral}  Cek Login Akun SSH/OpenVPN   ${green}[10]${neutral} Autokill SSH/OpenVPN"
+            echo -e " ${green}[5]${neutral}  Daftar Member SSH/OpenVPN    ${green}[11]${neutral} Buat Trial SSH/OpenVPN"
+            echo -e " ${green}[6]${neutral}  Ubah Limit Akun SSH/OpenVPN  ${red}[x]${neutral}  Kembali ke Menu Utama"
             echo -e ""
-            echo -e "${yellow}Pilih menu [1-11] atau tekan [x] untuk kembali:${neutral}"
-            read -p "Masukkan pilihan Anda: " ssh_choice
+            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            read -p " Masukkan pilihan Anda [1-11/x]: " ssh_choice
 
             case $ssh_choice in
             1) addssh ;;
@@ -486,14 +644,21 @@ validate_user_access
             10) autokill_ssh ;;
             11) trialssh ;;
             x | X)
-                echo -e ""
+                clear
                 echo -e "${green}Kembali ke menu utama...${neutral}"
                 menu
                 ;;
             *)
+                clear
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e "${red}║                           PILIHAN TIDAK VALID                       ║${neutral}"  
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
                 echo -e ""
-                echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
-                echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
+                echo -e " ${red}Pilihan yang Anda masukkan tidak tersedia!${neutral}"
+                echo -e " ${yellow}Silahkan pilih menu yang tersedia [1-11/x]${neutral}"
+                echo -e ""
+                echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+                echo -e " Tekan Enter untuk mencoba lagi..." 
                 read
                 display_ssh_menu
                 ;;

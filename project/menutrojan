@@ -1,13 +1,91 @@
 #!/bin/bash
 
-# Valid Script
+# ===============================
+# DAPATKAN IP DAN TANGGAL
+# ===============================
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
-# Validasi masa aktif sebelum mengakses menu
-source /usr/bin/validate_access.sh
-validate_user_access
+# ===============================
+# AMBIL DATA CLIENT 
+# ===============================
+MYIP=$ipsaya
+
+# URL data izin
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+
+# Ambil data dari GitHub dengan format baru: ### User Date IP
+data_izin=$(curl -sS "$url_izin")
+user_line=$(echo "$data_izin" | grep "$MYIP")
+
+if [ -n "$user_line" ]; then
+    username=$(echo "$user_line" | awk '{print $2}')
+    valid=$(echo "$user_line" | awk '{print $3}')
+else
+    username=""
+    valid=""
+fi
+
+echo "$username" >/usr/bin/user
+echo "$valid" >/usr/bin/e
+
+# ===============================
+# FUNGSI VALIDASI MASA AKTIF
+# ===============================
+validate_access() {
+    # Cek jika data user tidak ditemukan
+    if [ -z "$username" ] || [ -z "$valid" ]; then
+        clear
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "${red}║                           AKSES DITOLAK                            ║${neutral}"
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e ""
+        echo -e " IP Anda (${MYIP}) tidak terdaftar dalam sistem"
+        echo -e ""
+        echo -e " Silakan hubungi administrator untuk mendapatkan akses:"
+        echo -e " 📱 Telegram: https://t.me/Alrescha79"
+        echo -e " 📧 Email: anggun@cakson.my.id"
+        echo -e ""
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk keluar..."
+        read
+        exit 1
+    fi
+    
+    # Cek masa aktif
+    current_date=$(date +%Y-%m-%d)
+    if [[ "$valid" < "$current_date" ]]; then
+        # Hitung berapa hari sudah expired
+        expired_days=$(( ( $(date -d "$current_date" +%s) - $(date -d "$valid" +%s) ) / 86400 ))
+        
+        clear
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "${red}║                        AKSES KADALUARSA                           ║${neutral}"
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e ""
+        echo -e " Masa aktif script Anda telah berakhir!"
+        echo -e ""
+        echo -e " Detail Akses:"
+        echo -e "   • User ID: ${username}"
+        echo -e "   • IP Address: ${MYIP}"
+        echo -e "   • Tanggal Kadaluarsa: ${valid}"
+        echo -e "   • Sudah Expired: ${expired_days} hari"
+        echo -e ""
+        echo -e " Untuk memperpanjang masa aktif, hubungi:"
+        echo -e " 📱 Telegram: https://t.me/Alrescha79"
+        echo -e " 📧 Email: anggun@cakson.my.id"
+        echo -e " 💰 Informasi Harga & Paket Tersedia"
+        echo -e ""
+        echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk keluar..."
+        read
+        exit 1
+    fi
+}
+
+# Panggil fungsi validasi sebelum menampilkan menu
+validate_access
 
 
 # Variables
@@ -65,20 +143,20 @@ convert_size() {
 
 trojan_members() {
     clear
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "      ${green}.::::. TROJAN MEMBERS .::::.${neutral}"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}║                          TROJAN MEMBERS                           ║${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
         echo -e "   ${red}No Trojan accounts registered.${neutral}"
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e "   Press enter to return to the menu"
         read
         return
     fi
 
     echo -e " List of Trojan Accounts:"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     echo "┌──┬────────────┬──────┬──────┬───┬──────┐"
     echo "│no│ username   │ exp  │quota │ip │usage │"
     echo "├──┼────────────┼──────┼──────┼───┼──────┤"
@@ -131,28 +209,30 @@ trojan_members() {
     done
     echo "└──┴────────────┴──────┴──────┴───┴──────┘"
 
-    echo -e "   Press enter to return to menu"
+    echo -e ""
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e " Tekan Enter untuk kembali ke menu..."
     read
 
 }
 
 change_trojan_limit() {
     clear
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "    ${green}.::::. CHANGE TROJAN LIMIT .::::.${neutral}"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}║                       CHANGE TROJAN LIMIT                         ║${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
 
 
     account_count=$(grep -cE "^### " "/etc/xray/trojan/.trojan.db")
     if [ $account_count -eq 0 ]; then
         echo -e "   ${red}No active TROJAN accounts.${neutral}"
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e "   Press enter to return to the menu"
         read
         return
     fi
     echo -e " List of Trojan Accounts:"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     echo "┌────┬────────────────────┬─────────────┐"
     echo "│ no │ username           │     exp     │"
     echo "├────┼────────────────────┼─────────────┤"
@@ -167,7 +247,7 @@ change_trojan_limit() {
     }'
     echo "└────┴────────────────────┴─────────────┘"
 
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     read -p "   Select the account number : " account_number
     
     # Check if input is a number
@@ -190,7 +270,7 @@ change_trojan_limit() {
 
     if [ -z "$username" ]; then
         echo -e "   ${red}Invalid account number.${neutral}"
-        echo -e "   Press enter to return to menu"
+        echo -e "   Tekan Enter untuk kembali ke menu..."
         read
         return
     fi
@@ -231,26 +311,29 @@ change_trojan_limit() {
         echo -e "Please ensure you have sufficient permissions and try again."
     fi
 
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "   Press enter to return to menu"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "   Tekan Enter untuk kembali ke menu..."
     read
 }
 trojan_details() {
     clear
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "      ${green}      TROJAN DETAIL  ${neutral}"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}║                          TROJAN DETAIL                            ║${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
-        echo -e "   ${red}No Trojan accounts registered.${neutral}"
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
-        echo -e "   Press enter to return to menu"
+        echo -e ""
+        echo -e " ${red}Tidak ada akun Trojan yang terdaftar.${neutral}"
+        echo -e ""
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
         return
     fi
 
-    echo -e " List of Trojan Accounts:"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e ""
+    echo -e " Daftar Akun Trojan:"
+    echo -e ""
 
     while IFS= read -r line; do
         user=$(echo $line | cut -d ' ' -f 2 | sort -u)
@@ -284,20 +367,20 @@ trojan_details() {
             echo -e "   IP Limit      : ${green}Unlimited${neutral}"
         fi
 
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     done <"/etc/xray/trojan/.trojan.db"
 
-    echo -e "   Press enter to return to menu"
+    echo -e "   Tekan Enter untuk kembali ke menu..."
     read
 }
 custom_uuid_trojan() {
     clear
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "    ${green}       CUSTOM TROJAN UUID ${neutral}"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}║                       CUSTOM TROJAN UUID                          ║${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     if [ ! -e "/etc/xray/trojan/.trojan.db" ]; then
         echo -e "   ${red}No Trojan accounts registered.${neutral}"
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e "   Press enter to return to the menu"
         read
         return
@@ -306,13 +389,13 @@ custom_uuid_trojan() {
     account_count=$(grep -cE "^### " "/etc/xray/trojan/.trojan.db")
     if [ $account_count -eq 0 ]; then
         echo -e "   ${red}No active Trojan accounts.${neutral}"
-        echo -e "${orange}─────────────────────────────────────────${neutral}"
+        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e "   Press enter to return to the menu"
         read
         return
     fi
     echo -e " List of Trojan Accounts:"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     echo "┌────┬────────────────────┬─────────────┐"
     echo "│ no │ username           │     exp     │"
     echo "├────┼────────────────────┼─────────────┤"
@@ -327,7 +410,7 @@ custom_uuid_trojan() {
     }'
     echo "└────┴────────────────────┴─────────────┘"
 
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
     read -p "   Select the account number : " account_number
     
     # Check if input is a number
@@ -350,7 +433,7 @@ custom_uuid_trojan() {
 
     if [ -z "$user" ]; then
         echo -e "   ${red}Invalid account number.${neutral}"
-        echo -e "   Press enter to return to menu"
+        echo -e "   Tekan Enter untuk kembali ke menu..."
         read
         return
     fi
@@ -365,7 +448,7 @@ custom_uuid_trojan() {
     done
     if [ -z "$new_uuid" ]; then
         echo -e "${red}Error: UUID cannot be empty.${neutral}"
-        echo -e "   Press enter to return to menu"
+        echo -e "   Tekan Enter untuk kembali ke menu..."
         read
         return
     fi
@@ -395,8 +478,8 @@ custom_uuid_trojan() {
         echo -e "Please ensure you have sufficient permissions and try again."
     fi
 
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
-    echo -e "   Press enter to return to menu"
+    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "   Tekan Enter untuk kembali ke menu..."
     read
 }
 # Function to display Trojan menu

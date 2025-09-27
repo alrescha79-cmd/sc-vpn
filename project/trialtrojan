@@ -46,6 +46,56 @@ print_rainbow() {
     echo -e "$reset"
 }
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local duration="$3"
+    local error_msg="$4"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✨ TROJAN TRIAL ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔍 Trojan WS Port:</b> <code>443</code>
+<b>🔎 Trojan gRPC Port:</b> <code>443</code>
+<b>⏱️ Duration:</b> <code>$duration minutes</code>
+<b>⏰ Expires:</b> <code>$expiration</code>
+<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ TROJAN TRIAL CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
 srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
@@ -71,11 +121,11 @@ sleep 1
 clear
 
 # User data input
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│        Script by XTRIMER-TUNNEL         │"
+print_rainbow "┌══════════════════════════════════════════════════════════════════════┐"
+print_rainbow "│        Script by Alrescha79 Panel VPN         │"
 print_rainbow "│     Input xray/trojan account deps      │"
 print_rainbow "│            Enter User Data              │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "└══════════════════════════════════════════════════════════════════════┘"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
@@ -89,16 +139,26 @@ until [[ $duration =~ ^[0-9]+$ ]]; do
 done
 
 # Account creation process
+expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 exp=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 if [ ! -f "/etc/xray/trojan/config.json" ]; then
     echo "Configuration file not found. Creating new file..."
     echo '{"inbounds": []}' > /etc/xray/trojan/config.json
 fi
 
-sed -i '/#trojan$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json
-sed -i '/#trojangrpc$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json
+if ! sed -i '/#trojan$/a\### '"$user $exp"'\
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add Trojan WS user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add Trojan WS user to configuration file"
+    exit 1
+fi
+
+if ! sed -i '/#trojangrpc$/a\### '"$user $exp"'\
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add Trojan gRPC user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add Trojan gRPC user to configuration file"
+    exit 1
+fi
 
 # Create configuration files
 cat >/etc/xray/$user-tls.json <<EOF
@@ -141,14 +201,18 @@ trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serv
 # Restart service
 if ! systemctl restart trojan@config > /dev/null 2>&1; then
     echo -e "${red}Failed to restart trojan service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to restart trojan service"
     exit 1
 fi
 
+# Send success notification
+send_telegram_notification "success" "$user" "$duration"
+
 # Display account information
 clear -x
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "    Xray/Trojan Account    "
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Description  : ${user}"
 echo -e "Host Server  : ${domain}"
 echo -e "Host XrayDNS : ${ns_domain}"
@@ -163,11 +227,11 @@ echo -e "Path         : /trojan-ws "
 echo -e "ServiceName  : trojan-grpc"
 echo -e "Password     : ${uuid}"
 echo -e "Public Key   : ${pubkey}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link    : ${trojan_tls}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link   : ${trojan_grpc}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On  : $exp"
 echo -e ""
 read -n 1 -s -r -p "Press [ Enter ] to back on menu"

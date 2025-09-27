@@ -45,6 +45,60 @@ print_rainbow() {
     echo -e "$reset"
 }
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local duration="$3"
+    local error_msg="$4"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✨ SSH OVPN TRIAL ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔒 OpenSSH Port:</b> <code>443, 80, 22</code>
+<b>🔌 UdpSSH Port:</b> <code>1-65535</code>
+<b>🔍 Dropbear Port:</b> <code>443, 109</code>
+<b>🔎 SSH WS Port:</b> <code>80, 8080</code>
+<b>🔒 SSL/TLS Port:</b> <code>443</code>
+<b>📡 BadVPN UDP:</b> <code>7100, 7300</code>
+<b>⏱️ Duration:</b> <code>$duration minutes</code>
+<b>⏰ Expires:</b> <code>$expiration</code>
+<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ SSH OVPN TRIAL CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
 server_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
@@ -69,11 +123,11 @@ sleep 1
 clear
 
 # User data input
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│        Script by XTRIMER-TUNNEL         │"
-print_rainbow "│     Input SSH trial account data        │"
-print_rainbow "│            Enter User Data              │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
+print_rainbow "        Script by Alrescha79 Panel VPN"
+print_rainbow "    Input SSH trial account data"
+print_rainbow "            Enter User Data"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
@@ -90,18 +144,28 @@ done
 expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 
 # Create SSH account
-useradd -e $(date -d "+$duration minutes" +"%Y-%m-%d") -s /bin/false -M $user
-echo "$user:$user" | chpasswd
+if ! useradd -e $(date -d "+$duration minutes" +"%Y-%m-%d") -s /bin/false -M $user; then
+    echo -e "${red}Failed to create SSH user account${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to create SSH user account"
+    exit 1
+fi
+
+if ! echo "$user:$user" | chpasswd; then
+    echo -e "${red}Failed to set SSH user password${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to set SSH user password"
+    exit 1
+fi
 
 # Run tmux session to delete account after duration expires
 tmux new-session -d -s "trial_ssh_$user" "trial trialssh $user $duration"
+send_telegram_notification "success" "$user" "$duration"
 
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "     SSH OVPN Account      "
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Username         : $user"
 echo -e "Password         : $user"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "IP               : $ip"
 echo -e "Host             : $domain"
 echo -e "Slowdns Host     : ${ns_domain}"
@@ -118,13 +182,13 @@ echo -e "OVPN TCP Port    : 1194"
 echo -e "OVPN UDP Port    : 2200"
 echo -e "BadVPN UDP       : 7100, 7300, 7300"
 echo -e "SlowDns Public Key: ${public_key}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenVPN Link     : https://$domain:81/allovpn.zip"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Save Account Link: https://$domain:81/ssh-$user.txt"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Expiration       : $expiration"
 echo -e ""
 read -n 1 -s -r -p "Press [ Enter ] to back on menu"

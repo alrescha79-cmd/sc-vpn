@@ -47,6 +47,50 @@ print_rainbow() {
     done
     echo -e "$reset"
 }
+
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local error_msg="$3"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✅ SSH OVPN ACCOUNT DELETED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>⏰ Deleted Date:</b> <code>$(date '+%Y-%m-%d %H:%M:%S')</code>
+<b>✅ Status:</b> <code>Successfully Deleted</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ SSH OVPN ACCOUNT DELETION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # variable
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
@@ -119,18 +163,26 @@ fi
 
 # Deletion process
 if userdel -f $user 2>/dev/null; then
-    sed -i "/^### $user/d" /etc/ssh/.ssh.db
-    rm -f /etc/xray/log-createssh-$user.log
-    
-    clear
-    print_rainbow "┌─────────────────────────────────────────┐"
-    print_rainbow "│  SSH/OVPN ACCOUNT DELETED SUCCESSFULLY  │"
-    print_rainbow "└─────────────────────────────────────────┘"
-    echo -e "  Username : $user"
-    echo -e "  Expiration Date : $exp"
-    print_rainbow "  ───────────────────────────"
+    if sed -i "/^### $user/d" /etc/ssh/.ssh.db; then
+        rm -f /etc/xray/log-createssh-$user.log
+        
+        # Send success notification
+        send_telegram_notification "success" "$user"
+        
+        clear
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│  SSH/OVPN ACCOUNT DELETED SUCCESSFULLY  │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo -e "  Username : $user"
+        echo -e "  Expiration Date : $exp"
+        print_rainbow "  ───────────────────────────"
+    else
+        echo "Failed to remove user from database"
+        send_telegram_notification "error" "$user" "Failed to remove user from database"
+    fi
 else
     echo "Failed to delete account. Please check if the username is correct."
+    send_telegram_notification "error" "$user" "Failed to delete user account from system"
 fi
 
 echo ""

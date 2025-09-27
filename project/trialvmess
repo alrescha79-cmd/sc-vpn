@@ -45,6 +45,56 @@ print_rainbow() {
     echo -e "$reset"
 }
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local duration="$3"
+    local error_msg="$4"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✨ VMESS TRIAL ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔎 VMess WS Port:</b> <code>443, 80</code>
+<b>🔍 VMess gRPC Port:</b> <code>443</code>
+<b>⏱️ Duration:</b> <code>$duration minutes</code>
+<b>⏰ Expires:</b> <code>$expiration</code>
+<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ VMESS TRIAL CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
 srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
@@ -70,11 +120,11 @@ sleep 1
 clear
 
 # User data input
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│        Script by XTRIMER-TUNNEL         │"
+print_rainbow "┌══════════════════════════════════════════════════════════════════════┐"
+print_rainbow "│        Script by Alrescha79 Panel VPN         │"
 print_rainbow "│     Input xray/vmess account deps       │"
 print_rainbow "│            Enter User Data              │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "└══════════════════════════════════════════════════════════════════════┘"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
@@ -88,6 +138,7 @@ until [[ $duration =~ ^[0-9]+$ ]]; do
 done
 
 # Account creation process
+expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 exp=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
     echo "Configuration file not found. Creating new file..."
@@ -96,12 +147,14 @@ fi
 
 if ! sed -i '/#vmess$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Failed to add user to config.json${reset}"
+    echo -e "${red}Failed to add VMess WS user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add VMess WS user to configuration file"
     exit 1
 fi
 if ! sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
+    echo -e "${red}Failed to add VMess gRPC user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add VMess gRPC user to configuration file"
     exit 1
 fi
 
@@ -163,13 +216,17 @@ vmess_grpc="vmess://$(base64 -w 0 /etc/xray/$user-grpc.json)"
 # Restart service
 if ! systemctl restart vmess@config; then
     echo -e "${red}Failed to restart vmess service${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to restart vmess service"
     exit 1
 fi
 
+# Send success notification
+send_telegram_notification "success" "$user" "$duration"
+
 clear -x
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "    Xray/Vmess Account     "
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Description : ${user}"
 echo -e "Host Server : ${domain}"
 echo -e "Host XrayDNS: ${ns_domain}"
@@ -185,13 +242,13 @@ echo -e "Path        : /whatever/vmess "
 echo -e "ServiceName : vmess-grpc"
 echo -e "User ID     : ${uuid}"
 echo -e "Public Key  : ${pubkey}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link   : ${vmess_tls}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "NTLS Link  : ${vmess_non}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link  : ${vmess_grpc}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On : $exp"
 echo -e ""
 read -n 1 -s -r -p "Press [ Enter ] to back on menu"

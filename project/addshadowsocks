@@ -1,10 +1,15 @@
 #!/bin/bash
 
+# Color definitions
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+reset='\033[0m'
+
 # Valid Script
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
-
 
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
@@ -66,15 +71,80 @@ until [[ $ip_limit =~ ^[0-9]+$ ]]; do
   read -p "   User Limit (IP): " ip_limit
 done
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local error_msg="$3"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✅ SHADOWSOCKS ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔒 Port:</b> <code>443</code>
+<b>🔐 Method:</b> <code>$method</code>
+<b>📝 WS Path:</b> <code>/whatever/ss-ws</code>
+<b>⚙️ Service Name:</b> <code>ss-grpc</code>
+<b>📊 Quota:</b> <code>${quota} GB</code>
+<b>🔢 IP Limit:</b> <code>$ip_limit</code>
+<b>⏰ Expires:</b> <code>$exp</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 WS Link:</b>
+<code>$ss_link_ws</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 gRPC Link:</b>
+<code>$ss_link_grpc</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ SHADOWSOCKS ACCOUNT CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
 # Add user to config file
-sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
-sed -i '/#ssgrpc$/a\### '"$user $exp"'\
-},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+if ! sed -i '/#ssws$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (WS)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (WS)"
+    exit 1
+fi
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (gRPC)"
+    exit 1
+fi
 
 # Generate Shadowsocks links
 ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
@@ -311,9 +381,17 @@ gRPC Link : ${ss_link_grpc}
 
 END
 
+# Check if OpenClash configuration file was created successfully
+if [ ! -f "/var/www/html/shadowsocks-$user.txt" ]; then
+    echo -e "${red}Failed to create OpenClash configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create OpenClash configuration file"
+    exit 1
+fi
+
 # Restart service
 if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then
   echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+  send_telegram_notification "error" "$user" "Failed to restart Shadowsocks service"
   exit 1
 fi
 
@@ -331,6 +409,7 @@ if [ ! -d "/etc/xray/shadowsocks" ]; then
   mkdir -p /etc/xray/shadowsocks
   if [ $? -ne 0 ]; then
     echo "Failed to create directory /etc/xray/shadowsocks. Make sure you have sufficient permissions."
+    send_telegram_notification "error" "$user" "Failed to create directory /etc/xray/shadowsocks"
     exit 1
   fi
 fi
@@ -364,6 +443,9 @@ mv "$temp_file" "$db_file"
 
 # Add new entry
 echo "### ${user} ${exp} ${password}" >>"$db_file"
+
+# Send success notification to Telegram
+send_telegram_notification "success" "$user"
 
 # Display account information
 clear -x

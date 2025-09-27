@@ -1,10 +1,15 @@
 #!/bin/bash
 
+# Color definitions
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+reset='\033[0m'
+
 # Valid Script
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
-
 
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
@@ -73,12 +78,80 @@ until [[ $ip_limit =~ ^[0-9]+$ ]]; do
     read -p "   User Limit (IP): " ip_limit
 done
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local error_msg="$3"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✅ TROJAN ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔒 TLS Port:</b> <code>443</code>
+<b>🔍 DNS Port:</b> <code>443, 53</code>
+<b>🔧 GRPC Port:</b> <code>443</code>
+<b>🔐 Security:</b> <code>auto</code>
+<b>🌐 Network:</b> <code>WS/gRPC</code>
+<b>📝 Path:</b> <code>/whatever/trojan-ws</code>
+<b>⚙️ Service Name:</b> <code>trojan-grpc</code>
+<b>📊 Quota:</b> <code>${quota} GB</code>
+<b>🔢 IP Limit:</b> <code>$ip_limit</code>
+<b>⏰ Expires:</b> <code>$exp</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 TLS Link:</b>
+<code>$trojan_tls</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 GRPC Link:</b>
+<code>$trojan_grpc</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ TROJAN ACCOUNT CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
-sed -i '/#trojan$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json
-sed -i '/#trojangrpc$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json
+if ! sed -i '/#trojan$/a\### '"$user $exp"'\
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add user to config.json${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json"
+    exit 1
+fi
+if ! sed -i '/#trojangrpc$/a\### '"$user $exp"'\
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
+    exit 1
+fi
 
 # Create configuration files
 cat > /etc/xray/trojan/$user-tls.json <<EOF
@@ -197,6 +270,7 @@ trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serv
 # Restart Trojan service
 if ! systemctl restart trojan@config > /dev/null 2>&1; then
     echo -e "${red}Failed to restart Trojan service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "Failed to restart Trojan service"
     exit 1
 fi
 
@@ -242,6 +316,8 @@ mv "$temp_file" "$db_file"
 # Add new entry
 echo "### ${user} ${exp} ${uuid}" >> "$db_file"
 
+# Send success notification to Telegram
+send_telegram_notification "success" "$user"
 
 # Save log
 {

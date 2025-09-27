@@ -45,6 +45,65 @@ print_rainbow() {
     done
     echo -e "$reset"
 }
+
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local duration="$3"
+    local error_msg="$4"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✨ SHADOWSOCKS TRIAL ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔒 Port:</b> <code>443</code>
+<b>🔐 Method:</b> <code>$method</code>
+<b>📝 Path:</b> <code>/whatever/shadowsocks</code>
+<b>⚙️ Service:</b> <code>ss-grpc</code>
+<b>⏱️ Duration:</b> <code>$duration minutes</code>
+<b>⏰ Expires:</b> <code>$exp</code>
+<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 WS Link:</b>
+<code>$ss_link_ws</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 gRPC Link:</b>
+<code>$ss_link_grpc</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ SHADOWSOCKS TRIAL CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
 srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
@@ -71,11 +130,11 @@ sleep 1
 clear
 
 # User data input
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│        Script by XTRIMER-TUNNEL         │"
+print_rainbow "┌══════════════════════════════════════════════════════════════════════┐"
+print_rainbow "│        Script by Alrescha79 Panel VPN         │"
 print_rainbow "│   Input xray/ssocks account dependency  │"
 print_rainbow "│            Enter User Data              │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "└══════════════════════════════════════════════════════════════════════┘"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
@@ -92,10 +151,18 @@ method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
 # Add user to configuration file
-sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
-sed -i '/#ssgrpc$/a\### '"$user $exp"'\
-},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json
+if ! sed -i '/#ssws$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (WS)${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add user to config.json (WS)"
+    exit 1
+fi
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add user to config.json (gRPC)"
+    exit 1
+fi
 
 # Generate Shadowsocks links
 ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
@@ -335,17 +402,20 @@ END
 # Restart service
 if ! systemctl restart shadowsocks@config > /dev/null 2>&1; then
     echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to restart Shadowsocks service"
     exit 1
 fi
 
-# Exception if configuration file doesn't exist
+# Start trial session and send success notification
 tmux new-session -d -s "trial_shadowsocks_$user" "trial trialss $user $duration"
+send_telegram_notification "success" "$user" "$duration"
+send_telegram_notification "success" "$user" "$duration"
 
 # Display account information
 clear -x
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow " Xray/Shadowsocks Account  "
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Description : ${user}"
 echo -e "Host Server : ${domain}"
 echo -e "Host XrayDNS: ${ns_domain}"
@@ -356,13 +426,13 @@ echo -e "Password    : ${password}"
 echo -e "Path WS     : /whatever/shadowsocks"
 echo -e "ServiceName : ss-grpc"
 echo -e "Public Key  : ${pubkey}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "SS WS Link  : ${ss_link_ws}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "SS gRPC Link: ${ss_link_grpc}"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenClash Format: https://${domain}:81/shadowsocks-$user.txt"
-print_rainbow "───────────────────────────"
+print_rainbow "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On  : $exp"
 echo -e ""
 

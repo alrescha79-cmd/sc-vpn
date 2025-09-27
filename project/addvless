@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# Color definitions
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+reset='\033[0m'
+
 # Valid Script
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
-    
 # Variables
 ip=$(wget -qO- ipv4.icanhazip.com)
 srv_date=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
@@ -59,6 +64,69 @@ until [[ $ip_limit =~ ^[0-9]+$ ]]; do
     fi
 done
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local status="$1"
+    local user="$2"
+    local error_msg="$3"
+    
+    if [ -f '/root/.vars' ]; then
+        source '/root/.vars'
+        
+        if [ "$status" == "success" ]; then
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✅ VLESS ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🆔 User ID:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>📍 Location:</b> <code>$city</code>
+<b>🔒 Port TLS:</b> <code>443</code>
+<b>🔓 Port Non-TLS:</b> <code>80, 8080</code>
+<b>🔧 Port GRPC:</b> <code>443</code>
+<b>🔐 Security:</b> <code>auto</code>
+<b>🌐 Network:</b> <code>WS/gRPC</code>
+<b>📝 Path:</b> <code>/whatever/vless</code>
+<b>⚙️ Service Name:</b> <code>vless-grpc</code>
+<b>📊 Quota:</b> <code>${quota} GB</code>
+<b>🔢 IP Limit:</b> <code>$ip_limit</code>
+<b>⏰ Expires:</b> <code>$exp</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 TLS Link:</b>
+<code>$vless_tls</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 Non-TLS Link:</b>
+<code>$vless_non</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🔗 GRPC Link:</b>
+<code>$vless_grpc</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ VLESS ACCOUNT CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🆔 User ID:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        fi
+        
+        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+            -d "chat_id=$telegram_id" \
+            -d "parse_mode=HTML" \
+            -d "text=$message" > /dev/null 2>&1
+    fi
+}
+
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vless/config.json" ]; then
@@ -66,10 +134,18 @@ if [ ! -f "/etc/xray/vless/config.json" ]; then
     mkdir -p /etc/xray/vless
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
 fi
-sed -i '/#vless$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json
-sed -i '/#vlessgrpc$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json
+if ! sed -i '/#vless$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
+    echo -e "${red}Failed to add user to config.json${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json"
+    exit 1
+fi
+if ! sed -i '/#vlessgrpc$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
+    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
+    exit 1
+fi
 
 # Create configuration files
 cat >/etc/xray/vless/$user-tls.json <<EOF
@@ -197,6 +273,7 @@ vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&
 # Restart services
 if ! systemctl restart vless@config >/dev/null 2>&1; then
     echo -e "${red}Failed to restart vless service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "Failed to restart vless service"
     exit 1
 fi
 
@@ -246,7 +323,8 @@ fi
 # Add new entry
 echo "### ${user} ${exp} ${uuid}" >>"$db_file"
 
-
+# Send success notification to Telegram
+send_telegram_notification "success" "$user"
 
 # Save log
 {

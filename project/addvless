@@ -16,9 +16,9 @@ pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 # uuid=$(cat /proc/sys/kernel/random/uuid)
 
-echo -e "————————————————————————————————————————————————————"
-echo -e "             Add Xray Vless Account"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "                       Add Xray Vless Account"
+echo -e "══════════════════════════════════════════════════════════════════════"
 
 while true; do
     read -p "   Name: " user
@@ -122,9 +122,9 @@ EOF
 
 # Create configuration file for OpenClash
 cat >/var/www/html/vless-$user.txt <<-END
----------------------
+══════════════════════════════════════════════════════════════════════
 # Vless WS (CDN) Format
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vless-$user-WS (CDN)
   type: vless
@@ -141,9 +141,9 @@ cat >/var/www/html/vless-$user.txt <<-END
     path: /whatever/vless
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Vless WS (CDN) Non TLS Format
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vless-$user-WS (CDN) Non TLS
   type: vless
@@ -160,9 +160,9 @@ cat >/var/www/html/vless-$user.txt <<-END
     path: /whatever/vless
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Vless gRPC (SNI) Format
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vless-$user-gRPC (SNI)
   server: ${domain}
@@ -177,15 +177,15 @@ cat >/var/www/html/vless-$user.txt <<-END
   grpc-opts:
     grpc-service-name: vless-grpc
 
----------------------
+══════════════════════════════════════════════════════════════════════
 # Vless Account Links
----------------------
+══════════════════════════════════════════════════════════════════════
 TLS Link : vless://${uuid}@${domain}:443?path=/whatever/vless&security=tls&encryption=none&host=${domain}&type=ws#${user}-WS-TLS
----------------------
+══════════════════════════════════════════════════════════════════════
 Non-TLS Link : vless://${uuid}@${domain}:80?path=/whatever/vless&encryption=none&host=${domain}&type=ws#${user}-WS-NTLS
----------------------
+══════════════════════════════════════════════════════════════════════
 GRPC Link : vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}-gRPC
----------------------
+══════════════════════════════════════════════════════════════════════
 
 END
 
@@ -250,9 +250,9 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
 
 # Save log
 {
-    echo "───────────────────────────"
-    echo "    xray/vless account    "
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
+    echo "xray/vless account    "
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "description  : ${user}"
     echo "host server  : ${domain}"    
     echo "location     : $city"
@@ -266,15 +266,15 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
     echo "servicename  : vless-grpc"
     echo "user id      : ${uuid}"
     echo "public key   : ${pubkey}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "tls link     : ${vless_tls}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "ntls link    : ${vless_non}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "grpc link    : ${vless_grpc}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "openclash format : https://${domain}:81/vless-$user.txt"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "expires on   : $exp"
     echo ""
 } >> /etc/xray/vless/log-create-${user}.log
@@ -282,9 +282,9 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
 clear
 # Display account information
 clear 
-echo -e "—————————————————————————————————————"
-echo -e  "    Xray/vless Account    "
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Xray/vless Account"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Description  : ${user}"
 echo -e "Host Server  : ${domain}"
 echo -e "Location     : $city"
@@ -298,14 +298,14 @@ echo -e "Path         : /whatever/vless "
 echo -e "ServiceName  : vless-grpc"
 echo -e "User ID      : ${uuid}"
 echo -e "Public Key   : ${pubkey}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link    : ${vless_tls}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "NTLS Link   : ${vless_non}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link   : ${vless_grpc}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenClash Format : https://${domain}:81/vless-$user.txt"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On  : $exp"
 

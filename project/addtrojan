@@ -38,9 +38,9 @@ fi
 clear
 
 # User data input
-echo -e "————————————————————————————————————————————————————"
-echo -e "             Add Xray Trojan Account"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "                       Add Xray Trojan Account"
+echo -e "══════════════════════════════════════════════════════════════════════"
 
 
 while true; do
@@ -131,9 +131,9 @@ EOF
 
 # Create configuration file for OpenClash
 cat > /var/www/html/trojan-$user.txt <<-END
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Trojan WS (CDN)
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Trojan-$user-WS (CDN)
   type: trojan
@@ -148,9 +148,9 @@ cat > /var/www/html/trojan-$user.txt <<-END
     path: /whatever/trojan-ws
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Trojan WS (CDN) Non TLS
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Trojan-$user-WS (CDN) Non TLS
   type: trojan
@@ -165,9 +165,9 @@ cat > /var/www/html/trojan-$user.txt <<-END
     path: /whatever/trojan-ws
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Trojan gRPC (SNI)
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Trojan-$user-gRPC (SNI)
   server: ${domain}
@@ -180,13 +180,13 @@ cat > /var/www/html/trojan-$user.txt <<-END
   grpc-opts:
     grpc-service-name: trojan-grpc
 
----------------------
+══════════════════════════════════════════════════════════════════════
 # Trojan Account Links
----------------------
+══════════════════════════════════════════════════════════════════════
 TLS Link : trojan://${uuid}@${domain}:443?path=%2Fwhatever%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}
----------------------
+══════════════════════════════════════════════════════════════════════
 GRPC Link : trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}
----------------------
+══════════════════════════════════════════════════════════════════════
 
 END
 
@@ -245,9 +245,9 @@ echo "### ${user} ${exp} ${uuid}" >> "$db_file"
 
 # Save log
 {
-    echo "───────────────────────────"
-    echo "    Xray/Trojan Account    "
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
+    echo "Xray/Trojan Account"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "Description  : ${user}"
     echo "Host Server  : ${domain}"    
     echo "Location     : ${city}"
@@ -260,22 +260,22 @@ echo "### ${user} ${exp} ${uuid}" >> "$db_file"
     echo "ServiceName  : trojan-grpc"
     echo "Password     : ${uuid}"
     echo "Public Key   : ${pubkey}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "TLS Link     : ${trojan_tls}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "GRPC Link    : ${trojan_grpc}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "OpenClash Format : https://${domain}:81/trojan-${user}.txt"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "Expires On   : ${exp}"
     echo ""
 } >> /etc/xray/trojan/log-create-${user}.log
 # Display account information
 clear
 clear
-echo -e "—————————————————————————————————————"
-echo -e "    Xray/Trojan Account    "
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Xray/Trojan Account    "
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Description  : ${user}"
 echo -e "Host Server  : ${domain}"
 echo -e "Location     : ${city}"
@@ -288,12 +288,12 @@ echo -e "Path         : /whatever/trojan-ws"
 echo -e "ServiceName  : trojan-grpc"
 echo -e "Password     : ${uuid}"
 echo -e "Public Key   : ${pubkey}"
-echo -e "───────────────────────────"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link     : ${trojan_tls}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link    : ${trojan_grpc}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenClash Format : https://${domain}:81/trojan-${user}.txt"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On   : ${exp}"
 

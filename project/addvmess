@@ -21,9 +21,9 @@ domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
 
 # User data input
-echo -e "————————————————————————————————————————————————————"
-echo -e "             Add Xray VMess Account"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "                       Add Xray VMess Account"
+echo -e "══════════════════════════════════════════════════════════════════════"
 
 while true; do
     read -p "   Name: " user
@@ -134,9 +134,9 @@ EOF
 
 # Create configuration file for OpenClash
 cat >/var/www/html/vmess-$user.txt <<-END
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Vmess WS (CDN)
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vmess-$user-WS (CDN)
   type: vmess
@@ -154,9 +154,9 @@ cat >/var/www/html/vmess-$user.txt <<-END
     path: /whatever/vmess
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Vmess WS (CDN) Non TLS
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vmess-$user-WS (CDN) Non TLS
   type: vmess
@@ -174,9 +174,9 @@ cat >/var/www/html/vmess-$user.txt <<-END
     path: /whatever/vmess
     headers:
       Host: ${domain}
----------------------
+══════════════════════════════════════════════════════════════════════
 # Format Vmess gRPC (SNI)
----------------------
+══════════════════════════════════════════════════════════════════════
 
 - name: Vmess-$user-gRPC (SNI)
   server: ${domain}
@@ -192,15 +192,15 @@ cat >/var/www/html/vmess-$user.txt <<-END
   grpc-opts:
     grpc-service-name: vmess-grpc
 
----------------------
+══════════════════════════════════════════════════════════════════════
 # Vmess Account Links
----------------------
+══════════════════════════════════════════════════════════════════════
 TLS Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-tls.json)
----------------------
+══════════════════════════════════════════════════════════════════════
 Non-TLS Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-non.json)
----------------------
+══════════════════════════════════════════════════════════════════════
 GRPC Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-grpc.json)
----------------------
+══════════════════════════════════════════════════════════════════════
 
 END
 
@@ -277,9 +277,9 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
 
 # Save original log
 {
-    echo "——————————————————————————"
-    echo "    Xray/Vmess Account    "
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
+    echo "Xray/Vmess Account    "
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "remarks      : ${user}"
     echo "host_server  : ${domain}"    
     echo "location     : $city"
@@ -295,24 +295,24 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
     echo "servicename  : vmess-grpc"
     echo "user_id      : ${uuid}"
     echo "public_key   : ${pubkey}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "tls_link     : ${vmess_tls}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "ntls_link    : ${vmess_non}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "grpc_link    : ${vmess_grpc}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "openclash_format : https://${domain}:81/vmess-$user.txt"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "expires_on   : $exp"
     echo ""
 } >> /etc/xray/vmess/log-create-${user}.log
 
 # Display account information
 clear 
-echo -e "——————————————————————————————————————"
-echo -e  "    Xray/Vmess Account    "
-echo -e "——————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Xray/Vmess Account    "
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Remarks      : ${user}"
 echo -e "Host Server  : ${domain}"
 echo -e "Location     : $city"
@@ -327,13 +327,13 @@ echo -e "Path         : /whatever/vmess "
 echo -e "ServiceName  : vmess-grpc"
 echo -e "User ID      : ${uuid}"
 echo -e "Public Key   : ${pubkey}"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link    : ${vmess_tls}"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "NTLS Link   : ${vmess_non}"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link   : ${vmess_grpc}"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenClash Format : https://${domain}:81/vmess-$user.txt"
-echo -e "————————————————————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Expires On  : $exp"

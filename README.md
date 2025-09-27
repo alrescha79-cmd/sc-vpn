@@ -27,12 +27,14 @@ Tujuan proyek ini:
 
 ## 💻 Instalasi
 
+Pastikan sudah berada di user root, lalu jalankan perintah berikut:
+
 ```bash
 apt-get update && \
-apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd && \
-wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
+apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd build-essential&& \
+wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh && \
 chmod +x setup.sh && \
-screen -S setup ./setup.sh
+scren -S setup ./setup.sh
 ```
 
 Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
@@ -107,9 +109,19 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 
 ---
 
-## 📦 Kebutuhan Sistem
+## 📦 Sistem operasi yang didukung
 
-Lihat bagian [Kebutuhan Sistem](./install.md#️-kebutuhan-sistem) untuk daftar OS & paket wajib.
+![Ubuntu 20.04](https://img.shields.io/badge/Ubuntu-20.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Ubuntu 24.04](https://img.shields.io/badge/Ubuntu-24.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Debian 10](https://img.shields.io/badge/Debian-10-A81D33?style=for-the-badge&logo=debian&logoColor=white)
+![Debian 11](https://img.shields.io/badge/Debian-11-A81D33?style=for-the-badge&logo=debian&logoColor=white)
+![Other Distros](https://img.shields.io/badge/Other-Distros-4D4D4D?style=for-the-badge&logo=linux&logoColor=white)
+
+### Sistem Operasi yang Telah Diuji
+
+![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Ubuntu 20.04](https://img.shields.io/badge/Ubuntu-20.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
 ---
 

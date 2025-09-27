@@ -32,7 +32,7 @@ while true; do
     fi
 done
 echo ""
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo "   Username : $user"
 while true; do
     read -p "   Password: " passwd
@@ -81,12 +81,12 @@ echo "### ${user} $(date -d "$expired days" +"%Y-%m-%d")" >>/etc/ssh/.ssh.db
 
 # Create configuration file
 cat >/var/www/html/ssh-$user.txt <<END
----------------------
+══════════════════════════════════════════════════════════════════════
 SSH OVPN Account Details
----------------------
+══════════════════════════════════════════════════════════════════════
 Username         : $user
 Password         : $passwd
----------------------
+══════════════════════════════════════════════════════════════════════
 IP               : $ip
 Host             : $domain
 Public Key       : ${pubkey}
@@ -103,11 +103,11 @@ OVPN SSL Port    : 443
 OVPN TCP Port    : 443, 1194
 OVPN UDP Port    : 2200
 BadVPN UDP       : 7100, 7300, 7300
----------------------
-WSS Payload: GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf] 
----------------------
+══════════════════════════════════════════════════════════════════════
+WSS Payload: GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]
+══════════════════════════════════════════════════════════════════════
 OpenVPN Link     : http://$domain:85
----------------------
+══════════════════════════════════════════════════════════════════════
 Expiration       : $exp
 END
 
@@ -115,12 +115,12 @@ END
 
 # Save log
 {
-    echo "───────────────────────────"
-    echo "     SSH OVPN Account     "
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
+    echo "SSH OVPN Account"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "Username         : $user"
     echo "Password         : $passwd"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "IP               : $ip"
     echo "Host             : $domain"    
     echo "Location         : $city"
@@ -137,24 +137,24 @@ END
     echo "Squid Proxy      : 3128"
     echo "BadVPN UDP       : 7100, 7300, 7300"
     echo "SlowDns Public Key: ${pubkey}"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "OpenVPN Link     : https://$domain:81/allovpn.zip"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "Save Account Link: https://$domain:81/ssh-$user.txt"
-    echo "───────────────────────────"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "Expiration       : $exp"
     echo ""
 } >>/etc/xray/log-createssh-${user}.log
 
 clear
-echo -e "—————————————————————————————————————"
-echo -e "     SSH OVPN Account      "
-echo -e "───────────────────────────"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "SSH OVPN Account      "
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Username         : $user"
 echo -e "Password         : $passwd"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "IP               : $ip"
 echo -e "Host             : $domain"
 echo -e "Location         : $city"
@@ -170,12 +170,12 @@ echo -e "OVPN TCP Port    : 1194"
 echo -e "OVPN UDP Port    : 2200"
 echo -e "BadVPN UDP       : 7100, 7300, 7300"
 echo -e "SlowDns Public Key: ${pubkey}"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "WSS Payload      : GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "OpenVPN Link     : https://$domain:81/allovpn.zip"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Save Account Link: https://$domain:81/ssh-$user.txt"
-echo -e "—————————————————————————————————————"
+echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "Expiration       : $exp"
 echo -e ""

@@ -57,11 +57,11 @@ done
 echo -e "${reset}\n"
 
 # Table header
-echo -e "${orange}──────────────────────────────────────────${reset}"
+echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
 echo -e "${green}${bold}       VLESS USER STATUS${reset}"
-echo -e "${orange}──────────────────────────────────────────${reset}"
+echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
 echo -e "Username     | Usage  | Quota  | Log | Lim | Status"
-echo -e "──────────────────────────────────────────"
+echo -e "══════════════════════════════════════════════════════════════════════"
 
 ip_count=$(get_login_count "$user" "$LOG_FILE")
 usage=$(cat /etc/xray/vless/usage/${user} 2>/dev/null || echo 0)
@@ -87,7 +87,7 @@ fi
 printf "%-12s | %-6s | %-6s | %-3s | %-3s | %b\n" \
   "$user" "$readable_usage" "$readable_quota" "$ip_count" "$ip_limit" "$status"
 
-echo -e "${orange}──────────────────────────────────────────${reset}"
+echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
 
 if [[ "$ip_count" -gt 0 ]]; then
   echo -e "${green}User is currently online${reset}"

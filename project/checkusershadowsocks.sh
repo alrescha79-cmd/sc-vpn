@@ -62,9 +62,9 @@ check_shadowsocks_user() {
     clear
 
     # display header
-    echo -e "${orange}──────────────────────────────────────────${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     echo -e "${green}      SHADOWSOCKS USER STATUS      ${neutral}"
-    echo -e "${orange}──────────────────────────────────────────${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     
     # process log for the specific user
     declare -A user_ips

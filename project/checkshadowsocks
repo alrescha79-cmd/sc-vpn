@@ -54,9 +54,9 @@ check_shadowsocks() {
 
     # display header
 
-    echo -e "${orange}──────────────────────────────────────────${neutral}"
-    echo -e "${green}      SHADOWSOCKS USER LOGIN ACCOUNTS      ${neutral}"
-    echo -e "${orange}──────────────────────────────────────────${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "               ${green}      SHADOWSOCKS USER LOGIN ACCOUNTS      ${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     # read user database
     user_list=($(grep '^###' /etc/xray/shadowsocks/.shadowsocks.db | cut -d ' ' -f 2 | sort -u))
     >/tmp/rotation_shadowsocks

@@ -167,7 +167,7 @@ Follow these steps to deploy the VPN Account Management API on your Ubuntu VPS:
 
  instal auto rest backend :
    ```bash
-   wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/golang/rest-go.sh
+   wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/golang/rest-go.sh
    chmod +x rest-go.sh
    bash rest-go.sh
    ```

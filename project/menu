@@ -14,7 +14,7 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 MYIP=$ipsaya
 
 # URL data izin
-url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin"
 
 # Ambil data dari GitHub dengan format baru: ### User Date IP
 data_izin=$(curl -sS "$url_izin")
@@ -182,12 +182,21 @@ light_yellow="\e[38;5;229m"
 
 setup_bot_telegram() {
 clear
-echo -e "${orange}─────────────────────────────────────────${neutral}"
-echo -e "${green}           SETUP BOT TELEGRAM         ${neutral}"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}                               SETUP BOT TELEGRAM                          ${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
-read -p "Masukkan token bot telegram Anda: " bot_token
-read -p "Masukkan chat ID Anda: " chat_id
+echo -e "${yellow}⚠️  Pastikan Anda sudah membuat bot di Telegram dan mendapatkan token bot serta chat ID Anda.${neutral}"
+echo -e ""
+echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${bold_white}Masukkan Token Bot Telegram Anda:${neutral}"
+echo -ne "${yellow}>> ${neutral}"
+read bot_token
+echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${bold_white}Masukkan Chat ID Telegram Anda:${neutral}"
+echo -ne "${yellow}>> ${neutral}"
+read chat_id
+echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
 if [[ -z "$bot_token" || -z "$chat_id" ]]; then
 echo -e "${red}Token bot atau chat ID tidak boleh kosong.${neutral}"
 return
@@ -198,7 +207,7 @@ fi
 echo "bot_token=\"$bot_token\"" >> /root/.vars
 echo "telegram_id=\"$chat_id\"" >> /root/.vars
 systemctl restart limitip > /dev/null 2>&1
-echo -e "${dark_purple}─────────────────────────────────────────"
+echo -e "${dark_purple}══════════════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${green}Token bot dan chat ID telah disimpan di /root/.vars${neutral}"
 read -n 1 -s -r -p "Press any key to return to the menu"
 }

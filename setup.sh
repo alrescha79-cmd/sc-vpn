@@ -125,7 +125,7 @@ ip=$(wget -qO- ipinfo.io/ip)
 
 # Mendapatkan data izin dan user info
 echo -e "${blue}Mengunduh data otorisasi...${neutral}"
-data=$(curl -s --connect-timeout 10 --max-time 30 https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin)
+data=$(curl -s --connect-timeout 10 --max-time 30 https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin)
 
 # Cek apakah data berhasil diunduh
 if [ -z "$data" ]; then
@@ -273,20 +273,20 @@ sleep 2
 
 # URL sumber konfigurasi dan binary
 nginx_key_url="https://nginx.org/keys/nginx_signing.key"
-dropbear_init_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/dropbear/dropbear"
-dropbear_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/examples/dropbear"
-dropbear_dss_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/dropbear/dropbear_dss_host_key"
-sshd_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/examples/sshd"
-banner_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/examples/banner"
-common_password_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/examples/common-password"
-ws_py_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/websocket/ws.py"
-haproxy_cfg_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/Haproxy/haproxy.cfg"
-xray_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/nginx/xray.conf"
-udp_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/udp/udp-custom-linux-amd64"
-nginx_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/nginx/nginx.conf"
+dropbear_init_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/dropbear/dropbear"
+dropbear_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/examples/dropbear"
+dropbear_dss_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/dropbear/dropbear_dss_host_key"
+sshd_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/examples/sshd"
+banner_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/examples/banner"
+common_password_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/examples/common-password"
+ws_py_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/websocket/ws.py"
+haproxy_cfg_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/Haproxy/haproxy.cfg"
+xray_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/nginx/xray.conf"
+udp_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/udp/udp-custom-linux-amd64"
+nginx_conf_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/nginx/nginx.conf"
 badvpn_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/BadVPN-UDPWG/badvpn"
-openvpn_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/fodder/openvpn/openvpn.zip"
-gotop_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/gotop"
+openvpn_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/fodder/openvpn/openvpn.zip"
+gotop_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/gotop"
 vmess_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/VMess-VLESS-Trojan+Websocket+gRPC/vmess/config.json"
 vless_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/VMess-VLESS-Trojan+Websocket+gRPC/vless/config.json"
 trojan_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/VMess-VLESS-Trojan+Websocket+gRPC/trojan/config.json"
@@ -736,7 +736,7 @@ else
     echo -e "${red}Failed to download badvpn${neutral}"
 fi
 
-wget --no-check-certificate -O /opt/bbr.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/bbr.sh
+wget --no-check-certificate -O /opt/bbr.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bbr.sh
 chmod 755 /opt/bbr.sh
 /opt/bbr.sh
 
@@ -1187,7 +1187,7 @@ echo -e "${green}           INSTALLASI Menu              ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 
 
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/menu.sh && chmod +x menu.sh && ./menu.sh
+wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/menu.sh && chmod +x menu.sh && ./menu.sh
 
 cd
 
@@ -1198,7 +1198,7 @@ echo -e "${green}       INSTALLASI plugin Alrescha79        ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 
 
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/package-gohide.sh && chmod +x package-gohide.sh && ./package-gohide.sh
+wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/package-gohide.sh && chmod +x package-gohide.sh && ./package-gohide.sh
 cd 
 rm -rf package-gohide.sh
 
@@ -1209,7 +1209,7 @@ rm -rf package-gohide.sh
 
 
 # cd
-# wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/backend/install-go.sh && chmod +x install-go.sh && ./install-go.sh
+# wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/backend/install-go.sh && chmod +x install-go.sh && ./install-go.sh
 # rm -rf install-go.sh
 # cd
 

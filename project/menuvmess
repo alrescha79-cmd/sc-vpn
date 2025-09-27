@@ -13,7 +13,7 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 MYIP=$ipsaya
 
 # URL data izin
-url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin"
 
 # Ambil data dari GitHub dengan format baru: ### User Date IP
 data_izin=$(curl -sS "$url_izin")
@@ -94,7 +94,7 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 MYIP=$ipsaya
 
 # URL data izin
-url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/izin"
+url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin"
 
 # Ambil data dari GitHub dengan format baru: ### User Date IP
 data_izin=$(curl -sS "$url_izin")

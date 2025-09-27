@@ -58,7 +58,7 @@ install_validation() {
     echo -e "${yellow}📥 Menginstall script validasi...${neutral}"
     
     # URL script validasi dari GitHub
-    VALIDATE_URL="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/validate_access.sh"
+    VALIDATE_URL="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/validate_access.sh"
     
     # Download dan install ke /usr/bin/
     if curl -sS "$VALIDATE_URL" -o /usr/bin/validate_access.sh; then
@@ -107,12 +107,12 @@ setup_menu_scripts() {
     
     # Array script menu yang perlu diupdate
     MENU_SCRIPTS=(
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menu"
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menussh"
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menuvmess"
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menuvless"
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menutrojan"
-        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/menushadowsocks"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menu"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menussh"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menuvmess"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menuvless"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menutrojan"
+        "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/menushadowsocks"
     )
     
     for script_url in "${MENU_SCRIPTS[@]}"; do

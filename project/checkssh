@@ -37,9 +37,9 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
         # Fungsi untuk menampilkan informasi login SSH dan Dropbear
         tampilkan_info_ssh_dropbear() {
 
-            echo -e "${orange}─────────────────────────────────────────${neutral}"
-            echo -e "${green}         SSH USER LOGIN ACCOUNTS ${neutral}"
-            echo -e "${orange}─────────────────────────────────────────${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "               ${green}         SSH USER LOGIN ACCOUNTS ${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             cat $LOG_FILE | grep -i sshd | grep -i "Accepted password for" >/tmp/login-db-ssh.txt
             cat $LOG_FILE | grep -i dropbear | grep -i "Password auth succeeded" >/tmp/login-db-dropbear.txt

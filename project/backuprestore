@@ -148,19 +148,19 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
         # Function to start server for backup/restore
         server_backup_restore() {
             clear
-            echo -e "${orange}─────────────────────────────────────────${neutral}"
-            echo -e "   ${green}      BACKUP/RESTORE SERVER   ${neutral}"
-            echo -e "${orange}─────────────────────────────────────────${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "                   ${green}      BACKUP/RESTORE SERVER   ${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
             echo -e "       ${green}•${neutral} backup via web"
             echo -e "       ${green}•${neutral} restore via web"
             echo -e "       ${green}•${neutral} server backup restore"
-            echo -e "${orange}─────────────────────────────────────────${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
             echo "Please Download/Restore files via web interface."
             echo "Server running at http://$ipv4:5000"
             node /usr/bin/backuprestore.js
             echo "  Process completed, web server stopped."
             echo "      Please restart the server"
-            print_rainbow "─────────────────────────────────────────"
+            print_rainbow "══════════════════════════════════════════════════════════════════════"
             echo -e ""
         }
 

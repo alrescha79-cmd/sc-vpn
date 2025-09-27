@@ -51,11 +51,11 @@ check_trojan() {
     echo -e "${reset}\n"
 
     # Tabel
-    echo -e "${orange}──────────────────────────────────────────${reset}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
     echo -e "${green}${bold}       TROJAN USER LOGIN ACCOUNTS${reset}"
-    echo -e "${orange}──────────────────────────────────────────${reset}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
     echo -e "Username     | Usage  | Quota  | Log | Lim | Status"
-    echo -e "──────────────────────────────────────────"
+    echo -e "══════════════════════════════════════════════════════════════════════"
 
     for user in "${USER_LIST[@]}"; do
         ip_count=$(get_login_count "$user" "$LOG_FILE")
@@ -80,7 +80,7 @@ check_trojan() {
                "$user" "$readable_usage" "$readable_quota" "$ip_count" "$ip_limit" "$status"
     done
 
-    echo -e "${orange}──────────────────────────────────────────${reset}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
 }
 
 check_trojan

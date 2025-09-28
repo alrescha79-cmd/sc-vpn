@@ -13,6 +13,80 @@ pink="\e[38;5;205m"
 reset="\e[0m"
 gray="\e[38;5;245m"
 
+# Load Telegram configuration if available
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+if [ -f "$SCRIPT_DIR/telegram-config.sh" ]; then
+    source "$SCRIPT_DIR/telegram-config.sh" >/dev/null 2>&1
+else
+    # Default fallback configuration
+    TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:8326605319:AAGuWd4il0MV4UMQ4ZFZFfF-ji_hIW1UfkE}"
+    TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:647143027}"
+    ENABLE_START_NOTIFICATION=true
+    ENABLE_SUCCESS_NOTIFICATION=true
+    ENABLE_UNAUTHORIZED_NOTIFICATION=true
+    ENABLE_EXPIRED_NOTIFICATION=true
+    TELEGRAM_PARSE_MODE="HTML"
+    TELEGRAM_TIMEOUT=10
+fi
+
+# Function to send Telegram notification
+send_telegram_notification() {
+    local message="$1"
+    local parse_mode="${2:-$TELEGRAM_PARSE_MODE}"
+    local notification_type="${3:-general}"
+    
+    # Check if the specific notification type is enabled
+    case "$notification_type" in
+        "start")
+            [ "$ENABLE_START_NOTIFICATION" != "true" ] && return 0
+            ;;
+        "success")
+            [ "$ENABLE_SUCCESS_NOTIFICATION" != "true" ] && return 0
+            ;;
+        "unauthorized")
+            [ "$ENABLE_UNAUTHORIZED_NOTIFICATION" != "true" ] && return 0
+            ;;
+        "expired")
+            [ "$ENABLE_EXPIRED_NOTIFICATION" != "true" ] && return 0
+            ;;
+    esac
+    
+    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+        local response=$(curl -s --connect-timeout "${TELEGRAM_TIMEOUT:-10}" \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${message}" \
+            -d "parse_mode=${parse_mode}" \
+            -d "disable_web_page_preview=true" 2>/dev/null)
+        
+        # Optional: Log response for debugging
+        if [[ "$response" =~ "\"ok\":true" ]]; then
+            echo -e "${green}✓ Notifikasi Telegram berhasil dikirim${neutral}" >/dev/stderr
+        else
+            echo -e "${yellow}⚠ Gagal mengirim notifikasi Telegram${neutral}" >/dev/stderr
+        fi
+    else
+        echo -e "${gray}ℹ Notifikasi Telegram dilewati (konfigurasi tidak lengkap)${neutral}" >/dev/stderr
+    fi
+}
+
+# Function to get system information for notification
+get_system_info() {
+    local server_ip=$(curl -s --connect-timeout 5 ipinfo.io/ip || echo "Unknown")
+    local server_city=$(curl -s --connect-timeout 5 ipinfo.io/city || echo "Unknown")
+    local server_region=$(curl -s --connect-timeout 5 ipinfo.io/region || echo "Unknown")
+    local server_country=$(curl -s --connect-timeout 5 ipinfo.io/country || echo "Unknown")
+    local server_org=$(curl -s --connect-timeout 5 ipinfo.io/org || echo "Unknown")
+    local server_timezone=$(curl -s --connect-timeout 5 ipinfo.io/timezone || echo "Unknown")
+    local server_hostname=$(hostname || echo "Unknown")
+    local server_os=$(cat /etc/os-release | grep PRETTY_NAME | cut -d '"' -f 2 || echo "Unknown")
+    local server_kernel=$(uname -r || echo "Unknown")
+    local server_arch=$(uname -m || echo "Unknown")
+    local install_time=$(date '+%Y-%m-%d %H:%M:%S %Z')
+    
+    echo "${server_ip}|${server_city}|${server_region}|${server_country}|${server_org}|${server_timezone}|${server_hostname}|${server_os}|${server_kernel}|${server_arch}|${install_time}"
+}
+
 # Function to print rainbow text
 print_rainbow() {
     local text="$1"
@@ -184,6 +258,34 @@ if [ -z "$user_id" ]; then
     mkdir -p /var/log/setup
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] UNAUTHORIZED ACCESS ATTEMPT - IP: $ip, ISP: $isp, City: $city" >> /var/log/setup/unauthorized.log
     
+    # Send Telegram notification for unauthorized access
+    system_info=$(get_system_info)
+    IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch attempt_time <<< "$system_info"
+    
+    unauthorized_message="🚨 <b>AKSES TIDAK SAH TERDETEKSI!</b>
+
+⚠️ <b>Detail Percobaan Akses:</b>
+🆔 IP Address: <code>${server_ip}</code>
+⏰ Waktu Percobaan: <code>${attempt_time}</code>
+
+🌍 <b>Lokasi Penyerang:</b>
+🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
+🏢 ISP: <code>${server_org}</code>
+🕐 Timezone: <code>${server_timezone}</code>
+
+💻 <b>Sistem yang Digunakan:</b>
+🖥️ Hostname: <code>${server_hostname}</code>
+📦 OS: <code>${server_os}</code>
+🔧 Kernel: <code>${server_kernel}</code>
+
+❌ <b>Status:</b> Akses ditolak - IP tidak terdaftar
+📝 <b>Tindakan:</b> Percobaan akses telah dicatat
+🔒 <b>Keamanan:</b> Script telah dihentikan
+
+📞 <b>Admin:</b> @Alrescha79"
+
+    send_telegram_notification "$unauthorized_message" "HTML" "unauthorized"
+    
     echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${red}║                           AKSES DITOLAK                        ║${neutral}"
     echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
@@ -214,6 +316,35 @@ if [[ "$exp_date" < "$current_date" ]]; then
     mkdir -p /var/log/setup
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] EXPIRED ACCESS ATTEMPT - User: $user_id, IP: $ip, Expired: $exp_date" >> /var/log/setup/expired.log
     
+    # Send Telegram notification for expired access
+    system_info=$(get_system_info)
+    IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch attempt_time <<< "$system_info"
+    
+    expired_message="⏰ <b>AKSES KADALUARSA TERDETEKSI!</b>
+
+📊 <b>Detail Pengguna:</b>
+👤 User ID: <code>${user_id}</code>
+🆔 IP Address: <code>${server_ip}</code>
+⏰ Waktu Percobaan: <code>${attempt_time}</code>
+📅 Tanggal Kadaluarsa: <code>${exp_date}</code>
+📅 Tanggal Sekarang: <code>${current_date}</code>
+
+🌍 <b>Lokasi Server:</b>
+🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
+🏢 ISP: <code>${server_org}</code>
+
+💻 <b>Sistem:</b>
+🖥️ Hostname: <code>${server_hostname}</code>
+📦 OS: <code>${server_os}</code>
+
+❌ <b>Status:</b> Akses ditolak - Lisensi telah expired
+📝 <b>Tindakan:</b> Percobaan akses telah dicatat
+💰 <b>Solusi:</b> Perpanjang lisensi untuk melanjutkan
+
+📞 <b>Perpanjangan:</b> @Alrescha79"
+
+    send_telegram_notification "$expired_message" "HTML" "expired"
+    
     echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
     echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
@@ -243,6 +374,36 @@ days_left=$(( ( $(date -d "$exp_date" +%s) - $(date -d "$current_date" +%s) ) / 
 mkdir -p /var/log/setup
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] AUTHORIZED ACCESS - User: $user_id, IP: $ip, Expires: $exp_date, Days Left: $days_left" >> /var/log/setup/authorized.log
 
+# Send Telegram notification for successful script usage
+echo -e "${blue}Mengirim notifikasi Telegram...${neutral}"
+system_info=$(get_system_info)
+IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch install_time <<< "$system_info"
+
+telegram_message="🚀 <b>Alrescha79 VPN Script - Instalasi Dimulai</b>
+
+📊 <b>Detail Pengguna:</b>
+👤 User ID: <code>${user_id}</code>
+🆔 IP Address: <code>${server_ip}</code>
+⏰ Waktu Instalasi: <code>${install_time}</code>
+📅 Masa Berlaku: <code>${exp_date}</code>
+⏳ Sisa Waktu: <code>${days_left} hari</code>
+
+🌍 <b>Informasi Server:</b>
+🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
+🏢 ISP: <code>${server_org}</code>
+🕐 Timezone: <code>${server_timezone}</code>
+🖥️ Hostname: <code>${server_hostname}</code>
+
+💻 <b>Sistem Operasi:</b>
+📦 OS: <code>${server_os}</code>
+🔧 Kernel: <code>${server_kernel}</code>
+🏗️ Architecture: <code>${server_arch}</code>
+
+🔧 <b>Status:</b> Instalasi sedang berlangsung...
+📞 <b>Support:</b> @Alrescha79"
+
+send_telegram_notification "$telegram_message" "HTML" "start"
+
 echo -e "${green}╔════════════════════════════════════════════════════════════════╗${neutral}"
 echo -e "${green}║                          AKSES DITERIMA                        ║${neutral}"
 echo -e "${green}╠════════════════════════════════════════════════════════════════╣${neutral}"
@@ -253,6 +414,7 @@ echo -e "${green}║  ✓ Masa Berlaku: ${exp_date}                             
 echo -e "${green}║  ✓ Sisa Waktu: ${days_left} hari                              ${neutral}"
 echo -e "${green}║  ✓ Lokasi: ${city}                                            ${neutral}"
 echo -e "${green}║  ✓ ISP: ${isp}                                                ${neutral}"
+echo -e "${green}║  ✓ Notifikasi Telegram terkirim                               ${neutral}"
 echo -e "${green}╚════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
 
@@ -1219,10 +1381,42 @@ fi
 
 
 clear
+
+# Send completion notification to Telegram
+echo -e "${blue}Mengirim notifikasi penyelesaian instalasi...${neutral}"
+completion_time=$(date '+%Y-%m-%d %H:%M:%S %Z')
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "Not configured")
+
+completion_message="✅ <b>Alrescha79 VPN Script - Instalasi Selesai</b>
+
+📊 <b>Detail Pengguna:</b>
+👤 User ID: <code>${user_id}</code>
+🆔 IP Address: <code>${server_ip}</code>
+🌐 Domain: <code>${domain}</code>
+⏰ Waktu Selesai: <code>${completion_time}</code>
+
+🌍 <b>Informasi Server:</b>
+🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
+🏢 ISP: <code>${server_org}</code>
+🖥️ Hostname: <code>${server_hostname}</code>
+
+💻 <b>Sistem:</b>
+📦 OS: <code>${server_os}</code>
+🔧 Kernel: <code>${server_kernel}</code>
+
+🎉 <b>Status:</b> Instalasi berhasil diselesaikan!
+🔄 <b>Selanjutnya:</b> Server akan restart dalam beberapa saat
+📞 <b>Support:</b> @Alrescha79
+
+🚀 Server VPN siap digunakan setelah restart!"
+
+send_telegram_notification "$completion_message" "HTML" "success"
+
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 echo -e "${green}           INSTALLASI SELESAI            ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 echo -e "${green}  Selamat! Proses instalasi selesai.${neutral}"
+echo -e "${green}  ✓ Notifikasi Telegram telah dikirim.${neutral}"
 echo -e "${gray}Silakan reboot server Anda dengan 'enter'.${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 read -p "Tekan enter untuk reboot server..."

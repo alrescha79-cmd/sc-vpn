@@ -66,17 +66,17 @@ clear
 # Domain setup
 if [ -z "$1" ]; then
     clear
-    echo -e "${green}╔════════════════════════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${green}╔═════════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}                            SELAMAT DATANG DI SCRIPT INSTALASI                          ${neutral}"
     echo -e "${green}                                  Alrescha79 Panel VPN                                  ${neutral}"
     echo -e "${green}                                      Script Premium                                    ${neutral}"
-    echo -e "${green}╚════════════════════════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e "${green}╚═════════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     echo -e "${yellow}                  Copyright${reset} (C)${gray} https://t.me/Alrescha79${reset}"
     echo -e ""
-    echo -e "${green}══════════════════════════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}═══════════════════════════════════════════════════════════════════════════${neutral}"
     echo -e "${yellow}                    Masukkan domain Anda untuk memulai instalasi:                        ${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}═════════════════════════════════════════════════════════════ ══════════════${neutral}"
     echo -e ""
     read -p "  Masukkan domain Anda: " domain
 else

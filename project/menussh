@@ -70,7 +70,7 @@ validate_access() {
         echo -e "${red}║                        AKSES KADALUARSA                           ║${neutral}"
         echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e ""
-        echo -e " Masa aktif script Anda telah berakhir!"
+        echo -e " Akses untuk IP Anda telah kadaluarsa!"
         echo -e ""
         echo -e " Detail Akses:"
         echo -e "   • User ID: ${username}"

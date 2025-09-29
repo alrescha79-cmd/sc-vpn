@@ -301,7 +301,7 @@ display_menu() {
     echo -e "${gray}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${gray}║                            INFORMASI SCRIPT                           ║${neutral}"
     echo -e "${gray}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "              ${green}SCRIPT VERSION:${neutral} 4.0.1    │    ${green}AUTHOR:${neutral} Alrescha79"
+    echo -e "              ${green}SCRIPT VERSION:${neutral} 1.0.1    │    ${green}AUTHOR:${neutral} Alrescha79"
     echo -e "${gray}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     

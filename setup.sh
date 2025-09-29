@@ -19,8 +19,8 @@ if [ -f "$SCRIPT_DIR/telegram-config.sh" ]; then
     source "$SCRIPT_DIR/telegram-config.sh" >/dev/null 2>&1
 else
     # Default fallback configuration
-    TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:8326605319:AAGuWd4il0MV4UMQ4ZFZFfF-ji_hIW1UfkE}"
-    TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:647143027}"
+    TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+    TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
     ENABLE_START_NOTIFICATION=true
     ENABLE_SUCCESS_NOTIFICATION=true
     ENABLE_UNAUTHORIZED_NOTIFICATION=true

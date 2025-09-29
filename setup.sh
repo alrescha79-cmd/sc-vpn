@@ -15,19 +15,40 @@ gray="\e[38;5;245m"
 
 # Load Telegram configuration if available
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-if [ -f "$SCRIPT_DIR/telegram-config.sh" ]; then
-    source "$SCRIPT_DIR/telegram-config.sh" >/dev/null 2>&1
+TELEGRAM_CONFIG_URL="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/telegram-config.sh"
+
+echo -e "${blue}Mengunduh konfigurasi Telegram...${neutral}"
+
+# Download telegram-config.sh dari GitHub
+if wget -q -O "$SCRIPT_DIR/telegram-config.sh" "$TELEGRAM_CONFIG_URL"; then
+    chmod +x "$SCRIPT_DIR/telegram-config.sh"
+    echo -e "${green}✓ Konfigurasi Telegram berhasil diunduh${neutral}"
+    
+    # Load konfigurasi
+    if source "$SCRIPT_DIR/telegram-config.sh" >/dev/null 2>&1; then
+        echo -e "${green}✓ Konfigurasi Telegram berhasil dimuat${neutral}"
+        echo -e "${gray}Bot Token: ${TELEGRAM_BOT_TOKEN:0:10}...${neutral}" >/dev/stderr
+        echo -e "${gray}Chat ID: ${TELEGRAM_CHAT_ID}${neutral}" >/dev/stderr
+    else
+        echo -e "${yellow}⚠ Gagal memuat konfigurasi Telegram${neutral}" >/dev/stderr
+        TELEGRAM_BOT_TOKEN=""
+        TELEGRAM_CHAT_ID=""
+    fi
 else
-    # Default fallback configuration
+    echo -e "${yellow}⚠ Gagal mengunduh konfigurasi Telegram dari GitHub${neutral}"
+    echo -e "${gray}ℹ Notifikasi Telegram akan dilewati${neutral}"
+    # Default configuration - no credentials
     TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
     TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
-    ENABLE_START_NOTIFICATION=true
-    ENABLE_SUCCESS_NOTIFICATION=true
-    ENABLE_UNAUTHORIZED_NOTIFICATION=true
-    ENABLE_EXPIRED_NOTIFICATION=true
-    TELEGRAM_PARSE_MODE="HTML"
-    TELEGRAM_TIMEOUT=10
 fi
+
+# Set default notification settings
+ENABLE_START_NOTIFICATION=true
+ENABLE_SUCCESS_NOTIFICATION=true
+ENABLE_UNAUTHORIZED_NOTIFICATION=true
+ENABLE_EXPIRED_NOTIFICATION=true
+TELEGRAM_PARSE_MODE="HTML"
+TELEGRAM_TIMEOUT=10
 
 # Function to send Telegram notification
 send_telegram_notification() {

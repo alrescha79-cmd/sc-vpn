@@ -22,20 +22,20 @@ domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 # uuid=$(cat /proc/sys/kernel/random/uuid)
 
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "                       Add Xray Vless Account"
+echo -e "                       Tambah Akun Xray Vless"
 echo -e "══════════════════════════════════════════════════════════════════════"
 
 while true; do
-    read -p "   Name: " user
+    read -p "   Nama: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-        echo -e "${red}   Username cannot be empty${reset}"
+        echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
         continue
     fi
     if grep -q "^### $user " /etc/xray/vless/config.json; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+        echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
         break
     else
         break
@@ -43,24 +43,23 @@ while true; do
 done
 
 
-
-read -p "Password: " uuid
+read -p "   Kata sandi/UUID: " uuid
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Active period (days): " duration
+    read -p "   Masa aktif (hari): " duration
     if [[ -z "$duration" ]]; then
-        echo -e "${red}Active period cannot be empty. Please try again.${reset}"
+        echo -e "${red}Masa aktif tidak boleh kosong. Silakan coba lagi.${reset}"
     fi
 done
 until [[ $quota =~ ^[0-9]+$ ]]; do
-    read -p "   User Quota (GB): " quota
+    read -p "   Kuota Pengguna (GB): " quota
     if [[ -z "$quota" ]]; then
-        echo -e "${red}Quota limit cannot be empty. Please try again.${reset}"
+        echo -e "${red}Kuota tidak boleh kosong. Silakan coba lagi.${reset}"
     fi
 done
 until [[ $ip_limit =~ ^[0-9]+$ ]]; do
-    read -p "   User Limit (IP): " ip_limit
+    read -p "   Batas IP Pengguna: " ip_limit
     if [[ -z "$ip_limit" ]]; then
-        echo -e "${red}IP limit cannot be empty. Please try again.${reset}"
+        echo -e "${red}Batas IP tidak boleh kosong. Silakan coba lagi.${reset}"
     fi
 done
 
@@ -73,11 +72,11 @@ send_telegram_notification() {
     if [ -f '/root/.vars' ]; then
         source '/root/.vars'
         
-        if [ "$status" == "success" ]; then
-            message="
+    if [ "$status" == "success" ]; then
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>✅ vless ACCOUNT CREATED</b>
+<b>✅ AKUN VLESS BERHASIL DIBUAT</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🆔 User ID:</b> <code>$uuid</code>
@@ -105,16 +104,16 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
-        else
-            message="
+    else
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>❌ vless ACCOUNT CREATION FAILED</b>
+<b>❌ GAGAL MEMBUAT AKUN VLESS</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🆔 User ID:</b> <code>$uuid</code>
+<b>👤 Nama Pengguna:</b> <code>$user</code>
+<b>🆔 ID Pengguna:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Error:</b> <code>$error_msg</code>
+<b>❗ Kesalahan:</b> <code>$error_msg</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -123,7 +122,7 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            -d "text=$message" > /dev/null 2>&1
+            --data-urlencode "text=$message" > /dev/null 2>&1
     fi
 }
 
@@ -131,24 +130,23 @@ send_telegram_notification() {
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vless/config.json" ]; then
-    echo -e "${red}Vless configuration file not found. Creating new file...${reset}"
+    echo -e "${red}File konfigurasi Vless tidak ditemukan. Membuat file baru...${reset}"
     mkdir -p /etc/xray/vless
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
 fi
 if ! sed -i '/#vless$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
-    echo -e "${red}Failed to add user to config.json${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json"
+},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vless/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json"
     exit 1
 fi
 if ! sed -i '/#vlessgrpc$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
-    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
+},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vless/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (GRPC)"
     exit 1
 fi
 
-# Create configuration files
 cat >/etc/xray/vless/$user-tls.json <<EOF
 {
     "v": "2",
@@ -273,14 +271,14 @@ vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&
 
 # Restart services
 if ! systemctl restart vless@config >/dev/null 2>&1; then
-    echo -e "${red}Failed to restart vless service. Please check system logs for more information.${reset}"
-    send_telegram_notification "error" "$user" "Failed to restart vless service"
+    echo -e "${red}Gagal memulai ulang layanan Vless. Periksa log sistem untuk informasi lebih lanjut.${reset}"
+    send_telegram_notification "error" "$user" "Gagal memulai ulang layanan Vless"
     exit 1
 fi
 
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vless/config.json" ]; then
-    echo "Warning: Vless configuration file not found. Creating new file..."
+    echo "Peringatan: File konfigurasi Vless tidak ditemukan. Membuat file baru..."
     mkdir -p /etc/xray/vless
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
     systemctl restart vless@config
@@ -288,10 +286,10 @@ fi
 
 # Create directory if it doesn't exist
 if [ ! -d "/etc/xray/vless" ]; then
-    echo "Directory /etc/xray/vless not found. Creating directory..."
+    echo "Direktori /etc/xray/vless tidak ditemukan. Membuat direktori..."
     mkdir -p /etc/xray/vless
     if [ $? -ne 0 ]; then
-        echo "Failed to create directory /etc/xray/vless. Make sure you have sufficient permissions."
+        echo "Gagal membuat direktori /etc/xray/vless. Pastikan Anda memiliki izin yang cukup."
         exit 1
     fi
 fi

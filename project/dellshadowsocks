@@ -90,30 +90,26 @@ send_telegram_notification() {
 # variables
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "━━━━━━━━━━ HAPUS AKUN SHADOWSOCKS ━━━━━━━━━━"
 
 account_count=$(grep -c -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "  no customer names available"
+    echo "  Tidak ada akun tersedia"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}Select account to delete:${reset}"
-echo -e "${green}1) Choose by number${reset}"
-echo -e "${green}2) Type username manually${reset}"
-read -p "your choice [1-2]: " delete_choice
+echo -e "${yellow}Pilih metode untuk menghapus akun:${reset}"
+echo -e "${green}1) Pilih berdasarkan nomor${reset}"
+echo -e "${green}2) Ketik username manual${reset}"
+read -p "Pilihan anda [1-2]: " delete_choice
 if [[ $delete_choice == "1" ]]; then
     clear
-    print_rainbow "┌─────────────────────────────────────────┐"
-    print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
-    print_rainbow "└─────────────────────────────────────────┘"
-            echo " ┌────┬────────────────────┬─────────────┐"
-            echo " │ no │ username           │     exp     │"
-            echo " ├────┼────────────────────┼─────────────┤"
+    print_rainbow "━━━━━━━━━━ DAFTAR AKUN SHADOWSOCKS ━━━━━━━━━━"
+            echo " ┌────┬────────────────────┬──────────────┐"
+            echo " │ No │ Username           │ Sisa (hari)  │"
+            echo " ├────┼────────────────────┼──────────────┤"
     grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -121,53 +117,51 @@ if [[ $delete_choice == "1" ]]; then
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf " │ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+        printf " │ %-2d │ %-18s │ %-12s │\n", NR, $2, days_left " hari"
     }'
-    echo " └────┴────────────────────┴─────────────┘"
+    echo " └────┴────────────────────┴──────────────┘"
     
 fi
 
 case $delete_choice in
     1)
         until [[ ${account_number} -ge 1 && ${account_number} -le ${account_count} ]]; do
-            read -rp "Choose account number [1-${account_count}]: " account_number
+            read -rp "Pilih nomor akun [1-${account_count}]: " account_number
         done
         user=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
         exp=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3 | sed -n "${account_number}p")
         echo ""
-        print_rainbow "┌─────────────────────────────────────────┐"
-        print_rainbow "│            SELECTED ACCOUNT             │"
-        print_rainbow "└─────────────────────────────────────────┘"
-        echo -e "Username     : ${green}$user${reset}"
-        echo -e "Expiry       : ${yellow}$exp${reset}"
+        print_rainbow "━━━━━━━━━━ AKUN TERPILIH ━━━━━━━━━━"
+        echo -e "Username : ${green}$user${reset}"
+        echo -e "Kadaluarsa : ${yellow}$exp${reset}"
         echo ""
         sleep 2
         ;;
     2)
-        read -rp "enter username: " user
+        read -rp "Masukkan username: " user
         if ! grep -qE "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db"; then
-            echo "username not found"
+            echo "Username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3)
-        echo "You selected: $user (Expiry: $exp)"
+        echo "Dipilih: $user (Kadaluarsa: $exp)"
         ;;
     *)
-        echo "invalid choice"
+        echo "Pilihan tidak valid"
         exit 1
         ;;
 esac
 
 # Delete user from config and database
 if ! sed -i "/^### $user $exp/,/^},{/d" /etc/xray/shadowsocks/config.json; then
-    echo "Error: Failed to remove user from config.json"
-    send_telegram_notification "error" "$user" "Failed to remove user from config.json"
+    echo "Kesalahan: Gagal menghapus user dari config.json"
+    send_telegram_notification "error" "$user" "Gagal hapus user dari config.json"
     exit 1
 fi
 
 if ! sed -i "/^### $user $exp/d" /etc/xray/shadowsocks/.shadowsocks.db; then
-    echo "Error: Failed to remove user from database"
-    send_telegram_notification "error" "$user" "Failed to remove user from database"
+    echo "Kesalahan: Gagal menghapus user dari database"
+    send_telegram_notification "error" "$user" "Gagal hapus user dari database"
     exit 1
 fi
 
@@ -180,20 +174,18 @@ if [ -f "/etc/xray/shadowsocks/log-create-${user}.log" ]; then
 fi
 
 if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then
-    echo "Warning: Failed to restart shadowsocks service. Please check system logs for more information."
-    echo "However, the account has been successfully removed from the database."
-    send_telegram_notification "error" "$user" "Failed to restart shadowsocks service, but account deleted"
+    echo "Peringatan: Gagal restart service shadowsocks. Periksa log sistem."
+    echo "Akun sudah terhapus dari database."
+    send_telegram_notification "error" "$user" "Gagal restart service shadowsocks, akun sudah dihapus"
 else
     # Send success notification
     send_telegram_notification "success" "$user"
 fi
 
 clear
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
-print_rainbow "└─────────────────────────────────────────┘"
-echo -e "username     : ${green}$user${reset}"
-echo -e "account has been permanently deleted"
+print_rainbow "━━━━━━━━━━ AKUN SHADOWSOCKS DIHAPUS ━━━━━━━━━━"
+echo -e "Username : ${green}$user${reset}"
+echo -e "Status   : Akun berhasil dihapus permanen"
 echo ""
-read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu"
 menu

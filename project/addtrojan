@@ -23,20 +23,20 @@ domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 
 # Exception handling for missing configuration files
 if [ ! -f "/etc/xray/trojan/config.json" ]; then
-    echo "Trojan configuration file not found. Creating a new file..."
+    echo "File konfigurasi Trojan tidak ditemukan. Membuat file baru..."
     mkdir -p /etc/xray/trojan
     echo '{"inbounds": []}' > /etc/xray/trojan/config.json
 fi
 
 # Exception handling for missing directory
 if [ ! -d "/etc/xray/trojan" ]; then
-    echo "Directory /etc/xray/trojan not found. Creating directory..."
+    echo "Direktori /etc/xray/trojan tidak ditemukan. Membuat direktori..."
     mkdir -p /etc/xray/trojan
 fi
 
 # Exception handling for missing database file
 if [ ! -f "/etc/xray/trojan/.trojan.db" ]; then
-    echo "Trojan database file not found. Creating a new file..."
+    echo "File database Trojan tidak ditemukan. Membuat file baru..."
     touch /etc/xray/trojan/.trojan.db
 fi
 
@@ -44,38 +44,37 @@ clear
 
 # User data input
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "                       Add Xray Trojan Account"
+echo -e "                       Tambah Akun Xray Trojan"
 echo -e "══════════════════════════════════════════════════════════════════════"
 
 
 while true; do
-    read -p "   Name: " user
+    read -p "   Nama: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-        echo -e "${red}   Username cannot be empty${reset}"
-        continue
+        echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
+    continue
     fi
     if grep -q "^### $user " /etc/xray/trojan/config.json; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+    echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
         break
     else
         break
     fi
 done
 
-
-read -p "Password: " uuid
+read -p "   Kata sandi/UUID: " uuid
 
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Active period (days): " duration
+    read -p "   Masa aktif (hari): " duration
 done
 until [[ $quota =~ ^[0-9]+$ ]]; do
-    read -p "   User Quota (GB): " quota
+    read -p "   Kuota Pengguna (GB): " quota
 done
 until [[ $ip_limit =~ ^[0-9]+$ ]]; do
-    read -p "   User Limit (IP): " ip_limit
+    read -p "   Batas IP Pengguna: " ip_limit
 done
 
 # Function to send Telegram notification
@@ -91,7 +90,7 @@ send_telegram_notification() {
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>✅ trojan ACCOUNT CREATED</b>
+<b>✅ AKUN TROJAN BERHASIL DIBUAT</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🆔 User ID:</b> <code>$uuid</code>
@@ -123,12 +122,12 @@ send_telegram_notification() {
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>❌ trojan ACCOUNT CREATION FAILED</b>
+<b>❌ GAGAL MEMBUAT AKUN TROJAN</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🆔 User ID:</b> <code>$uuid</code>
+<b>👤 Nama Pengguna:</b> <code>$user</code>
+<b>🆔 ID Pengguna:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Error:</b> <code>$error_msg</code>
+<b>❗ Kesalahan:</b> <code>$error_msg</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -137,7 +136,7 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            -d "text=$message" > /dev/null 2>&1
+            --data-urlencode "text=$message" > /dev/null 2>&1
     fi
 }
 
@@ -145,21 +144,15 @@ send_telegram_notification() {
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if ! sed -i '/#trojan$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
-    echo -e "${red}Failed to add user to config.json${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json"
+},{"password": '"""$uuid"""',"email": '"""$user"""' /etc/xray/trojan/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json"
     exit 1
 fi
 if ! sed -i '/#trojangrpc$/a\### '"$user $exp"'\
-},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
-    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
-    exit 1
-fi
-
-# Create configuration files
-cat > /etc/xray/trojan/$user-tls.json <<EOF
-{
+},{"password": '"""$uuid"""',"email": '"""$user"""' /etc/xray/trojan/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (GRPC)"
     "v": "2",
     "ps": "$user WS (CDN) TLS",
     "add": "${domain}",
@@ -273,8 +266,8 @@ trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serv
 
 # Restart Trojan service
 if ! systemctl restart trojan@config > /dev/null 2>&1; then
-    echo -e "${red}Failed to restart Trojan service. Please check system logs for more information.${reset}"
-    send_telegram_notification "error" "$user" "Failed to restart Trojan service"
+    echo -e "${red}Gagal memulai ulang layanan Trojan. Periksa log sistem untuk informasi lebih lanjut.${reset}"
+    send_telegram_notification "error" "$user" "Gagal memulai ulang layanan Trojan"
     exit 1
 fi
 
@@ -291,7 +284,7 @@ if [ ! -d "/etc/xray/trojan" ]; then
     echo "Directory /etc/xray/trojan not found. Creating directory..."
     mkdir -p /etc/xray/trojan
     if [ $? -ne 0 ]; then
-        echo "Failed to create directory /etc/xray/trojan. Make sure you have sufficient permissions."
+    echo "Gagal membuat direktori /etc/xray/trojan. Pastikan Anda memiliki izin yang cukup."
         exit 1
     fi
 fi

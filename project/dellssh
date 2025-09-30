@@ -95,32 +95,28 @@ send_telegram_notification() {
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
 
-print_rainbow "┌─────────────────────────────────────────┐"
-print_rainbow "│        DELETE SSH OVPN ACCOUNT          │"
-print_rainbow "└─────────────────────────────────────────┘"
+print_rainbow "━━━━━━━━━━ HAPUS AKUN SSH / OVPN ━━━━━━━━━━"
 
 account_count=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "         No accounts available"
+    echo "   Tidak ada akun tersedia"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}choose how to delete the account:${reset}"
-echo -e "${green}1) select by number${reset}"
-echo -e "${green}2) enter username manually${reset}"
-read -p "your choice [1-2]: " delete_choice
+echo -e "${yellow}Pilih metode penghapusan akun:${reset}"
+echo -e "${green}1) Pilih berdasarkan nomor${reset}"
+echo -e "${green}2) Masukkan username manual${reset}"
+read -p "Pilihan anda [1-2]: " delete_choice
 
 case $delete_choice in
     1)
         clear
-        print_rainbow "┌─────────────────────────────────────────┐"
-        print_rainbow "│        DELETE SSH OVPN ACCOUNT          │"
-        print_rainbow "└─────────────────────────────────────────┘"
-        echo " ┌────┬────────────────────┬─────────────┐"
-        echo " │ No │ Username           │  Days Left  │"
-        echo " ├────┼────────────────────┼─────────────┤"
+        print_rainbow "━━━━━━━━━━ DAFTAR AKUN SSH / OVPN ━━━━━━━━━━"
+        echo " ┌────┬────────────────────┬──────────────┐"
+        echo " │ No │ Username           │ Sisa (hari)  │"
+        echo " ├────┼────────────────────┼──────────────┤"
         grep -E "^### " "/etc/ssh/.ssh.db" | awk '{
             cmd = "date -d \"" $3 "\" +%s"
             cmd | getline exp_timestamp
@@ -128,36 +124,36 @@ case $delete_choice in
             current_timestamp = systime()
             days_left = int((exp_timestamp - current_timestamp) / 86400)
             if (days_left < 0) days_left = 0
-            printf " │ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+            printf " │ %-2d │ %-18s │ %-12s │\n", NR, $2, days_left " hari"
         }'
-        echo " └────┴────────────────────┴─────────────┘"
+        echo " └────┴────────────────────┴──────────────┘"
         echo ""
         
         until [[ $client_number =~ ^[0-9]+$ && $client_number -ge 1 && $client_number -le $account_count ]]; do
-            read -rp "select account number [1-${account_count}]: " client_number
+            read -rp "Pilih nomor akun [1-${account_count}]: " client_number
         done
         
         user=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2 | sed -n "${client_number}"p)
         exp=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 3 | sed -n "${client_number}"p)
         ;;
     2)
-        read -rp "Enter username: " user
+        read -rp "Masukkan username: " user
         if ! grep -qE "^### $user " "/etc/ssh/.ssh.db"; then
-            echo "Username not found"
+            echo "Username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/ssh/.ssh.db" | cut -d ' ' -f 3)
         ;;
     *)
-        echo "Invalid choice"
+        echo "Pilihan tidak valid"
         exit 1
         ;;
 esac
 
-# Deletion confirmation
-read -p "Are you sure you want to delete the account $user? (y/n): " confirm
+# Konfirmasi
+read -p "Yakin ingin menghapus akun $user? (y/n): " confirm
 if [[ $confirm != "y" && $confirm != "Y" ]]; then
-    echo "Account deletion cancelled"
+    echo "Penghapusan dibatalkan"
     exit 0
 fi
 
@@ -165,27 +161,20 @@ fi
 if userdel -f $user 2>/dev/null; then
     if sed -i "/^### $user/d" /etc/ssh/.ssh.db; then
         rm -f /etc/xray/log-createssh-$user.log
-        
-        # Send success notification
         send_telegram_notification "success" "$user"
-        
         clear
-        print_rainbow "┌─────────────────────────────────────────┐"
-        print_rainbow "│  SSH/OVPN ACCOUNT DELETED SUCCESSFULLY  │"
-        print_rainbow "└─────────────────────────────────────────┘"
-        echo -e "  Username : $user"
-        echo -e "  Expiration Date : $exp"
-        print_rainbow "  ───────────────────────────"
+        print_rainbow "━━━━━━━━━━ AKUN SSH/OVPN DIHAPUS ━━━━━━━━━━"
+        echo -e "Username    : $user"
+        echo -e "Kadaluarsa  : $exp"
+        echo -e "Status      : Berhasil dihapus"
+        print_rainbow "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     else
-        echo "Failed to remove user from database"
-        send_telegram_notification "error" "$user" "Failed to remove user from database"
+        echo "Gagal menghapus user dari database"
+        send_telegram_notification "error" "$user" "Gagal hapus user dari database"
     fi
 else
-    echo "Failed to delete account. Please check if the username is correct."
-    send_telegram_notification "error" "$user" "Failed to delete user account from system"
+    echo "Gagal menghapus akun. Periksa kembali username."
+    send_telegram_notification "error" "$user" "Gagal userdel akun dari sistem"
 fi
 
 echo ""
-echo -e "—————————————————————————————————————"
-echo -e "     SSH/OVPN ACCOUNT DELETED SUCCESSFULLY      "
-echo -e "───────────────────────────"

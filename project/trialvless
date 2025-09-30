@@ -60,17 +60,30 @@ send_telegram_notification() {
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>✨ VLESS TRIAL ACCOUNT CREATED</b>
+<b>✨ AKUN VLESS TRIAL BERHASIL DIBUAT</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
-<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🆔 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>📍 Location:</b> <code>$city</code>
-<b>🔎 VLESS WS Port:</b> <code>443</code>
-<b>🔍 VLESS gRPC Port:</b> <code>443</code>
-<b>⏱️ Duration:</b> <code>$duration minutes</code>
-<b>⏰ Expires:</b> <code>$expiration</code>
-<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>🔒 Port TLS:</b> <code>443</code>
+<b>🔓 Port Non-TLS:</b> <code>80, 8080</code>
+<b>🔧 Port GRPC:</b> <code>443</code>
+<b>🔐 Security:</b> <code>auto</code>
+<b>🌐 Network:</b> <code>WS/gRPC</code>
+<b>📝 Path:</b> <code>/whatever/vless</code>
+<b>⚙️ Service Name:</b> <code>vless-grpc</code>
+<b>📊 Quota:</b> <code>${quota} GB</code>
+<b>⏰ Expires:</b> <code>$exp</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>🔗 TLS Link:</b>
+<code>$vless_tls</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>🔗 Non-TLS Link:</b>
+<code>$vless_non</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>🔗 GRPC Link:</b>
+<code>$vless_grpc</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -78,12 +91,12 @@ send_telegram_notification() {
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>❌ VLESS TRIAL CREATION FAILED</b>
+<b>❌ PEMBUATAN AKUN VLESS TRIAL GAGAL</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
+<b>👤 Nama Pengguna:</b> <code>$user</code>
 <b>🔐 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Error:</b> <code>$error_msg</code>
+<b>❗ Kesalahan:</b> <code>$error_msg</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -109,32 +122,32 @@ uuid=$(cat /proc/sys/kernel/random/uuid)
 
 # Loading animation
 echo ""
-echo -ne "${yellow}Preparing Premium Account${reset}"
+echo -ne "${yellow}Menyiapkan Akun Trial${reset}"
 for i in {1..2}; do
     for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
-        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
+        echo -ne "\r${yellow}Menyiapkan Akun Trial $j${reset}"
         sleep 0.1
     done
 done
-echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
+echo -ne "\r${yellow}Akun Trial Siap Dibuat!${reset}\n"
 sleep 1
 clear
 # User data input
 print_rainbow "┌══════════════════════════════════════════════════════════════════════"
 print_rainbow "                     Script by Alrescha79 Panel VPN  "
-print_rainbow "                     Input xray/vless account deps"
-print_rainbow "                         Enter User Data       "
+print_rainbow "                 Masukkan Data Akun VLESS Trial"
+print_rainbow "                        Input Data Pengguna"
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 
-echo "   Username : $user"
+echo "   Nama Pengguna : $user"
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Active period (minutes): " duration
+    read -p "   Durasi aktif (menit): " duration
     if [[ -z "$duration" ]]; then
-        echo -e "${red}   Active period cannot be empty${reset}"
+        echo -e "${red}   Durasi aktif tidak boleh kosong${reset}"
     fi
 done
 
@@ -142,21 +155,21 @@ done
 expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 exp=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 if [ ! -f "/etc/xray/vless/config.json" ]; then
-    echo "Configuration file not found. Creating new file..."
+    echo "File konfigurasi tidak ditemukan. Membuat file baru..."
     echo '{"inbounds": []}' > /etc/xray/vless/config.json
 fi
 
 if ! sed -i '/#vless$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
-    echo -e "${red}Failed to add VLESS WS user to configuration file${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Failed to add VLESS WS user to configuration file"
+    echo -e "${red}Gagal menambahkan pengguna VLESS WS ke file konfigurasi${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna VLESS WS ke file konfigurasi"
     exit 1
 fi
 
 if ! sed -i '/#vlessgrpc$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
-    echo -e "${red}Failed to add VLESS gRPC user to configuration file${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Failed to add VLESS gRPC user to configuration file"
+    echo -e "${red}Gagal menambahkan pengguna VLESS gRPC ke file konfigurasi${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna VLESS gRPC ke file konfigurasi"
     exit 1
 fi
 
@@ -217,8 +230,8 @@ vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&
 
 # Restart service
 if ! systemctl restart vless@config > /dev/null 2>&1; then
-    echo -e "${red}Failed to restart vless service. Please check system logs for more information.${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Failed to restart vless service"
+    echo -e "${red}Gagal memulai ulang layanan VLESS. Periksa log sistem untuk informasi lebih lanjut.${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Gagal memulai ulang layanan VLESS"
     exit 1
 fi
 

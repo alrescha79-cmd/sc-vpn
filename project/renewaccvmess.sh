@@ -21,25 +21,24 @@ reset="\e[0m"
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│         UPDATE VMESS ACCOUNT            │${reset}"
+echo -e "${green}│         PEMBARUAN AKUN VMESS            │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
 
 account_count=$(grep -c -E "^### " "/etc/xray/vmess/.vmess.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "  No customer names available"
+    echo "  Tidak ada data pengguna yang tersedia"
     echo ""
     exit 0
 fi
 
-# Prompt for username and password directly
-read -rp "Enter username: " user
-# read -rp "Enter password: " uuid
+# Prompt for username directly
+read -rp "Masukkan nama pengguna: " user
 
 # Check if user exists
 if ! grep -qE "^### $user " "/etc/xray/vmess/.vmess.db"; then
     echo ""
-    echo "Username not found"
+    echo "Nama pengguna tidak ditemukan"
     echo ""
     exit 1
 fi
@@ -48,7 +47,7 @@ uuid=$(grep -E "^### $user " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 4)
 stored_uuid=$(grep -E "^### $user " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 4)
 if [[ "$uuid" != "$stored_uuid" ]]; then
     echo ""
-    echo "Password (UUID) does not match"
+    echo "Password (UUID) tidak sesuai"
     echo ""
     exit 1
 fi
@@ -57,7 +56,7 @@ fi
 exp=$(grep -E "^### $user " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 3)
 
 clear
-echo -e "${yellow}Updating premium account $user${reset}"
+echo -e "${yellow}Memperbarui akun VMESS $user${reset}"
 echo ""
 
 # Read expiration date from database
@@ -66,32 +65,32 @@ old_exp=$(grep -E "^### $user " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 3)
 # Calculate remaining active days
 days_left=$((($(date -d "$old_exp" +%s) - $(date +%s)) / 86400))
 
-echo "Remaining active days: $days_left days"
+echo "Sisa masa aktif: $days_left hari"
 
 while true; do
-    read -p "Add active days: " active_days
+    read -p "Tambahkan masa aktif (hari): " active_days
     if [[ "$active_days" =~ ^[0-9]+$ ]]; then
         break
     else
-        echo "Input must be a positive number."
+    echo "Input harus berupa angka positif."
     fi
 done
 
 while true; do
-    read -p "Usage limit (GB, 0 for unlimited): " quota
+    read -p "Batas kuota (GB, 0 untuk tanpa batas): " quota
     if [[ "$quota" =~ ^[0-9]+$ ]]; then
         break
     else
-        echo "Input must be a positive number or 0."
+    echo "Input harus berupa angka positif atau 0."
     fi
 done
 
 while true; do
-    read -p "Device limit (IP, 0 for unlimited): " ip_limit
+    read -p "Batas perangkat (IP, 0 untuk tanpa batas): " ip_limit
     if [[ "$ip_limit" =~ ^[0-9]+$ ]]; then
         break
     else
-        echo "Input must be a positive number or 0."
+    echo "Input harus berupa angka positif atau 0."
     fi
 done
 
@@ -112,7 +111,7 @@ new_exp=$(date -d "$old_exp +${active_days} days" +"%Y-%m-%d")
 
 # Check if config file exists before making changes
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
-    echo "Config file not found. Creating a new file..."
+    echo "File konfigurasi tidak ditemukan. Membuat file baru..."
     echo '{"inbounds": []}' >/etc/xray/vmess/config.json
 fi
 
@@ -135,16 +134,16 @@ echo "### ${user} ${new_exp} ${uuid}" >>/etc/xray/vmess/.vmess.db
 
 # Restart service with error handling
 if ! systemctl restart vmess@config >/dev/null 2>&1; then
-    echo "Warning: Failed to restart vmess service. Please check system logs for more information."
-    echo "However, the account has been successfully updated in the database."
+    echo "Peringatan: Gagal memulai ulang layanan VMESS. Periksa log sistem untuk informasi lebih lanjut."
+    echo "Namun, data akun sudah berhasil diperbarui di basis data."
 fi
 
 clear
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│    VMESS ACCOUNT UPDATED SUCCESSFULLY   │${reset}"
+echo -e "${green}│    DATA AKUN VMESS BERHASIL DIPERBARUI  │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
-echo -e "Username     : ${green}$user${reset}"
-echo -e "Quota limit  : ${yellow}$quota GB${reset}"
-echo -e "IP limit     : ${yellow}$ip_limit devices${reset}"
-echo -e "Expiration   : ${yellow}$new_exp${reset}"
+echo -e "Nama Pengguna : ${green}$user${reset}"
+echo -e "Batas Kuota   : ${yellow}$quota GB${reset}"
+echo -e "Batas IP      : ${yellow}$ip_limit perangkat${reset}"
+echo -e "Masa Berlaku  : ${yellow}$new_exp${reset}"
 echo ""

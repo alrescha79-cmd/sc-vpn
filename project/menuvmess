@@ -241,9 +241,15 @@ vmess_members() {
         return
     fi
 
-    echo -e " Daftar Akun VMESS:"
-    echo -e "Username         | Exp      | Quota    | IP    | Usage    | Status"
-    echo -e "══════════════════════════════════════════════════════════════════════"
+    # Format kolom
+    local FMT="%-15s | %-6s | %-10s | %-9s | %-10s | %-12s"  # Username, Exp, Quota, IP Limit, Usage, Status
+    local HEADER=$(printf "$FMT" "Username" "Exp" "Quota" "IP Limit" "Usage" "Status")
+    # Hitung panjang header tanpa escape warna
+    local LINE_LEN=${#HEADER}
+    local LINE=$(printf '%*s' "$LINE_LEN" '' | tr ' ' '═')
+
+    echo -e "${bold_white}$HEADER${neutral}"
+    echo -e "${orange}$LINE${neutral}"
 
     total_accounts=0
     grep -E "^### " "/etc/xray/vmess/.vmess.db" | while read -r line; do
@@ -299,13 +305,20 @@ vmess_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-6s | %-3s | %-6s | %b\n" "$user" "$exp_display" "$quota" "$ip_limit" "$usage" "$status"
+        # Normalisasi panjang teks agar tidak melebihi kolom (khusus quota/usage/ip_limit jika sangat panjang)
+        quota_display="$quota"
+        ip_limit_display="$ip_limit"
+        usage_display="$usage"
+        [[ ${#quota_display} -gt 10 ]] && quota_display="${quota_display:0:9}+"
+        [[ ${#ip_limit_display} -gt 9 ]] && ip_limit_display="${ip_limit_display:0:8}+"
+        [[ ${#usage_display} -gt 10 ]] && usage_display="${usage_display:0:9}+"
+
+        printf "$FMT\n" "$user" "$exp_display" "$quota_display" "$ip_limit_display" "$usage_display" "$status"
     done
-    
+    echo -e "${orange}$LINE${neutral}"
     total_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")
-    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${yellow}Total Akun VMESS : ${green}${total_count}${neutral}"
-    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "Total Akun VMESS : ${green}${total_count}${neutral}"
+    echo -e "${orange}$LINE${neutral}"
     echo -e ""
     read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
     echo -e ""

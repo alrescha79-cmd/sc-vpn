@@ -987,11 +987,11 @@ mkdir -p /usr/lib/openvpn/ || echo -e "${red}Failed to create directory /usr/lib
 if [ -d "/etc/openvpn/" ]; then
     echo -e "${green}Directory /etc/openvpn/ already exists, continuing...${neutral}"
 else
-    mkdir -p /usr/lib/openvpn/ || echo -e "${red}Failed to create directory /usr/lib/openvpn/${neutral}"
+    mkdir -p /etc/openvpn/ || echo -e "${red}Failed to create directory /etc/openvpn/${neutral}"
 fi
 
-if wget -O /etc/openvpn/openvpn.zip $openvpn_url >/dev/null 2>&1; then
-    if unzip -d /etc/openvpn/ /etc/openvpn/openvpn.zip >/dev/null 2>&1; then
+if wget -O /etc/openvpn/openvpn.zip "$openvpn_url" >/dev/null 2>&1; then
+    if unzip -o -d /etc/openvpn/ /etc/openvpn/openvpn.zip >/dev/null 2>&1; then
         echo -e "${green}Successfully downloaded and extracted openvpn.zip${neutral}"
         rm -f /etc/openvpn/openvpn.zip
     else

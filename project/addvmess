@@ -25,20 +25,20 @@ clear
 
 # User data input
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "                       Add Xray VMess Account"
+echo -e "                       Tambah Akun Xray VMess"
 echo -e "══════════════════════════════════════════════════════════════════════"
 
 while true; do
-    read -p "   Name: " user
+    read -p "   Nama: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-        echo -e "${red}   Username cannot be empty${reset}"
+        echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
         continue
     fi
     if grep -q "^### $user " /etc/xray/vmess/config.json; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+        echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
         break
     else
         break
@@ -46,25 +46,25 @@ while true; do
 done
 
 
-read -p "Password: " uuid
+read -p "   Kata sandi/UUID: " uuid
 
 
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Active period (days): " duration
+    read -p "   Masa aktif (hari): " duration
     if [[ -z "$duration" ]]; then
-        echo -e "${red}   Active period cannot be empty${reset}"
+        echo -e "${red}   Masa aktif tidak boleh kosong${reset}"
     fi
 done
 until [[ $quota =~ ^[0-9]+$ ]]; do
-    read -p "   User Quota (GB): " quota
+    read -p "   Kuota Pengguna (GB): " quota
     if [[ -z "$quota" ]]; then
-        echo -e "${red}   User limit cannot be empty${reset}"
+        echo -e "${red}   Kuota pengguna tidak boleh kosong${reset}"
     fi
 done
 until [[ $ip_limit =~ ^[0-9]+$ ]]; do
-    read -p "   Device Limit (IP): " ip_limit
+    read -p "   Batas Perangkat (IP): " ip_limit
     if [[ -z "$ip_limit" ]]; then
-        echo -e "${red}   IP limit cannot be empty${reset}"
+        echo -e "${red}   Batas IP tidak boleh kosong${reset}"
     fi
 done
 
@@ -77,11 +77,11 @@ send_telegram_notification() {
     if [ -f '/root/.vars' ]; then
         source '/root/.vars'
         
-        if [ "$status" == "success" ]; then
-            message="
+    if [ "$status" == "success" ]; then
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>✅ VMESS ACCOUNT CREATED</b>
+<b>✅ AKUN VMESS BERHASIL DIBUAT</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🆔 User ID:</b> <code>$uuid</code>
@@ -109,16 +109,16 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
-        else
-            message="
+    else
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>❌ VMESS ACCOUNT CREATION FAILED</b>
+<b>❌ GAGAL MEMBUAT AKUN VMESS</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🆔 User ID:</b> <code>$uuid</code>
+<b>👤 Nama Pengguna:</b> <code>$user</code>
+<b>🆔 ID Pengguna:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Error:</b> <code>$error_msg</code>
+<b>❗ Kesalahan:</b> <code>$error_msg</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -127,27 +127,27 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            -d "text=$message" > /dev/null 2>&1
+            --data-urlencode "text=$message" > /dev/null 2>&1
     fi
 }
 
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
-    echo "Configuration file not found. Creating new file..."
+    echo "File konfigurasi tidak ditemukan. Membuat file baru..."
     echo '{"inbounds": []}' >/etc/xray/vmess/config.json
 fi
 
 if ! sed -i '/#vmess$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Failed to add user to config.json${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json"
+},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vmess/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json"
     exit 1
 fi
 if ! sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
+},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vmess/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (GRPC)"
     exit 1
 fi
 
@@ -170,8 +170,8 @@ EOF
 
 # Check if TLS configuration file was created successfully
 if [ ! -f "/etc/xray/vmess/$user-tls.json" ]; then
-    echo -e "${red}Failed to create TLS configuration file${reset}"
-    send_telegram_notification "error" "$user" "Failed to create TLS configuration file"
+    echo -e "${red}Gagal membuat file konfigurasi TLS${reset}"
+    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi TLS"
     exit 1
 fi
 
@@ -193,8 +193,8 @@ EOF
 
 # Check if Non-TLS configuration file was created successfully
 if [ ! -f "/etc/xray/vmess/$user-non.json" ]; then
-    echo -e "${red}Failed to create Non-TLS configuration file${reset}"
-    send_telegram_notification "error" "$user" "Failed to create Non-TLS configuration file"
+    echo -e "${red}Gagal membuat file konfigurasi Non-TLS${reset}"
+    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi Non-TLS"
     exit 1
 fi
 
@@ -216,8 +216,8 @@ EOF
 
 # Check if GRPC configuration file was created successfully
 if [ ! -f "/etc/xray/vmess/$user-grpc.json" ]; then
-    echo -e "${red}Failed to create GRPC configuration file${reset}"
-    send_telegram_notification "error" "$user" "Failed to create GRPC configuration file"
+    echo -e "${red}Gagal membuat file konfigurasi gRPC${reset}"
+    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi gRPC"
     exit 1
 fi
 
@@ -295,8 +295,8 @@ END
 
 # Check if OpenClash configuration file was created successfully
 if [ ! -f "/var/www/html/vmess-$user.txt" ]; then
-    echo -e "${red}Failed to create OpenClash configuration file${reset}"
-    send_telegram_notification "error" "$user" "Failed to create OpenClash configuration file"
+    echo -e "${red}Gagal membuat file konfigurasi OpenClash${reset}"
+    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi OpenClash"
     exit 1
 fi
 
@@ -307,14 +307,14 @@ vmess_grpc="vmess://$(base64 -w 0 /etc/xray/vmess/$user-grpc.json)"
 
 # Restart service
 if ! systemctl restart vmess@config; then
-    echo -e "${red}Failed to restart vmess service${reset}"
-    send_telegram_notification "error" "$user" "Failed to restart vmess service"
+    echo -e "${red}Gagal memulai ulang layanan VMess${reset}"
+    send_telegram_notification "error" "$user" "Gagal memulai ulang layanan VMess"
     exit 1
 fi
 
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
-    echo "Warning: Vmess configuration file not found. Creating new file..."
+    echo "Peringatan: File konfigurasi VMess tidak ditemukan. Membuat file baru..."
     mkdir -p /etc/xray/vmess
     echo '{"inbounds": []}' >/etc/xray/vmess/config.json
     systemctl restart vmess@config
@@ -322,22 +322,22 @@ fi
 
 # Create directory if it doesn't exist
 if [ ! -d "/etc/xray/vmess" ]; then
-    echo "Directory /etc/xray/vmess not found. Creating directory..."
+    echo "Direktori /etc/xray/vmess tidak ditemukan. Membuat direktori..."
     mkdir -p /etc/xray/vmess
     if [ $? -ne 0 ]; then
-        echo "Failed to create directory /etc/xray/vmess. Make sure you have sufficient permissions."
-        send_telegram_notification "error" "$user" "Failed to create directory /etc/xray/vmess"
+    echo "Gagal membuat direktori /etc/xray/vmess. Pastikan Anda memiliki izin yang cukup."
+    send_telegram_notification "error" "$user" "Gagal membuat direktori /etc/xray/vmess"
         exit 1
     fi
 fi
 
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
-    echo "Vmess configuration file not found. Creating new file..."
+    echo "File konfigurasi VMess tidak ditemukan. Membuat file baru..."
     echo '{"inbounds": []}' >/etc/xray/vmess/config.json
     if [ $? -ne 0 ]; then
-        echo "Failed to create Vmess configuration file. Make sure you have sufficient permissions."
-        send_telegram_notification "error" "$user" "Failed to create Vmess configuration file"
+    echo "Gagal membuat file konfigurasi VMess. Pastikan Anda memiliki izin yang cukup."
+    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi VMess"
         exit 1
     fi
 fi
@@ -361,7 +361,7 @@ temp_file="/etc/xray/vmess/.vmess.db.tmp"
 
 # Exception if database file doesn't exist
 if [ ! -f "$db_file" ]; then
-    echo "Warning: Vmess database file not found. Creating new file..."
+    echo "Peringatan: File database VMess tidak ditemukan. Membuat file baru..."
     touch "$db_file"
 fi
 

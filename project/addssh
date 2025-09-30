@@ -21,16 +21,16 @@ clear
 
 
 while true; do
-    read -p "   Name: " user
+    read -p "   Nama: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-        echo -e "${red}   Username cannot be empty${reset}"
+        echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
         continue
     fi
     if grep -q "^### $user " /etc/ssh/.ssh.db; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
+        echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
         break
     else
         break
@@ -38,37 +38,37 @@ while true; do
 done
 echo ""
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo "   Username : $user"
+echo "   Nama Pengguna : $user"
 while true; do
-    read -p "   Password: " passwd
+    read -p "   Kata sandi: " passwd
     if [[ -z "$passwd" ]]; then
-        echo -e "${red}   Password cannot be empty${reset}"
+        echo -e "${red}   Kata sandi tidak boleh kosong${reset}"
     else
         break
     fi
 done
 
 while true; do
-    read -p "   Active period (days): " expired
+    read -p "   Masa aktif (hari): " expired
     if [[ -z "$expired" ]]; then
-        echo -e "${red}   Active period cannot be empty${reset}"
+        echo -e "${red}   Masa aktif tidak boleh kosong${reset}"
     elif ! [[ $expired =~ ^[0-9]+$ ]]; then
-        echo -e "${red}   Active period must be a number${reset}"
+        echo -e "${red}   Masa aktif harus berupa angka${reset}"
     elif [[ $expired -lt 1 ]]; then
-        echo -e "${red}   Active period must be at least 1 day${reset}"
+        echo -e "${red}   Masa aktif minimal 1 hari${reset}"
     else
         break
     fi
 done
 
 while true; do
-    read -p "   IP limit: " iplim
+    read -p "   Batas IP: " iplim
     if [[ -z "$iplim" ]]; then
-        echo -e "${red}   IP limit cannot be empty${reset}"
+        echo -e "${red}   Batas IP tidak boleh kosong${reset}"
     elif ! [[ $iplim =~ ^[0-9]+$ ]]; then
-        echo -e "${red}   IP limit must be a number${reset}"
+        echo -e "${red}   Batas IP harus berupa angka${reset}"
     elif [[ $iplim -lt 1 ]]; then
-        echo -e "${red}   IP limit must be at least 1${reset}"
+        echo -e "${red}   Batas IP minimal 1${reset}"
     else
         break
     fi
@@ -83,11 +83,11 @@ send_telegram_notification() {
     if [ -f '/root/.vars' ]; then
         source '/root/.vars'
         
-        if [ "$status" == "success" ]; then
-            message="
+    if [ "$status" == "success" ]; then
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>✅ SSH OVPN ACCOUNT CREATED</b>
+<b>✅ AKUN SSH OVPN BERHASIL DIBUAT</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🔐 Password:</b> <code>$passwd</code>
@@ -105,16 +105,16 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
-        else
-            message="
+    else
+        message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>❌ SSH OVPN ACCOUNT CREATION FAILED</b>
+<b>❌ GAGAL MEMBUAT AKUN SSH OVPN</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🔐 Password:</b> <code>$passwd</code>
+<b>👤 Nama Pengguna:</b> <code>$user</code>
+<b>🔐 Kata Sandi:</b> <code>$passwd</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Error:</b> <code>$error_msg</code>
+<b>❗ Kesalahan:</b> <code>$error_msg</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -129,14 +129,14 @@ send_telegram_notification() {
 
 # Account creation process
 if ! useradd -e $(date -d "$expired days" +"%Y-%m-%d") -s /bin/false -M $user; then
-    echo -e "${red}Failed to create user account${reset}"
-    send_telegram_notification "error" "$user" "Failed to create user account"
+    echo -e "${red}Gagal membuat akun pengguna${reset}"
+    send_telegram_notification "error" "$user" "Gagal membuat akun pengguna"
     exit 1
 fi
 exp="$(chage -l $user | grep "Account expires" | awk -F": " '{print $2}')"
 if ! echo -e "$passwd\n$passwd\n" | passwd $user &>/dev/null; then
-    echo -e "${red}Failed to set user password${reset}"
-    send_telegram_notification "error" "$user" "Failed to set user password"
+    echo -e "${red}Gagal mengatur kata sandi pengguna${reset}"
+    send_telegram_notification "error" "$user" "Gagal mengatur kata sandi pengguna"
     exit 1
 fi
 

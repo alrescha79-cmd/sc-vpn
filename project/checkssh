@@ -38,7 +38,7 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
         tampilkan_info_ssh_dropbear() {
 
             echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e "               ${green}         SSH USER LOGIN ACCOUNTS ${neutral}"
+            echo -e "${green}${bold_white}       SSH USER LOGIN ACCOUNTS${neutral}"
             echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
             cat $LOG_FILE | grep -i sshd | grep -i "Accepted password for" >/tmp/login-db-ssh.txt
@@ -74,9 +74,8 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
     local file=$1
     user_list=($(grep '^###' /etc/ssh/.ssh.db | cut -d ' ' -f 2 | sort | uniq))
 
-    echo -e "${dark_purple}─────────────────────────────────────────${neutral}"
-    printf " %-12s | %-7s | %-7s\n" "Username" "LoginIP" "LimitIP"
-    echo -e "${dark_purple}─────────────────────────────────────────${neutral}"
+    echo -e "Username         | LoginIP | LimitIP | Status"
+    echo -e "══════════════════════════════════════════════════════════════════════"
 
     total_online=0
     for user in "${user_list[@]}"; do
@@ -90,14 +89,24 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
         # tampilkan hanya jika ada login aktif
         if [[ $login_ip -gt 0 ]]; then
-            printf " %-12s | %-7s | %-7s\n" "$user" "$login_ip" "$limit_ip"
+            if [[ "$limit_ip" == "∞" ]]; then
+                status="${green}OK${neutral}"
+            else
+                if [[ $login_ip -gt $limit_ip ]]; then
+                    status="${red}OVER${neutral}"
+                else
+                    status="${green}OK${neutral}"
+                fi
+            fi
+            
+            printf "%-15s | %-7s | %-7s | %b\n" "$user" "$login_ip" "$limit_ip" "$status"
             ((total_online++))
         fi
     done
 
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     echo -e "${green} Total User Online : $total_online"
-    echo -e "${orange}─────────────────────────────────────────${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 }
 
         # Menampilkan informasi
@@ -105,7 +114,21 @@ date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
         # Membersihkan file temporary
         rm -rf /tmp/ssh_login_user /tmp/login-db-ssh.txt /tmp/login-db-dropbear.txt /tmp/login-db-pid-ssh.txt /tmp/login-db-pid-dropbear.txt
-        echo " "
-        read -n 1 -s -r -p "Press [ Enter ] to back on menu"
-        menu
+        echo ""
+        read -n 1 -s -r -p "Press [ Enter ] to back to menu..."
+        echo ""
+
+        # Return to main menu
+        if [[ -f "/usr/bin/menu" ]]; then
+            /usr/bin/menu
+        elif [[ -f "/usr/local/bin/menu" ]]; then
+            /usr/local/bin/menu
+        elif [[ -f "./menu" ]]; then
+            ./menu
+        elif [[ -f "/root/menu.sh" ]]; then
+            /root/menu.sh
+        else
+            echo "Menu script not found. Exiting..."
+            exit 0
+        fi
     

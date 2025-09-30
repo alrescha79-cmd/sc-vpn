@@ -64,7 +64,7 @@ validate_access() {
         echo -e "${red}║                        AKSES KADALUARSA                           ║${neutral}"
         echo -e "${red}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e ""
-        echo -e " Masa aktif script Anda telah berakhir!"
+        echo -e " Akses untuk IP Anda telah kadaluarsa!"
         echo -e ""
         echo -e " Detail Akses:"
         echo -e "   • User ID: ${username}"
@@ -87,167 +87,176 @@ validate_access() {
 # Panggil fungsi validasi sebelum menampilkan menu
 validate_access
 
-        # Variables
-        green="\e[38;5;87m"
-        red="\e[38;5;196m"
-        neutral="\e[0m"
-        blue="\e[38;5;130m"
-        orange="\e[38;5;99m"
-        yellow="\e[38;5;226m"
-        purple="\e[38;5;141m"
-        bold_white="\e[1;37m"
-        reset="\e[0m"
-        pink="\e[38;5;205m"
+# Variables
+green="\e[38;5;82m"
+red="\e[38;5;196m"
+neutral="\e[0m"
+blue="\e[38;5;130m"
+orange="\e[38;5;99m"
+yellow="\e[38;5;226m"
+purple="\e[38;5;141m"
+bold_white="\e[1;37m"
+reset="\e[0m"
+pink="\e[38;5;205m"
+magenta="\e[38;5;205m"
+cyan="\e[38;5;87m"
+bold="\e[1m"
 
-        convert_size() {
-            local -i bytes=$1
-            if [[ $bytes -lt 1024 ]]; then
-                echo "${bytes}B"
-            elif [[ $bytes -lt 1048576 ]]; then
-                echo "$(((bytes + 1023) / 1024))KB"
-            elif [[ $bytes -lt 1073741824 ]]; then
-                echo "$(((bytes + 1048575) / 1048576))MB"
-            else
-                echo "$(((bytes + 1073741823) / 1073741824))GB"
-            fi
-        }
-        
+convert_size() {
+    local -i bytes=$1
+    if [[ $bytes -lt 1024 ]]; then
+        echo "${bytes}B"
+    elif [[ $bytes -lt 1048576 ]]; then
+        echo "$(((bytes + 1023) / 1024))KB"
+    elif [[ $bytes -lt 1073741824 ]]; then
+        echo "$(((bytes + 1048575) / 1048576))MB"
+    else
+        echo "$(((bytes + 1073741823) / 1073741824))GB"
+    fi
+}
+
 # Function to print rainbow text
-        print_rainbow() {
-            local text="$1"
-            local length=${#text}
-            local start_color=(0 5 0)
-            local mid_color=(0 200 0)
-            local end_color=(0 5 0)
+print_rainbow() {
+    local text="$1"
+    local length=${#text}
+    local start_color=(0 5 0)
+    local mid_color=(0 200 0)
+    local end_color=(0 5 0)
 
-            for ((i = 0; i < length; i++)); do
-                local progress=$((i * 100 / (length - 1)))
+    for ((i = 0; i < length; i++)); do
+        local progress=$((i * 100 / (length - 1)))
 
-                if [ $progress -lt 50 ]; then
-                    local factor=$((progress * 2))
-                    r=$(( (start_color[0] * (100 - factor) + mid_color[0] * factor) / 100 ))
-                    g=$(( (start_color[1] * (100 - factor) + mid_color[1] * factor) / 100 ))
-                    b=$(( (start_color[2] * (100 - factor) + mid_color[2] * factor) / 100 ))
-                else
-                    local factor=$(((progress - 50) * 2))
-                    r=$(( (mid_color[0] * (100 - factor) + end_color[0] * factor) / 100 ))
-                    g=$(( (mid_color[1] * (100 - factor) + end_color[1] * factor) / 100 ))
-                    b=$(( (mid_color[2] * (100 - factor) + end_color[2] * factor) / 100 ))
-                fi
+        if [ $progress -lt 50 ]; then
+            local factor=$((progress * 2))
+            r=$(( (start_color[0] * (100 - factor) + mid_color[0] * factor) / 100 ))
+            g=$(( (start_color[1] * (100 - factor) + mid_color[1] * factor) / 100 ))
+            b=$(( (start_color[2] * (100 - factor) + mid_color[2] * factor) / 100 ))
+        else
+            local factor=$(((progress - 50) * 2))
+            r=$(( (mid_color[0] * (100 - factor) + end_color[0] * factor) / 100 ))
+            g=$(( (mid_color[1] * (100 - factor) + end_color[1] * factor) / 100 ))
+            b=$(( (mid_color[2] * (100 - factor) + end_color[2] * factor) / 100 ))
+        fi
 
-                printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
-            done
-            echo -e "$reset" # Reset color at the end
-        }
-        shadowsocks_members() {
-            clear
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e "${green}║                           SHADOWSOCKS MEMBERS                     ║${neutral}"
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+        printf "\e[38;2;%d;%d;%dm%s" "$r" "$g" "$b" "${text:$i:1}"
+    done
+    echo -e "$reset" # Reset color at the end
+}
 
+shadowsocks_members() {
+    clear
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                 DAFTAR MEMBER SHADOWSOCKS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
-
-    account_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
-    if [ $account_count -eq 0 ]; then
-        echo -e ""
-        echo -e " ${red}Tidak ada akun Shadowsocks yang aktif.${neutral}"
-        echo -e ""
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    if [ ! -e "/etc/xray/shadowsocks/.shadowsocks.db" ]; then
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
-    echo -e ""
-    echo -e " Daftar Akun Shadowsocks:"
-    echo -e ""
-    echo "┌──┬────────────┬──────┬──────┬───┬──────┐"
-    echo "│no│ username   │ exp  │quota │ip │usage │"
-    echo "├──┼────────────┼──────┼──────┼───┼──────┤"
 
-    grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | nl -s ' ' | while read -r line; do
-        no=$(echo "$line" | awk '{print $1}')
-        user=$(echo "$line" | awk '{print $3}')
-        exp=$(echo "$line" | awk '{print $4}')
+    echo -e " Daftar Akun Shadowsocks:"
+    echo -e "Username         | Exp      | Quota    | IP    | Usage    | Status"
+    echo -e "══════════════════════════════════════════════════════════════════════"
+
+    total_accounts=0
+    grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | while read -r line; do
+        ((total_accounts++))
+        user=$(echo "$line" | awk '{print $2}')
+        exp=$(echo "$line" | awk '{print $3}')
         current_timestamp=$(date +%s)
         exp_timestamp=$(date -d "$exp" +%s)
         days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
+        
         if [ $days_left -lt 0 ]; then
-            days_left=0
+            status="${red}KADALUARSA${neutral}"
+            exp_display="${days_left}d"
+        elif [ $days_left -le 3 ]; then
+            status="${yellow}SEGERA HABIS${neutral}"
+            exp_display="${days_left}d"
+        else
+            status="${green}AKTIF${neutral}"
+            exp_display="${days_left}d"
         fi
-        exp="${days_left}d"
 
         quota_file="/etc/xray/shadowsocks/${user}"
         ip_limit_file="/etc/xray/shadowsocks/${user}IP"
         usage_file="/etc/xray/shadowsocks/usage/${user}"
 
-        quota="Unltd"
+        quota="Unlimited"
         if [ -f "$quota_file" ]; then
-            quota=$(cat "$quota_file")
-            if [ "$quota" != "" ] && [ "$quota" != "0" ]; then
-                quota=$(convert_size "$quota")
+            quota_raw=$(cat "$quota_file")
+            if [ "$quota_raw" != "" ] && [ "$quota_raw" != "0" ]; then
+                quota=$(convert_size "$quota_raw")
             else
-                quota="Unltd"
+                quota="Unlimited"
             fi
         fi
 
-        ip_limit="Unltd"
+        ip_limit="Unlimited"
         if [ -f "$ip_limit_file" ]; then
-            ip_limit=$(cat "$ip_limit_file")
-            if [ "$ip_limit" = "" ] || [ "$ip_limit" = "0" ]; then
-                ip_limit="Unltd"
-            fi
-        fi
-
-        usage="0GB"
-        if [ -f "$usage_file" ]; then
-            usage=$(cat "$usage_file")
-            if [ "$usage" != "" ] && [ "$usage" != "0" ]; then
-                usage=$(convert_size "$usage")
+            ip_limit_raw=$(cat "$ip_limit_file")
+            if [ "$ip_limit_raw" != "" ] && [ "$ip_limit_raw" != "0" ]; then
+                ip_limit="$ip_limit_raw"
             else
-                usage="0GB"
+                ip_limit="Unlimited"
             fi
         fi
 
-        printf "│%-2s│%-12s│%-6s│%-6s│%-3s│%-6s│\n" "$no" "$user" "$exp" "$quota" "$ip_limit" "$usage"
+        usage="0B"
+        if [ -f "$usage_file" ]; then
+            usage_raw=$(cat "$usage_file")
+            if [ "$usage_raw" != "" ] && [ "$usage_raw" != "0" ]; then
+                usage=$(convert_size "$usage_raw")
+            else
+                usage="0B"
+            fi
+        fi
+
+        printf "%-15s | %-6s | %-6s | %-3s | %-6s | %b\n" "$user" "$exp_display" "$quota" "$ip_limit" "$usage" "$status"
     done
-    echo "└──┴────────────┴──────┴──────┴───┴──────┘"
-
-    echo -e " Tekan Enter untuk kembali ke menu..."
-    read
-
+    
+    total_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${yellow}Total Akun Shadowsocks : ${green}${total_count}${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e ""
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_shadowsocks_menu
 }
 
-        change_shadowsocks_limit() {
-            clear
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e "${green}║                        CHANGE SHADOWSOCKS LIMIT                   ║${neutral}"
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e ""
-            echo -e " Daftar Akun Shadowsocks:"
-            echo -e ""
+change_shadowsocks_limit() {
+    clear
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                  UBAH LIMIT SHADOWSOCKS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+
     if [ ! -e "/etc/xray/shadowsocks/.shadowsocks.db" ]; then
-        echo -e ""
-        echo -e " ${red}Tidak ada akun Shadowsocks yang terdaftar.${neutral}"
-        echo -e ""
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
+        return
+    fi
+    
+    echo -e " Daftar Akun Shadowsocks:"
+    account_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
+    if [ $account_count -eq 0 ]; then
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang aktif.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
+        read
+        display_shadowsocks_menu
         return
     fi
 
-    account_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
-    if [ $account_count -eq 0 ]; then
-        echo -e ""
-        echo -e " ${red}Tidak ada akun Shadowsocks yang aktif.${neutral}"
-        echo -e ""
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e " Tekan Enter untuk kembali ke menu..."
-        read
-        return
-    fi
-    echo "┌────┬────────────────────┬─────────────┐"
-    echo "│ no │ username           │     exp     │"
-    echo "├────┼────────────────────┼─────────────┤"
+    echo -e "No  | Username           | Exp (hari)"
+    echo -e "─────────────────────────────────────────────"
     grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -255,54 +264,60 @@ validate_access
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+        printf "%-3d | %-18s | %-10s\n", NR, $2, days_left " hari"
     }'
-    echo "└────┴────────────────────┴─────────────┘"
-
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    read -p "   Select the account number : " account_number
+    echo -e "─────────────────────────────────────────────"
+    echo -e ""
+    read -p " Pilih nomor akun : " account_number
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
-        echo -e "   ${red}Error: Input must be a number.${neutral}"
+        echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
     
     # Check if account number is valid
     if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
-        echo -e "   ${red}Error: Invalid account number.${neutral}"
+        echo -e "   ${red}Error: Nomor akun tidak valid.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
     username=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
 
     if [ -z "$username" ]; then
-        echo -e "   ${red}Invalid account number.${neutral}"
+        echo -e "   ${red}Nomor akun tidak valid.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
-    echo -e "Changing limit for account: ${green}$username${neutral}"
-    read -p "Enter new quota limit (in GB, 0 for unlimited): " new_quota
-    read -p "Enter new IP limit (0 for unlimited): " new_ip_limit
+    echo -e ""
+    echo -e "Mengubah limit untuk akun: ${green}$username${neutral}"
+    echo -e ""
+    read -p "Masukkan limit quota baru (dalam GB, 0 untuk unlimited): " new_quota
+    read -p "Masukkan limit IP baru (0 untuk unlimited): " new_ip_limit
 
     # Validate input
     if ! [[ "$new_quota" =~ ^[0-9]+$ ]]; then
-        echo -e "${red}Error: Quota limit must be a number.${neutral}"
+        echo -e "${red}Error: Limit quota harus berupa angka.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
     if ! [[ "$new_ip_limit" =~ ^[0-9]+$ ]]; then
-        echo -e "${red}Error: IP limit must be a number.${neutral}"
+        echo -e "${red}Error: Limit IP harus berupa angka.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
@@ -314,101 +329,146 @@ validate_access
     echo "${new_ip_limit}" >"/etc/xray/shadowsocks/${username}IP"
 
     # Check if update was successful
+    echo -e ""
     if [ $? -eq 0 ]; then
-        echo -e "${green}Limit for account $username successfully changed.${neutral}"
-        echo -e "New quota: ${new_quota} GB"
-        echo -e "New IP limit: ${new_ip_limit}"
+        echo -e "${green}Limit untuk akun $username berhasil diubah.${neutral}"
+        echo -e "Quota baru: ${new_quota} GB"
+        echo -e "Limit IP baru: ${new_ip_limit}"
     else
-        echo -e "${red}Failed to change limit for account $username.${neutral}"
-        echo -e "Please ensure you have sufficient permissions and try again."
+        echo -e "${red}Gagal mengubah limit untuk akun $username.${neutral}"
+        echo -e "Pastikan Anda memiliki izin yang cukup dan coba lagi."
     fi
 
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e " Tekan Enter untuk kembali ke menu..."
-    read
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_shadowsocks_menu
+}
 
-        }
-        shadowsocks_details() {
-            clear
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            echo -e "${green}           SHADOWSOCKS DETAIL      ${neutral}"
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+shadowsocks_details() {
+    clear
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                   DETAIL AKUN SHADOWSOCKS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
-            if [ ! -e "/etc/xray/shadowsocks/.shadowsocks.db" ]; then
-                echo -e "   ${red}No Shadowsocks accounts registered.${neutral}"
-                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-                echo -e " Tekan Enter untuk kembali ke menu..."
-                read
-                return
+    if [ ! -e "/etc/xray/shadowsocks/.shadowsocks.db" ]; then
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
+        read
+        display_shadowsocks_menu
+        return
+    fi
+
+    echo -e " Detail Akun Shadowsocks:"
+
+    account_counter=1
+    while IFS= read -r line; do
+        if [[ $line == ###* ]]; then
+            user=$(echo $line | cut -d ' ' -f 2)
+            exp=$(echo $line | cut -d ' ' -f 3)
+            password=$(echo $line | cut -d ' ' -f 4)
+            
+            # Calculate days left
+            current_timestamp=$(date +%s)
+            exp_timestamp=$(date -d "$exp" +%s)
+            days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
+            
+            if [ $days_left -lt 0 ]; then
+                status="${red}KADALUARSA${neutral}"
+                exp_display="$exp (${days_left} hari)"
+            elif [ $days_left -le 3 ]; then
+                status="${yellow}SEGERA HABIS${neutral}"
+                exp_display="$exp (${days_left} hari)"
+            else
+                status="${green}AKTIF${neutral}"
+                exp_display="$exp (${days_left} hari)"
             fi
 
-            echo -e " List of Shadowsocks Accounts:"
-            echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e "${yellow}══════ AKUN #${account_counter} ══════${neutral}"
+            echo -e "   Username      : ${green}$user${neutral}"
+            echo -e "   Tanggal Exp   : ${green}$exp_display${neutral}"
+            echo -e "   Status        : $status"
+            echo -e "   Password      : ${green}$password${neutral}"
 
-            while IFS= read -r line; do
-                user=$(echo $line | cut -d ' ' -f 2 | sort -u)
-                exp=$(echo $line | cut -d ' ' -f 3 | sort -u)
-                password=$(echo $line | cut -d ' ' -f 4 | sort -u)
-
-                echo -e "   Username      : ${green}$user${neutral}"
-                echo -e "   Expired Date  : ${green}$exp${neutral}"
-                echo -e "   UUID          : ${green}$uuid${neutral}"
-
-                if [ -f "/etc/xray/shadowsocks/${user}" ]; then
-                    quota=$(cat /etc/xray/shadowsocks/${user})
-                    if [ -n "$quota" ] && [ "$quota" != "0" ]; then
-                        quota_readable=$(convert_size $quota)
-                        echo -e "   Quota         : ${green}$quota_readable${neutral}"
-                    else
-                        echo -e "   Quota         : ${green}Unlimited${neutral}"
-                    fi
+            if [ -f "/etc/xray/shadowsocks/${user}" ]; then
+                quota=$(cat /etc/xray/shadowsocks/${user})
+                if [ -n "$quota" ] && [ "$quota" != "0" ]; then
+                    quota_readable=$(convert_size $quota)
+                    echo -e "   Quota         : ${green}$quota_readable${neutral}"
                 else
                     echo -e "   Quota         : ${green}Unlimited${neutral}"
                 fi
+            else
+                echo -e "   Quota         : ${green}Unlimited${neutral}"
+            fi
 
-                if [ -f "/etc/xray/shadowsocks/${user}IP" ]; then
-                    ip_limit=$(cat /etc/xray/shadowsocks/${user}IP)
-                    if [ -n "$ip_limit" ] && [ "$ip_limit" != "0" ]; then
-                        echo -e "   IP Limit      : ${green}$ip_limit${neutral}"
-                    else
-                        echo -e "   IP Limit      : ${green}Unlimited${neutral}"
-                    fi
+            if [ -f "/etc/xray/shadowsocks/${user}IP" ]; then
+                ip_limit=$(cat /etc/xray/shadowsocks/${user}IP)
+                if [ -n "$ip_limit" ] && [ "$ip_limit" != "0" ]; then
+                    echo -e "   Limit IP      : ${green}$ip_limit${neutral}"
                 else
-                    echo -e "   IP Limit      : ${green}Unlimited${neutral}"
+                    echo -e "   Limit IP      : ${green}Unlimited${neutral}"
                 fi
+            else
+                echo -e "   Limit IP      : ${green}Unlimited${neutral}"
+            fi
+            
+            # Show current usage
+            if [ -f "/etc/xray/shadowsocks/usage/${user}" ]; then
+                usage_raw=$(cat /etc/xray/shadowsocks/usage/${user})
+                if [ -n "$usage_raw" ] && [ "$usage_raw" != "0" ]; then
+                    usage_readable=$(convert_size $usage_raw)
+                    echo -e "   Penggunaan    : ${green}$usage_readable${neutral}"
+                else
+                    echo -e "   Penggunaan    : ${green}0B${neutral}"
+                fi
+            else
+                echo -e "   Penggunaan    : ${green}0B${neutral}"
+            fi
 
-                echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-            done <"/etc/xray/shadowsocks/.shadowsocks.db"
+            echo -e "${orange}────────────────────────────────────────────────────────────────────${neutral}"
+            ((account_counter++))
+        fi
+    done <"/etc/xray/shadowsocks/.shadowsocks.db"
 
-            echo -e "    Press enter to return to menu"
-            read
-        }
-custom_uuid_shadowsocks() {
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_shadowsocks_menu
+}
+
+custom_shadowsocks_password() {
     clear
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "  ${green}      CUSTOM SHADOWSOCKS UUID ${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                CUSTOM PASSWORD SHADOWSOCKS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+
     if [ ! -e "/etc/xray/shadowsocks/.shadowsocks.db" ]; then
-        echo -e "   ${red}No Shadowsocks accounts registered.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
     account_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
     if [ $account_count -eq 0 ]; then
-        echo -e "   ${red}No active Shadowsocks accounts.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e "   ${red}Tidak ada akun Shadowsocks yang aktif.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
-    echo -e " List of Shadowsocks Accounts:"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo "┌────┬────────────────────┬─────────────┐"
-    echo "│ no │ username           │     exp     │"
-    echo "├────┼────────────────────┼─────────────┤"
+    
+    echo -e " Daftar Akun Shadowsocks:"
+    echo -e "No  | Username           | Exp (hari)"
+    echo -e "─────────────────────────────────────────────"
     grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -416,132 +476,142 @@ custom_uuid_shadowsocks() {
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+        printf "%-3d | %-18s | %-10s\n", NR, $2, days_left " hari"
     }'
-    echo "└────┴────────────────────┴─────────────┘"
-
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    read -p "   Select the account number : " account_number
+    echo -e "─────────────────────────────────────────────"
+    echo -e ""
+    read -p " Pilih nomor akun : " account_number
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
-        echo -e "   ${red}Error: Input must be a number.${neutral}"
+        echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
     
     # Check if account number is valid
     if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
-        echo -e "   ${red}Error: Invalid account number.${neutral}"
+        echo -e "   ${red}Error: Nomor akun tidak valid.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
     user=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
 
     if [ -z "$user" ]; then
-        echo -e "   ${red}Invalid account number.${neutral}"
+        echo -e "   ${red}Nomor akun tidak valid.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
+    
+    echo -e ""
+    echo -e "Mengubah password untuk akun: ${green}$user${neutral}"
+    echo -e ""
     while true; do
-        read -p "   UUID (min 6 characters): " new_uuid
-        if [[ ${#new_uuid} -ge 6 && "$new_uuid" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        read -p " Password baru (minimal 6 karakter): " new_password
+        if [[ ${#new_password} -ge 6 && "$new_password" =~ ^[a-zA-Z0-9_-]+$ ]]; then
             break
         else
-            printf "\033[1A\033[0J"
-            echo -e "${red}   UUID must be at least 6 characters${neutral}"
+            echo -e "${red} Password harus minimal 6 karakter dan hanya boleh berisi huruf, angka, _ atau -${neutral}"
         fi
     done
 
-    if [ -z "$new_uuid" ]; then
-        echo -e "${red}Error: UUID cannot be empty.${neutral}"
+    if [ -z "$new_password" ]; then
+        echo -e "${red}Error: Password tidak boleh kosong.${neutral}"
         echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_shadowsocks_menu
         return
     fi
 
-    # Update UUID in config.json
+    # Update password in config.json
     user_data=$(cat /etc/xray/shadowsocks/.shadowsocks.db | grep "^### $user")
     exp=$(echo "$user_data" | awk '{print $3}')
     config_file="/etc/xray/shadowsocks/config.json"
     db_file="/etc/xray/shadowsocks/.shadowsocks.db"
-    method="aes-256-gcm"
+
     sed -i "/^### $user $exp/,/^},{/d" "$config_file"
 
     # Add configuration back to config_file
+    sed -i '/#shadowsocks$/a\### '"$user $exp"'\
+},{"password": "'""$new_password""'","email": "'""$user""'"'  "$config_file"
 
-    sed -i '/#ssws$/a\### '"$user $exp"'\
-    },{"password": "'"$new_uuid"'","method": "'"$method"'","email": "'"$user"'"}' $config_file
-
-    sed -i '/#ssgrpc$/a\### '"$user $exp"'\
-    },{"password": "'"$new_uuid"'","method": "'"$method"'","email": "'"$user"'"}' $config_file
-
+    sed -i '/#shadowsocksgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$new_password""'","email": "'""$user""'"'  "$config_file"
+  
     sed -i "/^### $user/d" "$db_file"
-    echo "### $user $exp $new_uuid" >> "$db_file"
+    echo "### $user $exp $new_password" >> "$db_file"
     systemctl restart shadowsocks@config
 
+    echo -e ""
     if [ $? -eq 0 ]; then
-        echo -e "UUID for account $user successfully changed.${neutral}"
+        echo -e "${green}Password untuk akun $user berhasil diubah.${neutral}"
+        echo -e "Password baru: ${green}$new_password${neutral}"
     else
-        echo -e "UUID for account ${green}$user${neutral} successfully changed."
-        echo -e "Please ensure you have sufficient permissions and try again."
+        echo -e "${red}Gagal mengubah password untuk akun $user.${neutral}"
+        echo -e "Pastikan Anda memiliki izin yang cukup dan coba lagi."
     fi
 
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e " Tekan Enter untuk kembali ke menu..."
-    read
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_shadowsocks_menu
 }
-        # Function to display Shadowsocks menu
-        display_shadowsocks_menu() {
-            clear
-            echo -e ""
-            echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
-            echo -e "${magenta}║                         ${blue}SHADOWSOCKS MANAGEMENT${magenta}                       ║${neutral}"
-            echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-            echo -e ""
-            echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
-            echo -e "${cyan}║                               ${blue}PILIHAN MENU${cyan}                           ║${neutral}"
-            echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"
-            echo -e ""
-            echo -e "   ${neutral} ${green}[1]${neutral}  Buat Akun SHADOWSOCKS      ${green}[6]${neutral} Ubah Limit   "
-            echo -e "   ${neutral} ${green}[2]${neutral}  Hapus Akun SHADOWSOCKS     ${green}[7]${neutral} Detail Akun  "
-            echo -e "   ${neutral} ${green}[3]${neutral}  Perpanjang SHADOWSOCKS     ${green}[8]${neutral} Trial SHADOWSOCKS "
-            echo -e "   ${neutral} ${green}[4]${neutral}  Cek User Login             ${green}[9]${neutral} Custom UUID  "
-            echo -e "   ${neutral} ${green}[5]${neutral}  List Member SHADOWSOCKS    ${red}[x]${neutral}  Kembali ke Menu Utama"
-            echo -e ""
-            echo -e "${cyan}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-            echo -e ""
-            echo -ne "${yellow}Pilih menu [1-9 atau x]: ${neutral}"
-            read shadowsocks_choice
 
-            case $shadowsocks_choice in
-            1) addshadowsocks ;;
-            2) dellshadowsocks ;;
-            3) renewshadowsocks ;;
-            4) checkshadowsocks ;;
-            5) shadowsocks_members ;;
-            6) change_shadowsocks_limit ;;
-            7) shadowsocks_details ;;
-            8) trialshadowsocks ;;
-            9) custom_uuid_shadowsocks ;;
-            x | X)
-                echo -e ""
-                echo -e "${green}Kembali ke menu utama...${neutral}"
-                menu
-                ;;
-            *)
-                echo -e ""
-                echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
-                echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
-                read
-                display_shadowsocks_menu
-                ;;
-            esac
-        }
+# Function to display Shadowsocks menu
+display_shadowsocks_menu() {
+    clear
+    echo -e ""
+    echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${magenta}║                           ${cyan}SHADOWSOCKS MANAGEMENT${magenta}                    ║${neutral}"
+    echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${cyan}║                               ${blue}PILIHAN MENU${cyan}                           ║${neutral}"
+    echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e ""
+    echo -e "   ${neutral} ${green}[1]${neutral}  Buat Akun Shadowsocks     ${green}[6]${neutral} Ubah Limit   "
+    echo -e "   ${neutral} ${green}[2]${neutral}  Hapus Akun Shadowsocks    ${green}[7]${neutral} Detail Akun  "
+    echo -e "   ${neutral} ${green}[3]${neutral}  Perpanjang Shadowsocks    ${green}[8]${neutral} Trial Shadowsocks "
+    echo -e "   ${neutral} ${green}[4]${neutral}  Cek User Login           ${green}[9]${neutral} Custom Password  "
+    echo -e "   ${neutral} ${green}[5]${neutral}  List Member Shadowsocks  ${red}[x]${neutral}  Kembali ke Menu Utama"
+    echo -e ""
+    echo -e "${cyan}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -ne "${yellow}Pilih menu [1-9 atau x]: ${neutral}"
+    read shadowsocks_choice
 
-        # Call function to display menu
+    case $shadowsocks_choice in
+    1) addshadowsocks ;;
+    2) dellshadowsocks ;;
+    3) renewshadowsocks ;;
+    4) checkshadowsocks ;;
+    5) shadowsocks_members ;;
+    6) change_shadowsocks_limit ;;
+    7) shadowsocks_details ;;
+    8) trialshadowsocks ;;
+    9) custom_shadowsocks_password ;;
+    x | X)
+        echo -e ""
+        echo -e "${green}Kembali ke menu utama...${neutral}"
+        menu
+        ;;
+    *)
+        echo -e ""
+        echo -e "${red}Pilihan tidak valid! Silahkan pilih menu yang tersedia.${neutral}"
+        echo -e "${yellow}Tekan Enter untuk mencoba lagi...${neutral}"
+        read
         display_shadowsocks_menu
+        ;;
+    esac
+}
+
+# Call function to display menu
+display_shadowsocks_menu

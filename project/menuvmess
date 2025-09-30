@@ -171,16 +171,19 @@ validate_access
 
     
 # Variables
-green="\e[38;5;87m"
-        red="\e[38;5;196m"
-        neutral="\e[0m"
-        blue="\e[38;5;130m"
-        orange="\e[38;5;99m"
-        yellow="\e[38;5;226m"
-        purple="\e[38;5;141m"
-        bold_white="\e[1;37m"
-        reset="\e[0m"
-        pink="\e[38;5;205m"
+green="\e[38;5;82m"
+red="\e[38;5;196m"
+neutral="\e[0m"
+blue="\e[38;5;130m"
+orange="\e[38;5;99m"
+yellow="\e[38;5;226m"
+purple="\e[38;5;141m"
+bold_white="\e[1;37m"
+reset="\e[0m"
+pink="\e[38;5;205m"
+magenta="\e[38;5;205m"
+cyan="\e[38;5;87m"
+bold="\e[1m"
 
 convert_size() {
     local -i bytes=$1
@@ -225,106 +228,118 @@ convert_size() {
 
 vmess_members() {
     clear
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}║                           VMESS MEMBERS                           ║${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                      DAFTAR MEMBER VMESS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/vmess/.vmess.db" ]; then
-        echo -e "   ${red}No VMESS accounts registered.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Tidak ada akun VMESS yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
-    echo -e " List of VMESS Accounts:"
-    echo "┌──┬────────────┬──────┬──────┬───┬──────┐"
-    echo "│no│ username   │ exp  │quota │ip │usage │"
-    echo "├──┼────────────┼──────┼──────┼───┼──────┤"
+    echo -e " Daftar Akun VMESS:"
+    echo -e "Username         | Exp      | Quota    | IP    | Usage    | Status"
+    echo -e "══════════════════════════════════════════════════════════════════════"
 
-    grep -E "^### " "/etc/xray/vmess/.vmess.db" | nl -s ' ' | while read -r line; do
-        no=$(echo "$line" | awk '{print $1}')
-        user=$(echo "$line" | awk '{print $3}')
-        exp=$(echo "$line" | awk '{print $4}')
+    total_accounts=0
+    grep -E "^### " "/etc/xray/vmess/.vmess.db" | while read -r line; do
+        ((total_accounts++))
+        user=$(echo "$line" | awk '{print $2}')
+        exp=$(echo "$line" | awk '{print $3}')
         current_timestamp=$(date +%s)
         exp_timestamp=$(date -d "$exp" +%s)
         days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
+        
         if [ $days_left -lt 0 ]; then
-            days_left=0
+            status="${red}KADALUARSA${neutral}"
+            exp_display="${days_left}d"
+        elif [ $days_left -le 3 ]; then
+            status="${yellow}SEGERA HABIS${neutral}"
+            exp_display="${days_left}d"
+        else
+            status="${green}AKTIF${neutral}"
+            exp_display="${days_left}d"
         fi
-        exp="${days_left}d"
 
         quota_file="/etc/xray/vmess/${user}"
         ip_limit_file="/etc/xray/vmess/${user}IP"
         usage_file="/etc/xray/vmess/usage/${user}"
 
-        quota="Unltd"
+        quota="Unlimited"
         if [ -f "$quota_file" ]; then
-            quota=$(cat "$quota_file")
-            if [ "$quota" != "" ] && [ "$quota" != "0" ]; then
-                quota=$(convert_size "$quota")
+            quota_raw=$(cat "$quota_file")
+            if [ "$quota_raw" != "" ] && [ "$quota_raw" != "0" ]; then
+                quota=$(convert_size "$quota_raw")
             else
-                quota="Unltd"
+                quota="Unlimited"
             fi
         fi
 
-        ip_limit="Unltd"
+        ip_limit="Unlimited"
         if [ -f "$ip_limit_file" ]; then
-            ip_limit=$(cat "$ip_limit_file")
-            if [ "$ip_limit" = "" ] || [ "$ip_limit" = "0" ]; then
-                ip_limit="Unltd"
-            fi
-        fi
-
-        usage="0GB"
-        if [ -f "$usage_file" ]; then
-            usage=$(cat "$usage_file")
-            if [ "$usage" != "" ] && [ "$usage" != "0" ]; then
-                usage=$(convert_size "$usage")
+            ip_limit_raw=$(cat "$ip_limit_file")
+            if [ "$ip_limit_raw" != "" ] && [ "$ip_limit_raw" != "0" ]; then
+                ip_limit="$ip_limit_raw"
             else
-                usage="0GB"
+                ip_limit="Unlimited"
             fi
         fi
 
-        printf "│%-2s│%-12s│%-6s│%-6s│%-3s│%-6s│\n" "$no" "$user" "$exp" "$quota" "$ip_limit" "$usage"
+        usage="0B"
+        if [ -f "$usage_file" ]; then
+            usage_raw=$(cat "$usage_file")
+            if [ "$usage_raw" != "" ] && [ "$usage_raw" != "0" ]; then
+                usage=$(convert_size "$usage_raw")
+            else
+                usage="0B"
+            fi
+        fi
+
+        printf "%-15s | %-6s | %-6s | %-3s | %-6s | %b\n" "$user" "$exp_display" "$quota" "$ip_limit" "$usage" "$status"
     done
-    echo "└──┴────────────┴──────┴──────┴───┴──────┘"
-
+    
+    total_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${yellow}Total Akun VMESS : ${green}${total_count}${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     echo -e ""
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e " Tekan Enter untuk kembali ke menu..."
-    read
-
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_vmess_menu
 }
 
 change_vmess_limit() {
     clear
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}║                        CHANGE VMESS LIMIT                         ║${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                     UBAH LIMIT VMESS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/vmess/.vmess.db" ]; then
-        echo -e "   ${red}No VMESS accounts registered.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Tidak ada akun VMESS yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
-    echo -e "   List of VMESS Accounts:"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    
+    echo -e " Daftar Akun VMESS:"
     account_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")
     if [ $account_count -eq 0 ]; then
-        echo -e "   ${red}No active VMESS accounts.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Tidak ada akun VMESS yang aktif.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
-    echo "┌────┬────────────────────┬─────────────┐"
-    echo "│ no │ username           │     exp     │"
-    echo "├────┼────────────────────┼─────────────┤"
+    echo -e "No  | Username           | Exp (hari)"
+    echo -e "─────────────────────────────────────────────"
     grep -E "^### " "/etc/xray/vmess/.vmess.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -332,54 +347,60 @@ change_vmess_limit() {
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+        printf "%-3d | %-18s | %-10s\n", NR, $2, days_left " hari"
     }'
-    echo "└────┴────────────────────┴─────────────┘"
-
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    read -p "   Select the account number : " account_number
+    echo -e "─────────────────────────────────────────────"
+    echo -e ""
+    read -p " Pilih nomor akun : " account_number
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
-        echo -e "   ${red}Error: Input must be a number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
     
     # Check if account number is valid
     if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
-        echo -e "   ${red}Error: Invalid account number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Error: Nomor akun tidak valid.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
     username=$(grep -E "^### " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
 
     if [ -z "$username" ]; then
-        echo -e "   ${red}Invalid account number.${neutral}"
-        echo -e "   Tekan Enter untuk kembali ke menu..."
+        echo -e "   ${red}Nomor akun tidak valid.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
-    echo -e "Changing limit for account: ${green}$username${neutral}"
-    read -p "Enter new quota limit (in GB, 0 for unlimited): " new_quota
-    read -p "Enter new IP limit (0 for unlimited): " new_ip_limit
+    echo -e ""
+    echo -e "Mengubah limit untuk akun: ${green}$username${neutral}"
+    echo -e ""
+    read -p "Masukkan limit quota baru (dalam GB, 0 untuk unlimited): " new_quota
+    read -p "Masukkan limit IP baru (0 untuk unlimited): " new_ip_limit
 
     # Validate input
     if ! [[ "$new_quota" =~ ^[0-9]+$ ]]; then
-        echo -e "${red}Error: Quota limit must be a number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "${red}Error: Limit quota harus berupa angka.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
     if ! [[ "$new_ip_limit" =~ ^[0-9]+$ ]]; then
-        echo -e "${red}Error: IP limit must be a number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "${red}Error: Limit IP harus berupa angka.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
@@ -391,103 +412,145 @@ change_vmess_limit() {
     echo "${new_ip_limit}" >"/etc/xray/vmess/${username}IP"
 
     # Check if update was successful
+    echo -e ""
     if [ $? -eq 0 ]; then
-        echo -e "${green}Limit for account $username successfully changed.${neutral}"
-        echo -e "New quota: ${new_quota} GB"
-        echo -e "New IP limit: ${new_ip_limit}"
+        echo -e "${green}Limit untuk akun $username berhasil diubah.${neutral}"
+        echo -e "Quota baru: ${new_quota} GB"
+        echo -e "Limit IP baru: ${new_ip_limit}"
     else
-        echo -e "${red}Failed to change limit for account $username.${neutral}"
-        echo -e "Please ensure you have sufficient permissions and try again."
+        echo -e "${red}Gagal mengubah limit untuk akun $username.${neutral}"
+        echo -e "Pastikan Anda memiliki izin yang cukup dan coba lagi."
     fi
 
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "   Tekan Enter untuk kembali ke menu..."
-    read
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_vmess_menu
 }
 
 vmess_details() {
     clear
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}║                           VMESS DETAIL                            ║${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                      DETAIL AKUN VMESS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/vmess/.vmess.db" ]; then
-        echo -e "   ${red}No VMESS accounts registered.${neutral}"
-        echo -e "   ${orange}─────────────────────────────────────────${neutral}"
-        echo -e "   Tekan Enter untuk kembali ke menu..."
+        echo -e "   ${red}Tidak ada akun VMESS yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
-    echo -e "   List of VMESS Accounts:"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e " Detail Akun VMESS:"
 
+    account_counter=1
     while IFS= read -r line; do
-        user=$(echo $line | cut -d ' ' -f 2 | sort -u)
-        exp=$(echo $line | cut -d ' ' -f 3 | sort -u)
-        uuid=$(echo $line | cut -d ' ' -f 4 | sort -u)
+        if [[ $line == ###* ]]; then
+            user=$(echo $line | cut -d ' ' -f 2)
+            exp=$(echo $line | cut -d ' ' -f 3)
+            uuid=$(echo $line | cut -d ' ' -f 4)
+            
+            # Calculate days left
+            current_timestamp=$(date +%s)
+            exp_timestamp=$(date -d "$exp" +%s)
+            days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
+            
+            if [ $days_left -lt 0 ]; then
+                status="${red}KADALUARSA${neutral}"
+                exp_display="$exp (${days_left} hari)"
+            elif [ $days_left -le 3 ]; then
+                status="${yellow}SEGERA HABIS${neutral}"
+                exp_display="$exp (${days_left} hari)"
+            else
+                status="${green}AKTIF${neutral}"
+                exp_display="$exp (${days_left} hari)"
+            fi
 
-        echo -e "   Username      : ${green}$user${neutral}"
-        echo -e "   Expired Date  : ${green}$exp${neutral}"
-        echo -e "   UUID          : ${green}$uuid${neutral}"
+            echo -e ""
+            echo -e "${yellow}═══ AKUN #${account_counter} ═══${neutral}"
+            echo -e "   Username      : ${green}$user${neutral}"
+            echo -e "   Tanggal Exp   : ${green}$exp_display${neutral}"
+            echo -e "   Status        : $status"
+            echo -e "   UUID          : ${green}$uuid${neutral}"
 
-        if [ -f "/etc/xray/vmess/${user}" ]; then
-            quota=$(cat /etc/xray/vmess/${user})
-            if [ -n "$quota" ] && [ "$quota" != "0" ]; then
-                quota_readable=$(convert_size $quota)
-                echo -e "   Quota         : ${green}$quota_readable${neutral}"
+            if [ -f "/etc/xray/vmess/${user}" ]; then
+                quota=$(cat /etc/xray/vmess/${user})
+                if [ -n "$quota" ] && [ "$quota" != "0" ]; then
+                    quota_readable=$(convert_size $quota)
+                    echo -e "   Quota         : ${green}$quota_readable${neutral}"
+                else
+                    echo -e "   Quota         : ${green}Unlimited${neutral}"
+                fi
             else
                 echo -e "   Quota         : ${green}Unlimited${neutral}"
             fi
-        else
-            echo -e "   Quota         : ${green}Unlimited${neutral}"
-        fi
 
-        if [ -f "/etc/xray/vmess/${user}IP" ]; then
-            ip_limit=$(cat /etc/xray/vmess/${user}IP)
-            if [ -n "$ip_limit" ] && [ "$ip_limit" != "0" ]; then
-                echo -e "   IP Limit      : ${green}$ip_limit${neutral}"
+            if [ -f "/etc/xray/vmess/${user}IP" ]; then
+                ip_limit=$(cat /etc/xray/vmess/${user}IP)
+                if [ -n "$ip_limit" ] && [ "$ip_limit" != "0" ]; then
+                    echo -e "   Limit IP      : ${green}$ip_limit${neutral}"
+                else
+                    echo -e "   Limit IP      : ${green}Unlimited${neutral}"
+                fi
             else
-                echo -e "   IP Limit      : ${green}Unlimited${neutral}"
+                echo -e "   Limit IP      : ${green}Unlimited${neutral}"
             fi
-        else
-            echo -e "   IP Limit      : ${green}Unlimited${neutral}"
-        fi
+            
+            # Show current usage
+            if [ -f "/etc/xray/vmess/usage/${user}" ]; then
+                usage_raw=$(cat /etc/xray/vmess/usage/${user})
+                if [ -n "$usage_raw" ] && [ "$usage_raw" != "0" ]; then
+                    usage_readable=$(convert_size $usage_raw)
+                    echo -e "   Penggunaan    : ${green}$usage_readable${neutral}"
+                else
+                    echo -e "   Penggunaan    : ${green}0B${neutral}"
+                fi
+            else
+                echo -e "   Penggunaan    : ${green}0B${neutral}"
+            fi
 
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
+            echo -e "${orange}──────────────────────────────────────────────────────────────────────${neutral}"
+            ((account_counter++))
+        fi
     done <"/etc/xray/vmess/.vmess.db"
 
-    echo -e "   Tekan Enter untuk kembali ke menu..."
-    read
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_vmess_menu
 }
 custom_vmess_uuid() {
     clear
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}║                        CUSTOM VMESS UUID                          ║${neutral}"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${green}${bold_white}                     CUSTOM UUID VMESS${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/vmess/.vmess.db" ]; then
-        echo -e "   ${red}No VMESS accounts registered.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Tidak ada akun VMESS yang terdaftar.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
     account_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")
     if [ $account_count -eq 0 ]; then
-        echo -e "   ${red}No active VMESS accounts.${neutral}"
-        echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Tidak ada akun VMESS yang aktif.${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
-    echo -e " List of VMESS Accounts:"
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo "┌────┬────────────────────┬─────────────┐"
-    echo "│ no │ username           │     exp     │"
-    echo "├────┼────────────────────┼─────────────┤"
+    
+    echo -e " Daftar Akun VMESS:"
+    echo -e "No  | Username           | Exp (hari)"
+    echo -e "─────────────────────────────────────────────"
     grep -E "^### " "/etc/xray/vmess/.vmess.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -495,51 +558,57 @@ custom_vmess_uuid() {
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf "│ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
+        printf "%-3d | %-18s | %-10s\n", NR, $2, days_left " hari"
     }'
-    echo "└────┴────────────────────┴─────────────┘"
-
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    read -p "   Select the account number : " account_number
+    echo -e "─────────────────────────────────────────────"
+    echo -e ""
+    read -p " Pilih nomor akun : " account_number
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
-        echo -e "   ${red}Error: Input must be a number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
     
     # Check if account number is valid
     if [ "$account_number" -lt 1 ] || [ "$account_number" -gt "$account_count" ]; then
-        echo -e "   ${red}Error: Invalid account number.${neutral}"
-        echo -e "   Press enter to return to the menu"
+        echo -e "   ${red}Error: Nomor akun tidak valid.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
     user=$(grep -E "^### " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
 
     if [ -z "$user" ]; then
-        echo -e "   ${red}Invalid account number.${neutral}"
-        echo -e "   Tekan Enter untuk kembali ke menu..."
+        echo -e "   ${red}Nomor akun tidak valid.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
+    
+    echo -e ""
+    echo -e "Mengubah UUID untuk akun: ${green}$user${neutral}"
+    echo -e ""
     while true; do
-        read -p "   UUID (min 6 characters): " new_uuid
+        read -p " UUID baru (minimal 6 karakter): " new_uuid
         if [[ ${#new_uuid} -ge 6 && "$new_uuid" =~ ^[a-zA-Z0-9_-]+$ ]]; then
             break
         else
-            printf "\033[1A\033[0J"
-            echo -e "${red}   UUID must be at least 6 characters${neutral}"
+            echo -e "${red} UUID harus minimal 6 karakter dan hanya boleh berisi huruf, angka, _ atau -${neutral}"
         fi
     done
 
     if [ -z "$new_uuid" ]; then
-        echo -e "${red}Error: UUID cannot be empty.${neutral}"
-        echo -e "   Tekan Enter untuk kembali ke menu..."
+        echo -e "${red}Error: UUID tidak boleh kosong.${neutral}"
+        echo -e " Tekan Enter untuk kembali ke menu..."
         read
+        display_vmess_menu
         return
     fi
 
@@ -562,16 +631,20 @@ custom_vmess_uuid() {
     echo "### $user $exp $new_uuid" >> "$db_file"
     systemctl restart vmess@config
 
+    echo -e ""
     if [ $? -eq 0 ]; then
-        echo -e "UUID for account ${green}$user${neutral} successfully changed."
+        echo -e "${green}UUID untuk akun $user berhasil diubah.${neutral}"
+        echo -e "UUID baru: ${green}$new_uuid${neutral}"
     else
-        echo -e "${red}Failed to change UUID for account $user.${neutral}"
-        echo -e "Please ensure you have sufficient permissions and try again."
+        echo -e "${red}Gagal mengubah UUID untuk akun $user.${neutral}"
+        echo -e "Pastikan Anda memiliki izin yang cukup dan coba lagi."
     fi
 
-    echo -e "${green}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "   Tekan Enter untuk kembali ke menu..."
-    read
+    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    echo -e ""
+    display_vmess_menu
 }
 # Function to display VMESS menu
 display_vmess_menu() {

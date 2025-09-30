@@ -292,7 +292,7 @@ display_menu() {
     echo -e ""
     echo -e "       ${green}[1]${neutral} Kelola SSH/OpenVPN       │  ${green}[5]${neutral} Kelola Shadowsocks"
     echo -e "       ${green}[2]${neutral} Kelola VMess             │  ${green}[6]${neutral} Setup Bot Notifikasi"
-    echo -e "       ${green}[3]${neutral} Kelola VLess             │  ${green}[7]${neutral} Menu Bot Telegram"
+    echo -e "       ${green}[3]${neutral} Kelola VLess             │  ${green}[7]${neutral} Menu Bot Telegram (Segera)"
     echo -e "       ${green}[4]${neutral} Kelola Trojan            │  ${green}[8]${neutral} Menu Features"
     echo -e ""
     echo -e "                           ${red}[x]${neutral} Keluar dari Panel"

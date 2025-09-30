@@ -50,16 +50,18 @@ check_vless() {
     done
     echo -e "${reset}\n"
 
-    # Tabel
-    echo -e "${orange}──────────────────────────────────────────${reset}"
+    # Table header
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
     echo -e "${green}${bold}       VLESS USER LOGIN ACCOUNTS${reset}"
-    echo -e "${orange}──────────────────────────────────────────${reset}"
-    echo -e "Username     | Usage  | Quota  | Log | Lim | Status"
-    echo -e "──────────────────────────────────────────"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
+    echo -e "Username         | Usage     | Quota     | Log    | Lim    | Status"
+    echo -e "══════════════════════════════════════════════════════════════════════"
 
+    total_loggedin=0
     for user in "${USER_LIST[@]}"; do
         ip_count=$(get_login_count "$user" "$LOG_FILE")
         [[ "$ip_count" -eq 0 ]] && continue
+        ((total_loggedin++))
         usage=$(cat /etc/xray/vless/usage/${user} 2>/dev/null || echo 0)
         quota=$(cat /etc/xray/vless/${user} 2>/dev/null || echo 0)
         ip_limit=$(cat /etc/xray/vless/${user}IP 2>/dev/null || echo "0")
@@ -76,12 +78,29 @@ check_vless() {
             else status="${green}OK${reset}"; fi
         fi
 
-        printf "%-12s | %-6s | %-6s | %-3s | %-3s | %b\n" \
+        printf "%-12s | %-6s | %-6s | %-3s | %-6s | %b\n" \
                "$user" "$readable_usage" "$readable_quota" "$ip_count" "$ip_limit" "$status"
     done
-
-    echo -e "${orange}──────────────────────────────────────────${reset}"
 }
 
 check_vless
-read -n 1 -s -r -p "Press [ Enter ] to exit"
+echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
+echo -e "${yellow}Total User Login : ${green}${total_loggedin}${reset}"
+echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
+echo ""
+read -n 1 -s -r -p "Press [ Enter ] to back to menu..."
+echo ""
+
+# Return to main menu
+if [[ -f "/usr/bin/menu" ]]; then
+    /usr/bin/menu
+elif [[ -f "/usr/local/bin/menu" ]]; then
+    /usr/local/bin/menu
+elif [[ -f "./menu" ]]; then
+    ./menu
+elif [[ -f "/root/menu.sh" ]]; then
+    /root/menu.sh
+else
+    echo "Menu script not found. Exiting..."
+    exit 0
+fi

@@ -42,7 +42,7 @@ check_trojan() {
     USER_LIST=($(grep '^###' /etc/xray/trojan/.trojan.db | awk '{print $2}' | sort -u))
 
     # Spinner loading
-    echo -ne "${yellow}Checking Users "
+    echo -ne "${yellow}Memeriksa pengguna "
     for ((i=0;i<20;i++)); do
         echo -ne "${spinner[i % ${#spinner[@]}]}"
         sleep 0.05
@@ -52,9 +52,9 @@ check_trojan() {
 
     # Table header
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
-    echo -e "${green}${bold}       TROJAN USER LOGIN ACCOUNTS${reset}"
+    echo -e "${green}${bold}       DAFTAR PENGGUNA TROJAN ONLINE${reset}"
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
-    echo -e "Username         | Usage     | Quota     | Log    | Lim    | Status"
+    echo -e "Nama Pengguna    | Pemakaian | Kuota     | Login | Batas  | Status"
     echo -e "══════════════════════════════════════════════════════════════════════"
 
     total_loggedin=0
@@ -70,16 +70,22 @@ check_trojan() {
 
         readable_usage=$(convert_size $usage)
         readable_quota=$(convert_size $quota)
+        display_limit="$ip_limit"
 
-        if [[ "$ip_limit" == "Unlimited" ]]; then status="${green}OK${reset}"; 
+        if [[ "$ip_limit" == "Unlimited" ]]; then
+            display_limit="Tak Terbatas"
+            status="${green}OK${reset}"
         else
             ip_limit_num=$(echo "$ip_limit" | tr -dc '0-9')
-            if [[ "$ip_count" -gt "$ip_limit_num" ]]; then status="${red}OVER${reset}"; 
-            else status="${green}OK${reset}"; fi
+            if [[ "$ip_count" -gt "$ip_limit_num" ]]; then
+                status="${red}OVER${reset}"
+            else
+                status="${green}OK${reset}"
+            fi
         fi
 
-        printf "%-12s | %-6s | %-6s | %-3s | %-6s | %b\n" \
-               "$user" "$readable_usage" "$readable_quota" "$ip_count" "$ip_limit" "$status"
+        printf "%-15s | %-9s | %-9s | %-5s | %-6s | %b\n" \
+               "$user" "$readable_usage" "$readable_quota" "$ip_count" "$display_limit" "$status"
     done
 
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
@@ -87,10 +93,10 @@ check_trojan() {
 
 check_trojan
 echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
-echo -e "${yellow}Total User Login : ${green}${total_loggedin}${reset}"
+echo -e "${yellow}Total Pengguna Login : ${green}${total_loggedin}${reset}"
 echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
 echo ""
-read -n 1 -s -r -p "Press [ Enter ] to back to menu..."
+read -n 1 -s -r -p "Tekan [Enter] untuk kembali ke menu..."
 echo ""
 
 # Return to main menu
@@ -103,6 +109,6 @@ elif [[ -f "./menu" ]]; then
 elif [[ -f "/root/menu.sh" ]]; then
     /root/menu.sh
 else
-    echo "Menu script not found. Exiting..."
+    echo "Script menu tidak ditemukan. Keluar..."
     exit 0
 fi

@@ -448,7 +448,7 @@ vmess_details() {
 
     account_counter=1
     while IFS= read -r line; do
-        if [[ $line == ###* ]]; then
+    if [[ $line == \#\#\#* ]]; then
             user=$(echo $line | cut -d ' ' -f 2)
             exp=$(echo $line | cut -d ' ' -f 3)
             uuid=$(echo $line | cut -d ' ' -f 4)

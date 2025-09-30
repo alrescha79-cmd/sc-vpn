@@ -188,12 +188,59 @@ echo -e "${orange}╚═══════════════════�
 echo -e ""
 echo -e "${yellow}⚠️ Pastikan Anda sudah membuat bot di Telegram dan mendapatkan token bot serta chat ID Anda.${neutral}"
 echo -e ""
-echo -e "${yellow}Ketik 'y' untuk melanjutkan atau 'x' untuk kembali ke menu utama.${neutral}"
-echo -ne "${yellow}>> ${neutral}"
-read -r input
-if [[ "$input" == "x" || "$input" == "X" ]]; then
-return
+
+# Cek apakah sudah ada konfigurasi bot sebelumnya
+if [ -f /root/.vars ]; then
+    source /root/.vars
+    echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${cyan}║                        KONFIGURASI SAAT INI                           ║${neutral}"
+    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    if [ -n "$bot_token" ]; then
+        # Sembunyikan sebagian token untuk keamanan
+        masked_token="${bot_token:0:10}***${bot_token: -10}"
+        echo -e "   ${white}Bot Token: ${green}$masked_token${neutral}"
+    else
+        echo -e "   ${white}Bot Token: ${red}Tidak tersedia${neutral}"
+    fi
+    
+    if [ -n "$telegram_id" ]; then
+        echo -e "   ${white}Chat ID  : ${green}$telegram_id${neutral}"
+    else
+        echo -e "   ${white}Chat ID  : ${red}Tidak tersedia${neutral}"
+    fi
+    echo -e ""
+    echo -e "${yellow}Apakah Anda ingin mengganti konfigurasi yang sudah ada?${neutral}"
+    echo -e "${yellow}[y] Ya, ganti konfigurasi${neutral}"
+    echo -e "${yellow}[n] Tidak, biarkan seperti ini${neutral}"
+    echo -e "${yellow}[x] Kembali ke menu utama${neutral}"
+    echo -ne "${yellow}>> ${neutral}"
+    read -r input
+    
+    case $input in
+        x|X)
+            return
+            ;;
+        n|N)
+            echo -e ""
+            echo -e "${green}Konfigurasi bot telegram tidak diubah.${neutral}"
+            read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
+            return
+            ;;
+        y|Y)
+            echo -e ""
+            echo -e "${yellow}Melanjutkan untuk mengubah konfigurasi...${neutral}"
+            sleep 1
+            ;;
+        *)
+            echo -e ""
+            echo -e "${red}Pilihan tidak valid. Kembali ke menu utama.${neutral}"
+            sleep 2
+            return
+            ;;
+    esac
 fi
+
 clear
 echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${bold_white}Masukkan Token Bot Telegram Anda:${neutral}"
@@ -204,19 +251,29 @@ echo -e "${bold_white}Masukkan Chat ID Telegram Anda:${neutral}"
 echo -ne "${yellow}>> ${neutral}"
 read chat_id
 echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
+
 if [[ -z "$bot_token" || -z "$chat_id" ]]; then
-echo -e "${red}Token bot atau chat ID tidak boleh kosong.${neutral}"
-return
+    echo -e "${red}Token bot atau chat ID tidak boleh kosong.${neutral}"
+    echo -e ""
+    read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
+    return
 fi
+
+# Backup konfigurasi lama jika ada
 if [ -f /root/.vars ]; then
-rm -f /root/.vars
+    cp /root/.vars /root/.vars.backup.$(date +%Y%m%d_%H%M%S)
+    rm -f /root/.vars
 fi
+
 echo "bot_token=\"$bot_token\"" >> /root/.vars
 echo "telegram_id=\"$chat_id\"" >> /root/.vars
 systemctl restart limitip > /dev/null 2>&1
+
 echo -e "${dark_purple}══════════════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${green}Token bot dan chat ID telah disimpan di /root/.vars${neutral}"
-read -n 1 -s -r -p "Press any key to return to the menu"
+echo -e "${green}✅ Token bot dan chat ID telah berhasil disimpan di /root/.vars${neutral}"
+echo -e "${green}✅ Service limitip telah direstart untuk menerapkan konfigurasi baru${neutral}"
+echo -e ""
+read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
 }
       
 # Display menu function
@@ -246,8 +303,8 @@ display_menu() {
     
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                            INFORMASI SISTEM                           ║${neutral}"
-    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "    ${white}SISTEM    : $(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' | head -c25)${neutral}"
     echo -e "    ${white}RAM       : $(free -m | awk 'NR==2 {printf "%s / %s MB", $3, $2}')${neutral}"
     echo -e "    ${white}UPTIME    : $(uptime -p 2>/dev/null | cut -d ' ' -f 2-4 | head -c25)${neutral}"
@@ -260,35 +317,36 @@ display_menu() {
     
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
-    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "    ${white}WEBSOCKET: $(cek_status ws-stunnel)  │  NGINX: $(cek_status nginx)     │  DROPBEAR: $(cek_status dropbear)${neutral}"
     echo -e "    ${white}XRAY: $(cek_status vmess@config)   │  HAPROXY: $(cek_status haproxy) │  SSH/OVPN: $(cek_status ssh)${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
+
+    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "                   ${white}USER ID   : $username ${sts}${neutral}"
+    echo -e "                   ${white}MASA AKTIF : $(datediff "$valid" "$today")${neutral}"            
+    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+
     echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${blue}║                             JUMLAH AKUN                               ║${neutral}"
-    echo -e "${blue}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "    SSH/OPENVPN : ${yellow}$(printf "%2s" "$ssh")${neutral} Account    │    SHADOWSOCKS : ${yellow}$(printf "%2s" "$ss")${neutral} Account"
     echo -e "    VMESS XRAY  : ${yellow}$(printf "%2s" "$vm")${neutral} Account    │    TROJAN XRAY : ${yellow}$(printf "%2s" "$tr")${neutral} Account"
     echo -e "    VLESS XRAY  : ${yellow}$(printf "%2s" "$vl")${neutral} Account"
     echo -e "${blue}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
-
-    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
-    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "                   ${white}USER ID   : $username ${sts}${neutral}"
-    echo -e "                   ${white}MASA AKTIF : $(datediff "$valid" "$today")${neutral}"            
-    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     
     echo -e "${magenta}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                              MENU UTAMA                               ║${neutral}"
-    echo -e "${magenta}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${magenta}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e ""
     echo -e "       ${green}[1]${neutral} Kelola SSH/OpenVPN       │  ${green}[5]${neutral} Kelola Shadowsocks"
     echo -e "       ${green}[2]${neutral} Kelola VMess             │  ${green}[6]${neutral} Setup Bot Notifikasi"

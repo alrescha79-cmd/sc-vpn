@@ -80,9 +80,9 @@ send_telegram_notification() {
     if [ "$status" == "success" ]; then
         message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>✅ AKUN VMESS BERHASIL DIBUAT</b>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>👤 Username:</b> <code>$user</code>
 <b>🆔 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
@@ -97,29 +97,29 @@ send_telegram_notification() {
 <b>📊 Quota:</b> <code>${quota} GB</code>
 <b>🔢 IP Limit:</b> <code>$ip_limit</code>
 <b>⏰ Expires:</b> <code>$exp</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>🔗 TLS Link:</b>
 <code>$vmess_tls</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>🔗 Non-TLS Link:</b>
 <code>$vmess_non</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>🔗 GRPC Link:</b>
 <code>$vmess_grpc</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
     else
         message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>❌ GAGAL MEMBUAT AKUN VMESS</b>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>👤 Nama Pengguna:</b> <code>$user</code>
 <b>🆔 ID Pengguna:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>❗ Kesalahan:</b> <code>$error_msg</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
+<br>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -139,13 +139,13 @@ if [ ! -f "/etc/xray/vmess/config.json" ]; then
 fi
 
 if ! sed -i '/#vmess$/a\### '"$user $exp"'\
-},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vmess/config.json; then
+},{"id": "'"$uuid"'","email": "'"$user"'"}' /etc/xray/vmess/config.json; then
     echo -e "${red}Gagal menambahkan pengguna ke config.json${reset}"
     send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json"
     exit 1
 fi
 if ! sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
-},{"id": '"""$uuid"""',"email": '"""$user"""' /etc/xray/vmess/config.json; then
+},{"id": "'"$uuid"'","email": "'"$user"'"}' /etc/xray/vmess/config.json; then
     echo -e "${red}Gagal menambahkan pengguna ke config.json (GRPC)${reset}"
     send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (GRPC)"
     exit 1

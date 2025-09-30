@@ -7,9 +7,9 @@ orange='\e[0;33m'
 NC='\e[0m'
 clear
 
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}           INSTALLASI package            ${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                               Install package            ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
 cd /usr/bin
 wget -q -O addshadowsocks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/addshadowsocks"
@@ -108,7 +108,7 @@ chmod +x trialssh
 chmod +x trialshadowsoks
 
 
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}           INSTALLASI package            ${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                               Install package            ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 cd 

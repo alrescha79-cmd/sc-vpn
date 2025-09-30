@@ -57,26 +57,26 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>✅ VMESS ACCOUNT DELETED</b>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>⏰ Deleted Date:</b> <code>$(date '+%Y-%m-%d %H:%M:%S')</code>
 <b>✅ Status:</b> <code>Successfully Deleted</code>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>❌ VMESS ACCOUNT DELETION FAILED</b>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>❗ Error:</b> <code>$error_msg</code>
-<b>━━━━━━━━━━━━━━━━━━</b>
+<br>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi

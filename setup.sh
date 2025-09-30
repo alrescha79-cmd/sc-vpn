@@ -1358,9 +1358,9 @@ sudo systemctl restart netfilter-persistent
 cd
 
 clear
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}           INSTALLASI Menu              ${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                                  Install Menu              ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
 
 wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/menu.sh && chmod +x menu.sh && ./menu.sh
@@ -1369,9 +1369,9 @@ cd
 
 
 clear
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}       INSTALLASI plugin Alrescha79        ${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                               plugin Alrescha79        ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
 
 wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/package-gohide.sh && chmod +x package-gohide.sh && ./package-gohide.sh
@@ -1379,9 +1379,9 @@ cd
 rm -rf package-gohide.sh
 
 # cd
-# echo -e "${blue}─────────────────────────────────────────${neutral}"
-# echo -e "${green}   INSTALLASI golang bye Alrescha79       ${neutral}"
-# echo -e "${blue}─────────────────────────────────────────${neutral}"
+# echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+# echo -e "${green}   Install golang bye Alrescha79       ${neutral}"
+# echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
 
 # cd
@@ -1426,12 +1426,33 @@ completion_message="✅ <b>Alrescha79 VPN Script - Instalasi Selesai</b>
 
 send_telegram_notification "$completion_message" "HTML" "success"
 
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}           INSTALLASI SELESAI            ${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}           Install SELESAI            ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${green}  Selamat! Proses instalasi selesai.${neutral}"
 echo -e "${green}  ✓ Notifikasi Telegram telah dikirim.${neutral}"
-echo -e "${gray}Silakan reboot server Anda dengan 'enter'.${neutral}"
-echo -e "${blue}─────────────────────────────────────────${neutral}"
-read -p "Tekan enter untuk reboot server..."
+echo -e "${gray}Server akan otomatis reboot dalam 10 detik...${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+
+# Countdown with animation
+for i in {10..1}; do
+    printf "\r${yellow}Reboot dalam: ${red}%2d${yellow} detik ${blue}[" $i
+    
+    # Progress bar animation
+    filled=$((10 - i + 1))
+    for ((j=1; j<=10; j++)); do
+        if [ $j -le $filled ]; then
+            printf "▰"
+        else
+            printf "▱"
+        fi
+    done
+    printf "]${neutral}"
+    
+    sleep 1
+done
+
+printf "\n"
+echo -e "${green}🔄 Melakukan reboot sekarang...${neutral}"
+sleep 1
 reboot

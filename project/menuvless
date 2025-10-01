@@ -152,7 +152,7 @@ vless_members() {
     fi
 
     echo -e " Daftar Akun VLESS:"
-    echo -e "Username         | Sisa   | Kuota     | IP    | Penggunaan | Status"
+    echo -e "Username           | Sisa   | Kuota     | IP    | Penggunaan | Status"
     echo -e "══════════════════════════════════════════════════════════════════════"
 
     grep -E "^### " "/etc/xray/vless/.vless.db" | while read -r line; do

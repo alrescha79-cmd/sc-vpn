@@ -487,8 +487,8 @@ member_ssh() {
         ip_limit=$(cat /etc/ssh/${user} 2>/dev/null || echo "Unlimited")
 
         printf "%-3s %-18s %-15s " "$idx" "$user" "$exp"
-        printf "%-10s " "${status_color}${status_text}${neutral}"
-        printf "%-10s\n" "$ip_limit"
+        echo -ne "${status_color}${status_text}${neutral}"
+        printf " %-10s\n" "$ip_limit"
         ((idx++))
     done
 

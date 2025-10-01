@@ -469,20 +469,26 @@ member_ssh() {
         fi
 
         if [ "$days_left" -lt 0 ]; then
-            status="${red}KADALUARSA${neutral}"
+            status_text="KADALUARSA"
+            status_color="${red}"
         elif [ "$days_left" -le 3 ]; then
-            status="${yellow}SEGERA HABIS${neutral}"
+            status_text="SEGERA HABIS"
+            status_color="${yellow}"
         else
-            status="${green}AKTIF${neutral}"
+            status_text="AKTIF"
+            status_color="${green}"
         fi
 
         if passwd -S "$user" 2>/dev/null | grep -q " L "; then
-            status="${red}TERKUNCI${neutral}"
+            status_text="TERKUNCI"
+            status_color="${red}"
         fi
 
         ip_limit=$(cat /etc/ssh/${user} 2>/dev/null || echo "Unlimited")
 
-        printf "%-3s %-18s %-15s %-10b %-10s\n" "$idx" "$user" "$exp" "$status" "$ip_limit"
+        printf "%-3s %-18s %-15s " "$idx" "$user" "$exp"
+        printf "%-10s " "${status_color}${status_text}${neutral}"
+        printf "%-10s\n" "$ip_limit"
         ((idx++))
     done
 

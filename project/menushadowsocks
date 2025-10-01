@@ -172,13 +172,16 @@ shadowsocks_members() {
         days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
         
         if [ $days_left -lt 0 ]; then
-            status="${red}KADALUARSA${neutral}"
+            status_text="KADALUARSA"
+            status_color="${red}"
             exp_display="${days_left}d"
         elif [ $days_left -le 3 ]; then
-            status="${yellow}SEGERA HABIS${neutral}"
+            status_text="SEGERA HABIS"
+            status_color="${yellow}"
             exp_display="${days_left}d"
         else
-            status="${green}AKTIF${neutral}"
+            status_text="AKTIF"
+            status_color="${green}"
             exp_display="${days_left}d"
         fi
 
@@ -216,7 +219,8 @@ shadowsocks_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-6s | %-3s | %-6s | %b\n" "$user" "$exp_display" "$quota" "$ip_limit" "$usage" "$status"
+        printf "%-15s | %-6s | %-6s | %-3s | %-6s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
+        echo -e "${status_color}${status_text}${neutral}"
     done
     
     total_count=$(grep -cE "^### " "/etc/xray/shadowsocks/.shadowsocks.db")

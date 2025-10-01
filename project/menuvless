@@ -163,13 +163,16 @@ vless_members() {
         days_left=$(((exp_timestamp - current_timestamp) / 86400))
 
         if [ $days_left -lt 0 ]; then
-            status="${red}KADALUARSA${neutral}"
+            status_text="KADALUARSA"
+            status_color="${red}"
             exp_display="${days_left} hari"
         elif [ $days_left -le 3 ]; then
-            status="${yellow}SEGERA HABIS${neutral}"
+            status_text="SEGERA HABIS"
+            status_color="${yellow}"
             exp_display="${days_left} hari"
         else
-            status="${green}AKTIF${neutral}"
+            status_text="AKTIF"
+            status_color="${green}"
             exp_display="${days_left} hari"
         fi
 
@@ -201,7 +204,8 @@ vless_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-9s | %-4s | %-11s | %b\n" "$user" "$exp_display" "$quota" "$ip_limit" "$usage" "$status"
+        printf "%-15s | %-6s | %-9s | %-4s | %-11s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
+        echo -e "${status_color}${status_text}${neutral}"
     done
 
     total_count=$(grep -cE "^### " "/etc/xray/vless/.vless.db")
@@ -359,20 +363,23 @@ vless_details() {
         days_left=$(((exp_timestamp - current_timestamp) / 86400))
 
         if [ $days_left -lt 0 ]; then
-            status="${red}KADALUARSA${neutral}"
+            status_text="KADALUARSA"
+            status_color="${red}"
             exp_display="$exp (${days_left} hari)"
         elif [ $days_left -le 3 ]; then
-            status="${yellow}SEGERA HABIS${neutral}"
+            status_text="SEGERA HABIS"
+            status_color="${yellow}"
             exp_display="$exp (${days_left} hari)"
         else
-            status="${green}AKTIF${neutral}"
+            status_text="AKTIF"
+            status_color="${green}"
             exp_display="$exp (${days_left} hari)"
         fi
 
         echo -e "${yellow}═══ AKUN #${account_counter} ═══${neutral}"
         echo -e "   Username      : ${green}$user${neutral}"
         echo -e "   Tanggal Exp   : ${green}$exp_display${neutral}"
-        echo -e "   Status        : $status"
+        echo -e "   Status        : ${status_color}${status_text}${neutral}"
         echo -e "   UUID          : ${green}$uuid${neutral}"
 
         quota_file="/etc/xray/vless/${user}"

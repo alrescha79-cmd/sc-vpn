@@ -246,7 +246,7 @@ vmess_members() {
     local HEADER=$(printf "$FMT" "Username" "Exp" "Quota" "IP Limit" "Usage" "Status")
     # Hitung panjang header tanpa escape warna
     local LINE_LEN=${#HEADER}
-    local LINE=$(printf '%*s' "$LINE_LEN" '' | tr ' ' '═')
+    local LINE=$(printf '%*s' "$LINE_LEN" '' | tr ' ' '══')
 
     echo -e "${bold_white}$HEADER${neutral}"
     echo -e "${orange}$LINE${neutral}"
@@ -261,13 +261,16 @@ vmess_members() {
         days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
         
         if [ $days_left -lt 0 ]; then
-            status="${red}KADALUARSA${neutral}"
+            status_text="KADALUARSA"
+            status_color="${red}"
             exp_display="${days_left}d"
         elif [ $days_left -le 3 ]; then
-            status="${yellow}SEGERA HABIS${neutral}"
+            status_text="SEGERA HABIS"
+            status_color="${yellow}"
             exp_display="${days_left}d"
         else
-            status="${green}AKTIF${neutral}"
+            status_text="AKTIF"
+            status_color="${green}"
             exp_display="${days_left}d"
         fi
 
@@ -313,7 +316,8 @@ vmess_members() {
         [[ ${#ip_limit_display} -gt 9 ]] && ip_limit_display="${ip_limit_display:0:8}+"
         [[ ${#usage_display} -gt 10 ]] && usage_display="${usage_display:0:9}+"
 
-        printf "$FMT\n" "$user" "$exp_display" "$quota_display" "$ip_limit_display" "$usage_display" "$status"
+        printf "%-15s | %-6s | %-10s | %-9s | %-10s | " "$user" "$exp_display" "$quota_display" "$ip_limit_display" "$usage_display"
+        echo -e "${status_color}${status_text}${neutral}"
     done
     echo -e "${orange}$LINE${neutral}"
     total_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")

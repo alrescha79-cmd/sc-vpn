@@ -89,9 +89,9 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>✅ AKUN TROJAN BERHASIL DIBUAT</b>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>✅ trojan ACCOUNT CREATED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🆔 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
@@ -106,29 +106,29 @@ send_telegram_notification() {
 <b>📊 Quota:</b> <code>${quota} GB</code>
 <b>🔢 IP Limit:</b> <code>$ip_limit</code>
 <b>⏰ Expires:</b> <code>$exp</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🔗 TLS Link:</b>
 <code>$trojan_tls</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🔗 Non-TLS Link:</b>
 <code>$trojan_non</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🔗 GRPC Link:</b>
 <code>$trojan_grpc</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>❌ GAGAL MEMBUAT AKUN TROJAN</b>
-<br>
-<b>👤 Nama Pengguna:</b> <code>$user</code>
-<b>🆔 ID Pengguna:</b> <code>$uuid</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>❌ trojan ACCOUNT CREATION FAILED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🆔 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Kesalahan:</b> <code>$error_msg</code>
-<br>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -136,7 +136,7 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            --data-urlencode "text=$message" > /dev/null 2>&1
+            -d "text=$message" > /dev/null 2>&1
     fi
 }
 
@@ -144,17 +144,21 @@ send_telegram_notification() {
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if ! sed -i '/#trojan$/a\### '"$user $exp"'\
-},{"password": "'"$uuid"'","email": "'"$user"'"}' /etc/xray/trojan/config.json; then
-    echo -e "${red}Gagal menambahkan pengguna ke config.json${reset}"
-    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json"
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add user to config.json${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json"
     exit 1
 fi
 if ! sed -i '/#trojangrpc$/a\### '"$user $exp"'\
-},{"password": "'"$uuid"'","email": "'"$user"'"}' /etc/xray/trojan/config.json; then
-    echo -e "${red}Gagal menambahkan pengguna ke config.json (GRPC)${reset}"
-    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (GRPC)"
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan/config.json; then
+    echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
     exit 1
 fi
+
+# Create configuration files
+cat > /etc/xray/trojan/$user-tls.json <<EOF
+{
     "v": "2",
     "ps": "$user WS (CDN) TLS",
     "add": "${domain}",

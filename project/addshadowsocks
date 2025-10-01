@@ -78,8 +78,8 @@ send_telegram_notification() {
     if [ -f '/root/.vars' ]; then
         source '/root/.vars'
         
-  if [ "$status" == "success" ]; then
-      message="
+        if [ "$status" == "success" ]; then
+            message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <br>
 <b>✅ AKUN SHADOWSOCKS BERHASIL DIBUAT</b>
@@ -104,8 +104,8 @@ send_telegram_notification() {
 <br>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
-  else
-      message="
+        else
+            message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <br>
 <b>❌ GAGAL MEMBUAT AKUN SHADOWSOCKS</b>
@@ -122,7 +122,7 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            -d "text=$message" > /dev/null 2>&1
+            --data-urlencode "text=$message" > /dev/null 2>&1
     fi
 }
 

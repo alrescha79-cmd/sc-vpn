@@ -505,11 +505,11 @@ display_ssh_menu() {
     clear
     echo -e ""
     echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${magenta}║                         ${blue}MANAJEMEN SSH / OPENVPN${magenta}                    ║${neutral}"
+    echo -e "${magenta}║                         ${blue}MANAJEMEN SSH / OPENVPN${magenta}                      ║${neutral}"
     echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${cyan}║                               ${blue}PILIHAN MENU${cyan}                           ║${neutral}"
+    echo -e "${cyan}║                           ${blue}PILIHAN MENU${cyan}                               ║${neutral}"
     echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e ""
     echo -e "   ${neutral} ${green}[1]${neutral}  Buat Akun SSH/OpenVPN        ${green}[7]${neutral}  Kunci Akun SSH/OpenVPN"

@@ -102,10 +102,24 @@ if [[ ${account_count} == '0' ]]; then
     exit 0
 fi
 
-echo -e "${yellow}Select account to delete:${reset}"
-echo -e "${green}1) Choose by number${reset}"
-echo -e "${green}2) Type username manually${reset}"
-read -p "your choice [1-2]: " delete_choice
+while true; do
+    echo -e "${yellow}Select account to delete:${reset}"
+    echo -e "${green}1) Choose by number${reset}"
+    echo -e "${green}2) Type username manually${reset}"
+    read -p "your choice [1-2]: " delete_choice
+    
+    if [[ $delete_choice == "1" || $delete_choice == "2" ]]; then
+        break
+    else
+        echo -e "${red}Invalid choice! Please select 1 or 2.${reset}"
+        echo -e "${yellow}Press Enter to try again...${reset}"
+        read
+        clear
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│       DELETE SHADOWSOCKS ACCOUNT        │"
+        print_rainbow "└─────────────────────────────────────────┘"
+    fi
+done
 if [[ $delete_choice == "1" ]]; then
     clear
     print_rainbow "┌─────────────────────────────────────────┐"
@@ -144,16 +158,21 @@ case $delete_choice in
         sleep 2
         ;;
     2)
-        read -rp "enter username: " user
-        if ! grep -qE "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db"; then
-            echo "username not found"
-            exit 1
-        fi
-        exp=$(grep -E "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3)
-        echo "You selected: $user (Expiry: $exp)"
+        while true; do
+            read -rp "enter username: " user
+            if grep -qE "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db"; then
+                exp=$(grep -E "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3)
+                echo -e "${green}Username found: $user (Expiry: $exp)${reset}"
+                break
+            else
+                echo -e "${red}Username '$user' not found!${reset}"
+                echo -e "${yellow}Please try again or press Ctrl+C to cancel.${reset}"
+                echo ""
+            fi
+        done
         ;;
     *)
-        echo "invalid choice"
+        echo -e "${red}Error: Invalid choice${reset}"
         exit 1
         ;;
 esac
@@ -196,4 +215,4 @@ echo -e "username     : ${green}$user${reset}"
 echo -e "account has been permanently deleted"
 echo ""
 read -n 1 -s -r -p "Press [ Enter ] to back on menu"
-menu
+menushadowsocks

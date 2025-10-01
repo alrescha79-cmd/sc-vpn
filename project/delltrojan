@@ -104,10 +104,24 @@ if [[ ${account_count} == '0' ]]; then
     exit 0
 fi
 
-echo -e "${yellow}Pilihan:${reset}"
-echo -e "${green}1) Berdasarkan nomer${reset}"
-echo -e "${green}2) Ketik username secara manual${reset}"
-read -p "Pilih [1-2]: " delete_choice
+while true; do
+    echo -e "${yellow}Pilihan:${reset}"
+    echo -e "${green}1) Berdasarkan nomer${reset}"
+    echo -e "${green}2) Ketik username secara manual${reset}"
+    read -p "Pilih [1-2]: " delete_choice
+    
+    if [[ $delete_choice == "1" || $delete_choice == "2" ]]; then
+        break
+    else
+        echo -e "${red}Pilihan tidak valid! Silakan pilih 1 atau 2.${reset}"
+        echo -e "${yellow}Tekan Enter untuk mencoba lagi...${reset}"
+        read
+        clear
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│            HAPUS AKUN TROJAN            │"
+        print_rainbow "└─────────────────────────────────────────┘"
+    fi
+done
 if [[ $delete_choice == "1" ]]; then
 clear
         print_rainbow "┌─────────────────────────────────────────┐"
@@ -146,16 +160,21 @@ case $delete_choice in
         sleep 2
         ;;
     2)
-        read -rp "Ketik username: " user
-        if ! grep -qE "^### $user " "/etc/xray/trojan/.trojan.db"; then
-            echo "username tidak ditemukan"
-            exit 1
-        fi
-        exp=$(grep -E "^### $user " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 3)
-        echo "Anda memilih: $user (Expiry: $exp)"
+        while true; do
+            read -rp "Ketik username: " user
+            if grep -qE "^### $user " "/etc/xray/trojan/.trojan.db"; then
+                exp=$(grep -E "^### $user " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 3)
+                echo -e "${green}Username ditemukan: $user (Expiry: $exp)${reset}"
+                break
+            else
+                echo -e "${red}Username '$user' tidak ditemukan!${reset}"
+                echo -e "${yellow}Silakan coba lagi atau tekan Ctrl+C untuk membatalkan.${reset}"
+                echo ""
+            fi
+        done
         ;;
     *)
-        echo "Pilihan tidak valid"
+        echo -e "${red}Error: Pilihan tidak valid${reset}"
         exit 1
         ;;
 esac
@@ -198,7 +217,7 @@ echo -e "username     : ${green}$user${reset}"
 echo -e "akun telah dihapus secara permanen"
 echo ""
 read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu"
-menu
+menutrojan
 
 
 echo -e ""

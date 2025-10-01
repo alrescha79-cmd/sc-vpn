@@ -105,16 +105,5 @@ echo ""
 read -n 1 -s -r -p "Tekan [Enter] untuk kembali ke menu..."
 echo ""
 
-# Return to main menu
-if [[ -f "/usr/bin/menu" ]]; then
-    /usr/bin/menu
-elif [[ -f "/usr/local/bin/menu" ]]; then
-    /usr/local/bin/menu
-elif [[ -f "./menu" ]]; then
-    ./menu
-elif [[ -f "/root/menu.sh" ]]; then
-    /root/menu.sh
-else
-  echo "Script menu tidak ditemukan. Keluar..."
-    exit 0
-fi
+# Return to vmess menu
+menuvmess

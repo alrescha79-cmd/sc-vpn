@@ -19,8 +19,6 @@ ip_url="https://ip.yha.my.id/ip"
 city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
 pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
-uuid=$(cat /proc/sys/kernel/random/uuid)
-password=$(openssl rand -base64 16)
 
 # Exception handling if config file doesn't exist
 if [ ! -f "/etc/xray/shadowsocks/config.json" ]; then
@@ -132,24 +130,28 @@ exp=$(date -d "$duration days" +"%Y-%m-%d")
 method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
-# Add user to config file
+# Generate base64 encoded credentials for Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+
+# Generate Shadowsocks links
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=%2Fwhatever%2Fss-ws;host=${domain};tls#${user}-WS"
+ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
+
+# Add user to config file (WS)
 if ! sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
-    echo -e "${red}Failed to add user to config.json (WS)${reset}"
-    send_telegram_notification "error" "$user" "Failed to add user to config.json (WS)"
-    exit 1
-fi
-if ! sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": '"""$password"""',"method": '"""$method"""',"email": '"""$user"""' /etc/xray/shadowsocks/config.json; then
-  echo -e "${red}Gagal menambahkan pengguna ke config.json (WS)${reset}"
-  send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (WS)"
+},{"password": "'"$password"'","method": "'"$method"'","email": "'"$user"'"}' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Gagal menambahkan pengguna ke config.json (WS)${reset}"
+    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (WS)"
     exit 1
 fi
 
-},{"password": '"""$password"""',"method": '"""$method"""',"email": '"""$user"""' /etc/xray/shadowsocks/config.json; then
+# Add user to config file (gRPC) 
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'"$password"'","method": "'"$method"'","email": "'"$user"'"}' /etc/xray/shadowsocks/config.json; then
   echo -e "${red}Gagal menambahkan pengguna ke config.json (gRPC)${reset}"
   send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (gRPC)"
-ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
+  exit 1
+fi
 
 # Create JSON config file
 cat >/var/www/html/shadowsocks-$user.txt <<-END
@@ -206,7 +208,7 @@ cat >/var/www/html/shadowsocks-$user.txt <<-END
             "address": "$domain",
             "level": 8,
             "method": "$method",
-            "password": "$uuid",
+            "password": "$password",
             "port": 443
           }
         ]
@@ -316,7 +318,7 @@ cat >/var/www/html/shadowsocks-$user.txt <<-END
             "address": "$domain",
             "level": 8,
             "method": "$method",
-            "password": "$uuid",
+            "password": "$password",
             "port": 443
           }
         ]
@@ -496,26 +498,4 @@ echo -e "Expires On   : ${exp}"
   echo ""
 } >> "/etc/xray/shadowsocks/log-create-${user}.log"
 # Display account information
-
-clear
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "Xray/Shadowsocks Account "
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "Description  : ${user}"
-echo -e "Server Host  : ${domain}"
-echo -e "Location     : ${city}"
-echo -e "Port         : 443"
-echo -e "Method       : ${method}"
-echo -e "Password     : ${password}"
-echo -e "WS Path      : /whatever/ss-ws"
-echo -e "ServiceName  : ss-grpc"
-echo -e "Public Key   : ${pubkey}"
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "SS WS Link   : ${ss_link_ws}"
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "SS gRPC Link : ${ss_link_grpc}"
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "OpenClash Format : https://${domain}:81/shadowsocks-${user}.txt"
-echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "Expires On   : ${exp}"
 

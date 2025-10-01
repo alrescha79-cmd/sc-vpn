@@ -1,22 +1,13 @@
 #!/bin/bash
 
-# ===============================
 # DAPATKAN IP DAN TANGGAL
-# ===============================
 ipsaya=$(curl -sS ipv4.icanhazip.com)
 data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
-
-# ===============================
 # AMBIL DATA CLIENT 
-# ===============================
 MYIP=$ipsaya
-
-# URL data izin
 url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin"
-
-# Ambil data dari GitHub dengan format baru: ### User Date IP
 data_izin=$(curl -sS "$url_izin")
 user_line=$(echo "$data_izin" | grep "$MYIP")
 
@@ -31,15 +22,11 @@ fi
 echo "$username" >/usr/bin/user
 echo "$valid" >/usr/bin/e
 
-# ===============================
 # TANGGAL HARI INI DAN EXPIRY
-# ===============================
 today=$(date +'%Y-%m-%d')
 Exp1="$valid"  # tanggal expiry
 
-# ===============================
 # FUNGSI HITUNG SELISIH HARI & FORMAT TANGGAL
-# ===============================
 datediff() {
     local d1=$(date -d "$1" +%s)
     local d2=$(date -d "$2" +%s)
@@ -49,11 +36,8 @@ datediff() {
     echo "$diff day | $formatted"
 }
 
-# ===============================
 # FUNGSI VALIDASI MASA AKTIF
-# ===============================
 validate_access() {
-    # Cek jika data user tidak ditemukan
     if [ -z "$username" ] || [ -z "$valid" ]; then
         clear
         echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
@@ -74,26 +58,25 @@ validate_access() {
     # Cek masa aktif
     current_date=$(date +%Y-%m-%d)
     if [[ "$valid" < "$current_date" ]]; then
-        # Hitung berapa hari sudah expired
         expired_days=$(( ( $(date -d "$current_date" +%s) - $(date -d "$valid" +%s) ) / 86400 ))
         
         clear
         echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
         echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
         echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${red}       Akses untuk IP Anda telah kadaluarsa!                          ${neutral}"
-        echo -e "${red}                                                                     ${neutral}"
-        echo -e "${red}       Detail Akses:                                                 ${neutral}"
-        echo -e "${red}         • User ID: ${username}                                      ${neutral}"
-        echo -e "${red}         • IP Address: ${MYIP}                                       ${neutral}"
-        echo -e "${red}         • Tanggal Kadaluarsa: ${valid}                              ${neutral}"
-        echo -e "${red}         • Sudah Expired: ${expired_days} hari                       ${neutral}"
-        echo -e "${red}                                                                     ${neutral}"
-        echo -e "${red}       Untuk memperpanjang masa aktif, hubungi:                      ${neutral}"
-        echo -e "${red}       📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-        echo -e "${red}       📧 Email: anggun@cakson.my.id                                 ${neutral}"
-        echo -e "${red}                                                                     ${neutral}"
-        echo -e "${red}       💰 Informasi Harga & Paket Tersedia                           ${neutral}"
+        echo -e "${red}               Akses untuk IP Anda telah kadaluarsa! ${neutral}"
+        echo -e "${red}                                               ${neutral}"
+        echo -e "${red}       Detail Akses:                           ${neutral}"
+        echo -e "${red}         • User ID: ${username}                ${neutral}"
+        echo -e "${red}         • IP Address: ${MYIP}                 ${neutral}"
+        echo -e "${red}         • Tanggal Kadaluarsa: ${valid}        ${neutral}"
+        echo -e "${red}         • Sudah Expired: ${expired_days} hari ${neutral}"
+        echo -e "${red}                                               ${neutral}"
+        echo -e "${red}       Untuk memperpanjang masa aktif, hubungi:${neutral}"
+        echo -e "${red}       📱 Telegram: https://t.me/Alrescha79    ${neutral}"
+        echo -e "${red}       📧 Email: anggun@cakson.my.id           ${neutral}"
+        echo -e "${red}                                               ${neutral}"
+        echo -e "${red}               💰 Informasi Harga & Paket Tersedia  ${neutral}"
         echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
         echo -e ""
         echo -e "${yellow}Tekan Enter untuk keluar...${neutral}"
@@ -102,10 +85,7 @@ validate_access() {
     fi
 }
 
-# ===============================
 # CEK STATUS ACTIVE / EXPIRED
-# ===============================
-# Panggil fungsi validasi sebelum menampilkan menu
 validate_access
 
 Info="(${green}Active${neutral})"
@@ -183,48 +163,46 @@ light_yellow="\e[38;5;229m"
 setup_bot_telegram() {
 clear
 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-echo -e "${green}                               SETUP BOT TELEGRAM                          ${neutral}"
+echo -e "${green}                             SETUP BOT TELEGRAM                          ${neutral}"
 echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
-echo -e "${yellow}⚠️ Pastikan Anda sudah membuat bot di Telegram dan mendapatkan token bot serta chat ID Anda.${neutral}"
-echo -e ""
-
-# Cek apakah sudah ada konfigurasi bot sebelumnya
 if [ -f /root/.vars ]; then
     source /root/.vars
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                        KONFIGURASI SAAT INI                           ║${neutral}"
-    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     if [ -n "$bot_token" ]; then
-        # Sembunyikan sebagian token untuk keamanan
         masked_token="${bot_token:0:10}***${bot_token: -10}"
-        echo -e "   ${white}Bot Token: ${green}$masked_token${neutral}"
+        echo -e "   ${white}Bot Token  : ${green}$masked_token${neutral}"
     else
-        echo -e "   ${white}Bot Token: ${red}Tidak tersedia${neutral}"
+        echo -e "   ${white}Bot Token  : ${red}Tidak tersedia${neutral}"
     fi
     
     if [ -n "$telegram_id" ]; then
-        echo -e "   ${white}Chat ID  : ${green}$telegram_id${neutral}"
+        echo -e "   ${white}Chat ID    : ${green}$telegram_id${neutral}"
     else
-        echo -e "   ${white}Chat ID  : ${red}Tidak tersedia${neutral}"
+        echo -e "   ${white}Chat ID    : ${red}Tidak tersedia${neutral}"
     fi
+    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     echo -e "${yellow}Apakah Anda ingin mengganti konfigurasi yang sudah ada?${neutral}"
-    echo -e "${yellow}[y] Ya, ganti konfigurasi${neutral}"
+    echo -e "${green}[y] Ya, ganti konfigurasi${neutral}"
     echo -e "${yellow}[n] Tidak, biarkan seperti ini${neutral}"
-    echo -e "${yellow}[x] Kembali ke menu utama${neutral}"
+    echo -e "${red}[x]${neutral} Kembali ke menu utama${neutral}"
     echo -ne "${yellow}>> ${neutral}"
     read -r input
     
     case $input in
         x|X)
+            display_menu
             return
             ;;
         n|N)
             echo -e ""
             echo -e "${green}Konfigurasi bot telegram tidak diubah.${neutral}"
             read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
+            display_menu
             return
             ;;
         y|Y)
@@ -236,6 +214,7 @@ if [ -f /root/.vars ]; then
             echo -e ""
             echo -e "${red}Pilihan tidak valid. Kembali ke menu utama.${neutral}"
             sleep 2
+            display_menu
             return
             ;;
     esac
@@ -243,11 +222,11 @@ fi
 
 clear
 echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${bold_white}Masukkan Token Bot Telegram Anda:${neutral}"
+echo -e "${bold_white}Masukkan Token Bot Telegram Anda :${neutral}"
 echo -ne "${yellow}>> ${neutral}"
 read bot_token
 echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${bold_white}Masukkan Chat ID Telegram Anda:${neutral}"
+echo -e "${bold_white}Masukkan Chat ID Telegram Anda :${neutral}"
 echo -ne "${yellow}>> ${neutral}"
 read chat_id
 echo -e "${light_blue}═════════════════════════════════════════════════════════════════════════════${neutral}"
@@ -256,6 +235,7 @@ if [[ -z "$bot_token" || -z "$chat_id" ]]; then
     echo -e "${red}Token bot atau chat ID tidak boleh kosong.${neutral}"
     echo -e ""
     read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
+    display_menu
     return
 fi
 
@@ -274,8 +254,9 @@ echo -e "${green}✅ Token bot dan chat ID telah berhasil disimpan di /root/.var
 echo -e "${green}✅ Service limitip telah direstart untuk menerapkan konfigurasi baru${neutral}"
 echo -e ""
 read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu"
+display_menu
 }
-      
+
 # Display menu function
 display_menu() {
     clear
@@ -315,32 +296,32 @@ display_menu() {
     echo -e "    ${white}DOMAIN    : $(head -n1 /etc/xray/domain 2>/dev/null | head -c25)${neutral}"
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
-    
-    echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
-    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "    ${white}WEBSOCKET: $(cek_status ws-stunnel)  │  NGINX: $(cek_status nginx)     │  DROPBEAR: $(cek_status dropbear)${neutral}"
-    echo -e "    ${white}XRAY: $(cek_status vmess@config)   │  HAPROXY: $(cek_status haproxy) │  SSH/OVPN: $(cek_status ssh)${neutral}"
-    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
 
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
     echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "                   ${white}USER ID   : $username ${sts}${neutral}"
-    echo -e "                   ${white}MASA AKTIF : $(datediff "$valid" "$today")${neutral}"            
+    echo -e "                   ${white}USER ID     : $username ${sts}${neutral}"
+    echo -e "                   ${white}MASA AKTIF  : $(datediff "$valid" "$today")${neutral}"            
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    
+    echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "           ${white}WEBSOCKET : $(cek_status ws-stunnel)   ║  NGINX : $(cek_status nginx)     ║  DROPBEAR : $(cek_status dropbear)"
+    echo -e "           ${white}HAPROXY   : $(cek_status haproxy)    ║  XRAY  : $(cek_status vmess@config)     ║  SSH/OVPN : $(cek_status ssh)"
+    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
 
     echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${blue}║                             JUMLAH AKUN                               ║${neutral}"
     echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "    SSH/OPENVPN : ${yellow}$(printf "%2s" "$ssh")${neutral} Account    │    SHADOWSOCKS : ${yellow}$(printf "%2s" "$ss")${neutral} Account"
-    echo -e "    VMESS XRAY  : ${yellow}$(printf "%2s" "$vm")${neutral} Account    │    TROJAN XRAY : ${yellow}$(printf "%2s" "$tr")${neutral} Account"
-    echo -e "    VLESS XRAY  : ${yellow}$(printf "%2s" "$vl")${neutral} Account"
+    echo -e "       SSH/OPENVPN : ${yellow}$(printf "%2s" "$ssh")${neutral} Akun    ║    SHADOWSOCKS : ${yellow}$(printf "%2s" "$ss")${neutral} Akun"
+    echo -e "       VMESS XRAY  : ${yellow}$(printf "%2s" "$vm")${neutral} Akun    ║    TROJAN XRAY : ${yellow}$(printf "%2s" "$tr")${neutral} Akun"
+    echo -e "       VLESS XRAY  : ${yellow}$(printf "%2s" "$vl")${neutral} Akun    ║"
     echo -e "${blue}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     
@@ -349,12 +330,12 @@ display_menu() {
     echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e ""
-    echo -e "       ${green}[1]${neutral} Kelola SSH/OpenVPN       │  ${green}[5]${neutral} Kelola Shadowsocks"
-    echo -e "       ${green}[2]${neutral} Kelola VMess             │  ${green}[6]${neutral} Setup Bot Notifikasi"
-    echo -e "       ${green}[3]${neutral} Kelola VLess             │  ${green}[7]${neutral} Menu Bot Telegram (Segera)"
-    echo -e "       ${green}[4]${neutral} Kelola Trojan            │  ${green}[8]${neutral} Menu Features"
+    echo -e "       ${green}[1]${neutral} Kelola SSH/OpenVPN    ║     ${green}[5]${neutral} Kelola Shadowsocks"
+    echo -e "       ${green}[2]${neutral} Kelola VMess          ║     ${green}[6]${neutral} Setup Bot Notifikasi"
+    echo -e "       ${green}[3]${neutral} Kelola VLess          ║     ${green}[7]${neutral} Menu Bot Telegram (Segera)"
+    echo -e "       ${green}[4]${neutral} Kelola Trojan         ║     ${green}[8]${neutral} Menu Features"
     echo -e ""
-    echo -e "                           ${red}[x]${neutral} Keluar dari Panel"
+    echo -e "                          ${red}[x]${neutral} Keluar dari Panel"
     echo -e "${magenta}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     
@@ -423,5 +404,4 @@ display_menu() {
     esac
 }
 
-# === CALL MENU ===
 display_menu

@@ -58,9 +58,9 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>✨ AKUN SSH OVPN TRIAL BERHASIL DIBUAT</b>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>✨ SSH OVPN TRIAL ACCOUNT CREATED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🔐 Password:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
@@ -74,20 +74,20 @@ send_telegram_notification() {
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
 <b>⏰ Expires:</b> <code>$expiration</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>❌ PEMBUATAN AKUN SSH OVPN TRIAL GAGAL</b>
-<br>
-<b>👤 Nama Pengguna:</b> <code>$user</code>
-<b>🔐 Kata Sandi:</b> <code>$user</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>❌ SSH OVPN TRIAL CREATION FAILED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Kesalahan:</b> <code>$error_msg</code>
-<br>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -111,32 +111,32 @@ domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 
 # Loading animation
 echo ""
-echo -ne "${yellow}Menyiapkan Akun Trial${reset}"
+echo -ne "${yellow}Preparing Premium Account${reset}"
 for i in {1..2}; do
     for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
-        echo -ne "\r${yellow}Menyiapkan Akun Trial $j${reset}"
+        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
         sleep 0.1
     done
 done
-echo -ne "\r${yellow}Akun Trial Siap Dibuat!${reset}\n"
+echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
 sleep 1
 clear
 
 # User data input
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "        Script by Alrescha79 Panel VPN"
-print_rainbow "     Masukkan Data Akun SSH Trial"
-print_rainbow "            Input Data Pengguna"
+print_rainbow "    Input SSH trial account data"
+print_rainbow "            Enter User Data"
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 
-echo "   Nama Pengguna : $user"
+echo "   Username : $user"
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Durasi aktif (menit): " duration
+    read -p "   Active period (minutes): " duration
     if [[ -z "$duration" ]]; then
-        echo -e "${red}   Durasi aktif tidak boleh kosong${reset}"
+        echo -e "${red}   Active period cannot be empty${reset}"
     fi
 done
 
@@ -144,15 +144,15 @@ done
 expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 
 # Create SSH account
-if ! useradd -e $(date -d "+$duration minutes" "+%Y-%m-%d") -s /bin/false -M $user; then
-    echo -e "${red}Gagal membuat akun pengguna SSH${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Gagal membuat akun pengguna SSH"
+if ! useradd -e $(date -d "+$duration minutes" +"%Y-%m-%d") -s /bin/false -M $user; then
+    echo -e "${red}Failed to create SSH user account${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to create SSH user account"
     exit 1
 fi
 
 if ! echo "$user:$user" | chpasswd; then
-    echo -e "${red}Gagal mengatur kata sandi pengguna SSH${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Gagal mengatur kata sandi pengguna SSH"
+    echo -e "${red}Failed to set SSH user password${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to set SSH user password"
     exit 1
 fi
 

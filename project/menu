@@ -407,6 +407,8 @@ display_menu() {
             echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
             echo -e "${green}║                                                                       ║${neutral}"
             echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+            echo -e "${green}║                                                                       ║${neutral}"
+            echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
             echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
             exit 0

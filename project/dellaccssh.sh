@@ -30,23 +30,23 @@ clear
 account_count=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "         No accounts available"
+    echo "         Tidak ada akun yang tersedia untuk dihapus!"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}choose how to delete the account:${reset}"
-echo -e "${green}1) select by number${reset}"
-echo -e "${green}2) enter username manually${reset}"
+echo -e "${yellow}Pilih cara untuk menghapus akun:${reset}"
+echo -e "${green}1) Berdasarkan nomor${reset}"
+echo -e "${green}2) Ketik username secara manual${reset}"
 # Auto-select option 2: enter username manually
 delete_choice="2"
-echo "Auto-selected: 2) enter username manually"
+echo "Auto-selected: 2) Ketik username secara manual"
 
 case $delete_choice in
     1)
         clear
         echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-        echo -e "${green}│        DELETE SSH OVPN ACCOUNT          │${reset}"
+        echo -e "${green}│           HAPUS AKUN SSH OVPN           │${reset}"
         echo -e "${green}└─────────────────────────────────────────┘${reset}"
         echo " ┌────┬────────────────────┬─────────────┐"
         echo " │ No │ Username           │  Days Left  │"
@@ -64,22 +64,22 @@ case $delete_choice in
         echo ""
         
         until [[ $client_number =~ ^[0-9]+$ && $client_number -ge 1 && $client_number -le $account_count ]]; do
-            read -rp "select account number [1-${account_count}]: " client_number
+            read -rp "Pilih nomor akun [1-${account_count}]: " client_number
         done
         
         user=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 2 | sed -n "${client_number}"p)
         exp=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 3 | sed -n "${client_number}"p)
         ;;
     2)
-        read -rp "Enter username: " user
+        read -rp "Masukkan username: " user
         if ! grep -qE "^### $user " "/etc/ssh/.ssh.db"; then
-            echo "Username not found"
+            echo "Username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/ssh/.ssh.db" | cut -d ' ' -f 3)
         ;;
     *)
-        echo "Invalid choice"
+        echo "Pilihan tidak valid"
         exit 1
         ;;
 esac
@@ -98,12 +98,20 @@ if userdel -f $user 2>/dev/null; then
     echo -e "  Username : $user"
     echo -e "  Expiration Date : $exp"
 else
-    echo "Failed to delete account. Please check if the username is correct."
+    echo "Gagal menghapus akun. Silakan periksa apakah username sudah benar."
 fi
 
 
 clear
-echo ""
-echo -e "—————————————————————————————————————"
-echo -e "     SSH/OVPN ACCOUNT DELETED SUCCESSFULLY      "
-echo -e "───────────────────────────"
+
+
+echo -e ""
+echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""

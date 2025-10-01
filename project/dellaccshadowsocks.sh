@@ -21,26 +21,26 @@ reset="\e[0m"
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│          DELETE SHADOWSOCKS ACCOUNT     │${reset}"
+echo -e "${green}│          HAPUS AKUN SHADOWSOCKS        │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
 
 account_count=$(grep -c -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "  no customer names available"
+    echo "       Tidak ada akun yang tersedia"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}Select account to delete:${reset}"
-echo -e "${green}1) Choose by number${reset}"
-echo -e "${green}2) Type username manually${reset}"
+echo -e "${yellow}Pilihan:${reset}"
+echo -e "${green}1) Pilih berdasarkan nomer${reset}"
+echo -e "${green}2) Berdasarkan username${reset}"
 delete_choice="2"
-echo "Auto-selected: 2) Type username manually"
+echo "Auto-selected: 2) Berdasarkan username"
 if [[ $delete_choice == "1" ]]; then
 clear
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│          DELETE SHADOWSOCKS ACCOUNT     │${reset}"
+echo -e "${green}│          HAPUS AKUN SHADOWSOCKS        │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
             echo " ┌────┬────────────────────┬─────────────┐"
             echo " │ no │ username           │     exp     │"
@@ -61,30 +61,30 @@ fi
 case $delete_choice in
     1)
         until [[ ${account_number} -ge 1 && ${account_number} -le ${account_count} ]]; do
-            read -rp "Choose account number [1-${account_count}]: " account_number
+            read -rp "Pilih nomer [1-${account_count}]: " account_number
         done
         user=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
         exp=$(grep -E "^### " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3 | sed -n "${account_number}p")
         echo ""
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│          DELETE SHADOWSOCKS ACCOUNT     │${reset}"
+echo -e "${green}│          HAPUS AKUN SHADOWSOCKS         │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
         echo -e "Username     : ${green}$user${reset}"
-        echo -e "Expiry       : ${yellow}$exp${reset}"
+        echo -e "Expired      : ${yellow}$exp${reset}"
         echo ""
         sleep 2
         ;;
     2)
-        read -rp "enter username: " user
+        read -rp "Masukkan username: " user
         if ! grep -qE "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db"; then
-            echo "username not found"
+            echo "Username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/xray/shadowsocks/.shadowsocks.db" | cut -d ' ' -f 3)
-        echo "You selected: $user (Expiry: $exp)"
+        echo "Anda memilih: $user (Expired: $exp)"
         ;;
     *)
-        echo "invalid choice"
+        echo "Pilihan tidak valid"
         exit 1
         ;;
 esac
@@ -105,7 +105,19 @@ fi
 
 clear
 echo -e "${green}┌─────────────────────────────────────────┐${reset}"
-echo -e "${green}│          DELETE SHADOWSOCKS ACCOUNT     │${reset}"
+echo -e "${green}│          HAPUS AKUN SHADOWSOCKS        │${reset}"
 echo -e "${green}└─────────────────────────────────────────┘${reset}"
 echo -e "username     : ${green}$user${reset}"
-echo -e "account has been permanently deleted"
+echo -e "akun telah dihapus secara permanen${reset}"
+echo ""
+
+echo -e ""
+echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""

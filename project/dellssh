@@ -60,26 +60,26 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>✅ SSH OVPN ACCOUNT DELETED</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>⏰ Deleted Date:</b> <code>$(date '+%Y-%m-%d %H:%M:%S')</code>
 <b>✅ Status:</b> <code>Successfully Deleted</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>❌ SSH OVPN ACCOUNT DELETION FAILED</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>❗ Error:</b> <code>$error_msg</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -95,28 +95,32 @@ send_telegram_notification() {
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
 
-print_rainbow "━━━━━━━━━━ HAPUS AKUN SSH / OVPN ━━━━━━━━━━"
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│             HAPUS AKUN SSH              │"
+print_rainbow "└─────────────────────────────────────────┘"
 
 account_count=$(grep -c -E "^### " "/etc/ssh/.ssh.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "   Tidak ada akun tersedia"
+    echo "         Tidak ada akun yang tersedia untuk dihapus!"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}Pilih metode penghapusan akun:${reset}"
-echo -e "${green}1) Pilih berdasarkan nomor${reset}"
-echo -e "${green}2) Masukkan username manual${reset}"
-read -p "Pilihan anda [1-2]: " delete_choice
+echo -e "${yellow}Pilih cara untuk menghapus akun:${reset}"
+echo -e "${green}1) Berdasarkan nomor${reset}"
+echo -e "${green}2) Ketik username secara manual${reset}"
+read -p "Pilih [1-2]: " delete_choice
 
 case $delete_choice in
     1)
         clear
-        print_rainbow "━━━━━━━━━━ DAFTAR AKUN SSH / OVPN ━━━━━━━━━━"
-        echo " ┌────┬────────────────────┬──────────────┐"
-        echo " │ No │ Username           │ Sisa (hari)  │"
-        echo " ├────┼────────────────────┼──────────────┤"
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│             HAPUS AKUN SSH              │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo " ┌────┬────────────────────┬─────────────┐"
+        echo " │ No │ Username           │  Days Left  │"
+        echo " ├────┼────────────────────┼─────────────┤"
         grep -E "^### " "/etc/ssh/.ssh.db" | awk '{
             cmd = "date -d \"" $3 "\" +%s"
             cmd | getline exp_timestamp
@@ -124,9 +128,9 @@ case $delete_choice in
             current_timestamp = systime()
             days_left = int((exp_timestamp - current_timestamp) / 86400)
             if (days_left < 0) days_left = 0
-            printf " │ %-2d │ %-18s │ %-12s │\n", NR, $2, days_left " hari"
+            printf " │ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
         }'
-        echo " └────┴────────────────────┴──────────────┘"
+        echo " └────┴────────────────────┴─────────────┘"
         echo ""
         
         until [[ $client_number =~ ^[0-9]+$ && $client_number -ge 1 && $client_number -le $account_count ]]; do
@@ -137,7 +141,7 @@ case $delete_choice in
         exp=$(grep -E "^### " "/etc/ssh/.ssh.db" | cut -d ' ' -f 3 | sed -n "${client_number}"p)
         ;;
     2)
-        read -rp "Masukkan username: " user
+        read -rp "Ketik username: " user
         if ! grep -qE "^### $user " "/etc/ssh/.ssh.db"; then
             echo "Username tidak ditemukan"
             exit 1
@@ -150,10 +154,10 @@ case $delete_choice in
         ;;
 esac
 
-# Konfirmasi
-read -p "Yakin ingin menghapus akun $user? (y/n): " confirm
+# Deletion confirmation
+read -p "Apakah Anda yakin ingin menghapus akun $user? (y/n): " confirm
 if [[ $confirm != "y" && $confirm != "Y" ]]; then
-    echo "Penghapusan dibatalkan"
+    echo "Penghapusan akun dibatalkan"
     exit 0
 fi
 
@@ -161,20 +165,42 @@ fi
 if userdel -f $user 2>/dev/null; then
     if sed -i "/^### $user/d" /etc/ssh/.ssh.db; then
         rm -f /etc/xray/log-createssh-$user.log
+        
+        # Send success notification
         send_telegram_notification "success" "$user"
+        
         clear
-        print_rainbow "━━━━━━━━━━ AKUN SSH/OVPN DIHAPUS ━━━━━━━━━━"
-        echo -e "Username    : $user"
-        echo -e "Kadaluarsa  : $exp"
-        echo -e "Status      : Berhasil dihapus"
-        print_rainbow "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│        HAPUS AKUN SSH BERHASIL          │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo -e "  Username : $user"
+        echo -e "  Expiration Date : $exp"
+        print_rainbow "  ───────────────────────────"
     else
-        echo "Gagal menghapus user dari database"
-        send_telegram_notification "error" "$user" "Gagal hapus user dari database"
+        echo "Gagal menghapus akun dari database."
+        send_telegram_notification "error" "$user" "Gagal menghapus akun dari database."
     fi
 else
-    echo "Gagal menghapus akun. Periksa kembali username."
-    send_telegram_notification "error" "$user" "Gagal userdel akun dari sistem"
+    echo "Gagal menghapus akun. Silakan periksa apakah username sudah benar."
+    send_telegram_notification "error" "$user" "Gagal menghapus akun dari sistem."
 fi
 
 echo ""
+echo -e "—————————————————————————————————————"
+echo -e "     HAPUS AKUN SSH BERHASIL      "
+echo -e "─────────────────────────────────────"
+echo ""
+read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu"
+menu
+
+
+echo -e ""
+echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""

@@ -58,32 +58,32 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>✨ AKUN VMESS TRIAL BERHASIL DIBUAT</b>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>✨ VMESS TRIAL ACCOUNT CREATED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
-<b>🆔 User ID:</b> <code>$uuid</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>📍 Location:</b> <code>$city</code>
-<b>🔒 Port TLS:</b> <code>443</code>
-<b>🔓 Port Non-TLS:</b> <code>80, 8080</code>
-<b>🔧 Port GRPC:</b> <code>443</code>
-<b>🔐 Security:</b> <code>auto</code>
-<b>🌐 Network:</b> <code>WS/gRPC</code>
-<b>📝 Path:</b> <code>/whatever/vmess</code>
-<b>⚙️ Service Name:</b> <code>vmess-grpc</code>
-<b>📊 Quota:</b> <code>${quota} GB</code>
-<b>⏰ Expires:</b> <code>$exp</code>
-<br>
-<b>🔗 TLS Link:</b>
-<code>$vmess_tls</code>
-<br>
-<b>🔗 Non-TLS Link:</b>
-<code>$vmess_non</code>
-<br>
-<b>🔗 GRPC Link:</b>
-<code>$vmess_grpc</code>
-<br>
+<b>🔎 VMess WS Port:</b> <code>443, 80</code>
+<b>🔍 VMess gRPC Port:</b> <code>443</code>
+<b>⏱️ Duration:</b> <code>$duration minutes</code>
+<b>⏰ Expires:</b> <code>$expiration</code>
+<b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>🌟 Alrescha79 Panel VPN 🌟</b>
+"
+        else
+            message="
+<b>🚀 Alrescha79 Panel VPN 🚀</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>❌ VMESS TRIAL CREATION FAILED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🌐 Host:</b> <code>$domain</code>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -108,32 +108,32 @@ uuid=$(cat /proc/sys/kernel/random/uuid)
 
 # Loading animation
 echo ""
-echo -ne "${yellow}Menyiapkan Akun Trial${reset}"
+echo -ne "${yellow}Preparing Premium Account${reset}"
 for i in {1..2}; do
     for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
-        echo -ne "\r${yellow}Menyiapkan Akun Trial $j${reset}"
+        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
         sleep 0.1
     done
 done
-echo -ne "\r${yellow}Akun Trial Siap Dibuat!${reset}\n"
+echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
 sleep 1
 clear
 
 # User data input
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "                     Script by Alrescha79 Panel VPN  "
-print_rainbow "                 Masukkan Data Akun VMESS Trial"
-print_rainbow "                        Input Data Pengguna"
+print_rainbow "                     Input xray/vmess account deps"
+print_rainbow "                         Enter User Data       "
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 
-echo "   Nama Pengguna : $user"
+echo "   Username : $user"
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Durasi aktif (menit): " duration
+    read -p "   Active period (minutes): " duration
     if [[ -z "$duration" ]]; then
-        echo -e "${red}   Durasi aktif tidak boleh kosong${reset}"
+        echo -e "${red}   Active period cannot be empty${reset}"
     fi
 done
 
@@ -141,20 +141,20 @@ done
 expiration=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 exp=$(date -d "+$duration minutes" +"%Y-%m-%d %H:%M:%S")
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
-    echo "File konfigurasi tidak ditemukan. Membuat file baru..."
+    echo "Configuration file not found. Creating new file..."
     echo '{"inbounds": []}' > /etc/xray/vmess/config.json
 fi
 
 if ! sed -i '/#vmess$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Gagal menambahkan pengguna VMess WS ke file konfigurasi${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna VMess WS ke file konfigurasi"
+    echo -e "${red}Failed to add VMess WS user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add VMess WS user to configuration file"
     exit 1
 fi
 if ! sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
-    echo -e "${red}Gagal menambahkan pengguna VMess gRPC ke file konfigurasi${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna VMess gRPC ke file konfigurasi"
+    echo -e "${red}Failed to add VMess gRPC user to configuration file${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add VMess gRPC user to configuration file"
     exit 1
 fi
 
@@ -215,8 +215,8 @@ vmess_grpc="vmess://$(base64 -w 0 /etc/xray/$user-grpc.json)"
 
 # Restart service
 if ! systemctl restart vmess@config; then
-    echo -e "${red}Gagal memulai ulang layanan VMESS${reset}"
-    send_telegram_notification "error" "$user" "$duration" "Gagal memulai ulang layanan VMESS"
+    echo -e "${red}Failed to restart vmess service${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to restart vmess service"
     exit 1
 fi
 

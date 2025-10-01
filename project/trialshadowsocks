@@ -56,12 +56,12 @@ send_telegram_notification() {
     if [ -f '/root/.vars' ]; then
         source '/root/.vars'
         
-    if [ "$status" == "success" ]; then
-      message="
+        if [ "$status" == "success" ]; then
+            message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>✨ AKUN SHADOWSOCKS TRIAL BERHASIL DIBUAT</b>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>✨ SHADOWSOCKS TRIAL ACCOUNT CREATED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🔐 Password:</b> <code>$password</code>
 <b>🌐 Host:</b> <code>$domain</code>
@@ -73,26 +73,26 @@ send_telegram_notification() {
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
 <b>⏰ Expires:</b> <code>$exp</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🔗 WS Link:</b>
 <code>$ss_link_ws</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🔗 gRPC Link:</b>
 <code>$ss_link_grpc</code>
-<br>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>❌ PEMBUATAN AKUN SHADOWSOCKS TRIAL GAGAL</b>
-<br>
-<b>👤 Nama Pengguna:</b> <code>$user</code>
-<b>🔐 Kata Sandi:</b> <code>$password</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>❌ SHADOWSOCKS TRIAL CREATION FAILED</b>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Kesalahan:</b> <code>$error_msg</code>
-<br>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -118,32 +118,32 @@ password=$(openssl rand -base64 16)
 
 # Loading animation
 echo ""
-echo -ne "${yellow}Menyiapkan Akun Trial${reset}"
+echo -ne "${yellow}Preparing Premium Account${reset}"
 for i in {1..2}; do
     for j in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do
-    echo -ne "\r${yellow}Menyiapkan Akun Trial $j${reset}"
+        echo -ne "\r${yellow}Preparing Premium Account $j${reset}"
         sleep 0.1
     done
 done
-echo -ne "\r${yellow}Akun Trial Siap Dibuat!${reset}\n"
+echo -ne "\r${yellow}Premium Account Ready to be created!${reset}\n"
 sleep 1
 clear
 
 # User data input
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 print_rainbow "                   Script by Alrescha79 Panel VPN"
-print_rainbow "               Masukkan Data Akun Shadowsocks"
-print_rainbow "                      Input Data Pengguna"
+print_rainbow "               Input xray/ssocks account dependency"
+print_rainbow "                       Enter User Data"
 print_rainbow "══════════════════════════════════════════════════════════════════════"
 
 # Generate random username
 user=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 
-echo "   Nama Pengguna : $user"
+echo "   Username : $user"
 until [[ $duration =~ ^[0-9]+$ ]]; do
-  read -p "   Durasi aktif (menit): " duration
+    read -p "   Active period (minutes): " duration
     if [[ -z "$duration" ]]; then
-    echo -e "${red}   Durasi aktif tidak boleh kosong${reset}"
+        echo -e "${red}   Active period cannot be empty${reset}"
     fi
 done
 exp=$(date -d "$duration days" +"%Y-%m-%d")
@@ -157,16 +157,16 @@ if ! sed -i '/#ssws$/a\### '"$user $exp"'\
     send_telegram_notification "error" "$user" "$duration" "Failed to add user to config.json (WS)"
     exit 1
 fi
-if ! sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": '""$password""',"method": '""$method""',"email": '""$user""'}' /etc/xray/shadowsocks/config.json; then
-  echo -e "${red}Gagal menambahkan pengguna ke config.json (WS)${reset}"
-  send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna ke config.json (WS)"
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to add user to config.json (gRPC)"
     exit 1
 fi
 
-},{"password": '""$password""',"method": '""$method""',"email": '""$user""'}' /etc/xray/shadowsocks/config.json; then
-  echo -e "${red}Gagal menambahkan pengguna ke config.json (gRPC)${reset}"
-  send_telegram_notification "error" "$user" "$duration" "Gagal menambahkan pengguna ke config.json (gRPC)"
+# Generate Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/shadowsocks;host=${domain};tls;network=ws;host=$domain#${user}-WS"
 ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
 
 # Create JSON configuration file
@@ -401,8 +401,8 @@ END
 
 # Restart service
 if ! systemctl restart shadowsocks@config > /dev/null 2>&1; then
-  echo -e "${red}Gagal memulai ulang layanan Shadowsocks. Periksa log sistem untuk informasi lebih lanjut.${reset}"
-  send_telegram_notification "error" "$user" "$duration" "Gagal memulai ulang layanan Shadowsocks"
+    echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "$duration" "Failed to restart Shadowsocks service"
     exit 1
 fi
 

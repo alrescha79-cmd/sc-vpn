@@ -63,7 +63,7 @@ check_shadowsocks_user() {
 
     # display header
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}      SHADOWSOCKS USER STATUS      ${neutral}"
+    echo -e "${green}                           STATUS PENGGUNAAN      ${neutral}"
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     
     # process log for the specific user

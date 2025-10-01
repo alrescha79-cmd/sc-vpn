@@ -58,26 +58,26 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>✅ TROJAN ACCOUNT DELETED</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>⏰ Deleted Date:</b> <code>$(date '+%Y-%m-%d %H:%M:%S')</code>
 <b>✅ Status:</b> <code>Successfully Deleted</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>❌ TROJAN ACCOUNT DELETION FAILED</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
 <b>❗ Error:</b> <code>$error_msg</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -92,26 +92,30 @@ send_telegram_notification() {
 # variables
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 clear
-print_rainbow "━━━━━━━━━━ HAPUS AKUN TROJAN ━━━━━━━━━━"
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│            HAPUS AKUN TROJAN            │"
+print_rainbow "└─────────────────────────────────────────┘"
 
 account_count=$(grep -c -E "^### " "/etc/xray/trojan/.trojan.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "  Tidak ada akun tersedia"
+    echo "  Tidak ada akun untuk dihapus!"
     echo ""
     exit 0
 fi
 
-echo -e "${yellow}Pilih metode penghapusan akun:${reset}"
-echo -e "${green}1) Pilih berdasarkan nomor${reset}"
-echo -e "${green}2) Masukkan username manual${reset}"
-read -p "Pilihan anda [1-2]: " delete_choice
+echo -e "${yellow}Pilihan:${reset}"
+echo -e "${green}1) Berdasarkan nomer${reset}"
+echo -e "${green}2) Ketik username secara manual${reset}"
+read -p "Pilih [1-2]: " delete_choice
 if [[ $delete_choice == "1" ]]; then
 clear
-        print_rainbow "━━━━━━━━━━ DAFTAR AKUN TROJAN ━━━━━━━━━━"
-        echo " ┌────┬────────────────────┬──────────────┐"
-        echo " │ No │ Username           │ Sisa (hari)  │"
-        echo " ├────┼────────────────────┼──────────────┤"
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│            HAPUS AKUN TROJAN            │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo " ┌────┬────────────────────┬─────────────┐"
+        echo " │ no │ username           │     exp     │"
+        echo " ├────┼────────────────────┼─────────────┤"
     grep -E "^### " "/etc/xray/trojan/.trojan.db" | awk '{
         cmd = "date -d \"" $3 "\" +%s"
         cmd | getline exp_timestamp
@@ -119,9 +123,9 @@ clear
         current_timestamp = systime()
         days_left = int((exp_timestamp - current_timestamp) / 86400)
         if (days_left < 0) days_left = 0
-        printf " │ %-2d │ %-18s │ %-12s │\n", NR, $2, days_left " hari"
+        printf " │ %-2d │ %-18s │ %-11s │\n", NR, $2, days_left " days"
     }'
-    echo " └────┴────────────────────┴──────────────┘"
+    echo " └────┴────────────────────┴─────────────┘"
     
 fi
 
@@ -133,20 +137,22 @@ case $delete_choice in
         user=$(grep -E "^### " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
         exp=$(grep -E "^### " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 3 | sed -n "${account_number}p")
         echo ""
-        print_rainbow "━━━━━━━━━━ AKUN TERPILIH ━━━━━━━━━━"
-        echo -e "Username   : ${green}$user${reset}"
-        echo -e "Kadaluarsa : ${yellow}$exp${reset}"
+        print_rainbow "┌─────────────────────────────────────────┐"
+        print_rainbow "│           HAPUS AKUN TROJAN            │"
+        print_rainbow "└─────────────────────────────────────────┘"
+        echo -e "Username     : ${green}$user${reset}"
+        echo -e "Expiry       : ${yellow}$exp${reset}"
         echo ""
         sleep 2
         ;;
     2)
-        read -rp "Masukkan username: " user
+        read -rp "Ketik username: " user
         if ! grep -qE "^### $user " "/etc/xray/trojan/.trojan.db"; then
-            echo "Username tidak ditemukan"
+            echo "username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/xray/trojan/.trojan.db" | cut -d ' ' -f 3)
-        echo "Dipilih: $user (Kadaluarsa: $exp)"
+        echo "Anda memilih: $user (Expiry: $exp)"
         ;;
     *)
         echo "Pilihan tidak valid"
@@ -156,14 +162,14 @@ esac
 
 # Delete user from config and database
 if ! sed -i "/^### $user $exp/,/^},{/d" /etc/xray/trojan/config.json; then
-    echo "Kesalahan: Gagal hapus user dari config.json"
-    send_telegram_notification "error" "$user" "Gagal hapus user dari config.json"
+    echo "Error: Failed to remove user from config.json"
+    send_telegram_notification "error" "$user" "Failed to remove user from config.json"
     exit 1
 fi
 
 if ! sed -i "/^### $user $exp/d" /etc/xray/trojan/.trojan.db; then
-    echo "Kesalahan: Gagal hapus user dari database"
-    send_telegram_notification "error" "$user" "Gagal hapus user dari database"
+    echo "Error: Failed to remove user from database"
+    send_telegram_notification "error" "$user" "Failed to remove user from database"
     exit 1
 fi
 
@@ -176,18 +182,32 @@ if [ -f "/etc/xray/trojan/log-create-${user}.log" ]; then
 fi
 
 if ! systemctl restart trojan@config >/dev/null 2>&1; then
-    echo "Peringatan: Gagal restart service trojan. Periksa log sistem."
-    echo "Akun sudah terhapus dari database."
-    send_telegram_notification "error" "$user" "Gagal restart service trojan, akun dihapus"
+    echo "Warning: Failed to restart trojan service. Please check system logs for more information."
+    echo "However, the account has been successfully removed from the database."
+    send_telegram_notification "error" "$user" "Failed to restart trojan service, but account deleted"
 else
     # Send success notification
     send_telegram_notification "success" "$user"
 fi
 
 clear
-print_rainbow "━━━━━━━━━━ AKUN TROJAN DIHAPUS ━━━━━━━━━━"
-echo -e "Username : ${green}$user${reset}"
-echo -e "Status   : Akun berhasil dihapus permanen"
+print_rainbow "┌─────────────────────────────────────────┐"
+print_rainbow "│        HAPUS AKUN TROJAN BERHASIL       │"
+print_rainbow "└─────────────────────────────────────────┘"
+echo -e "username     : ${green}$user${reset}"
+echo -e "akun telah dihapus secara permanen"
 echo ""
 read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu"
 menu
+
+
+echo -e ""
+echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""

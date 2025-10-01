@@ -25,13 +25,13 @@ clear
 read -p "User: " -e user
 
 echo -e  "┌─────────────────────────────────────────┐"
-echo -e  "│          DELETE VMESS ACCOUNT           │"
+echo -e  "│           HAPUS AKUN VMESS              │"
 echo -e  "└─────────────────────────────────────────┘"
 echo -e "Remarks      : ${user}"
 account_count=$(grep -c -E "^### " "/etc/xray/vmess/.vmess.db")
 if [[ ${account_count} == '0' ]]; then
     echo ""
-    echo "  no customer names available"
+    echo "  Tidak ada akun yang tersedia untuk dihapus!"
     echo ""
     exit 0
 fi
@@ -42,7 +42,7 @@ delete_choice="2"
 if [[ $delete_choice == "1" ]]; then
 clear
         echo -e  "┌─────────────────────────────────────────┐"
-        echo -e  "│          DELETE VMESS ACCOUNT           │"
+        echo -e  "│           HAPUS AKUN VMESS              │"
         echo -e  "└─────────────────────────────────────────┘"
     echo " ┌────┬────────────────────┬─────────────┐"
     echo " │ no │ username           │     exp     │"
@@ -63,30 +63,30 @@ fi
 case $delete_choice in
     1)
         until [[ ${account_number} -ge 1 && ${account_number} -le ${account_count} ]]; do
-            read -rp "Choose account number [1-${account_count}]: " account_number
+            read -rp "Pilih nomor akun [1-${account_count}]: " account_number
         done
         user=$(grep -E "^### " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 2 | sed -n "${account_number}p")
         exp=$(grep -E "^### " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 3 | sed -n "${account_number}p")
         echo ""
         echo -e  "┌─────────────────────────────────────────┐"
-        echo -e  "│           SELECTED ACCOUNT              │"
+        echo -e  "│           AKUN YANG DIPILIH             │"
         echo -e  "└─────────────────────────────────────────┘"
         echo -e "Username     : ${green}$user${reset}"
-        echo -e "Expiry       : ${yellow}$exp${reset}"
+        echo -e "Expired      : ${yellow}$exp${reset}"
         echo ""
         sleep 2
         ;;
     2)
         # read -rp "enter username: " user
         if ! grep -qE "^### $user " "/etc/xray/vmess/.vmess.db"; then
-            echo "username not found"
+            echo "Username tidak ditemukan"
             exit 1
         fi
         exp=$(grep -E "^### $user " "/etc/xray/vmess/.vmess.db" | cut -d ' ' -f 3)
-        echo "You selected: $user (Expiry: $exp)"
+        echo "Anda memilih: $user (Expired: $exp)"
         ;;
     *)
-        echo "invalid choice"
+        echo "Pilihan tidak valid"
         exit 1
         ;;
 esac
@@ -107,7 +107,20 @@ fi
 
 clear
 echo -e "┌─────────────────────────────────────────┐"
-echo -e  "│    VMESS ACCOUNT DELETED SUCCESSFULLY   │"
-echo -e  "└─────────────────────────────────────────┘"
+echo -e "│         HAPUS AKUN VMESS BERHASIL       │"
+echo -e "└─────────────────────────────────────────┘"
 echo -e "username     : ${green}$user${reset}"
-echo -e "account has been permanently deleted"
+echo -e "akun telah dihapus secara permanen"
+echo ""
+
+
+echo -e ""
+echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+echo -e "${green}║                                                                       ║${neutral}"
+echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo -e ""

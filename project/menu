@@ -292,11 +292,12 @@ display_menu() {
     # Peringatan jika masa aktif akan berakhir dalam 7 hari
     if [ "$days_left" -le 7 ] && [ "$days_left" -gt 0 ]; then
         echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-        echo -e "${red}║                                    ${yellow}PERINGATAN${red}                         ║${neutral}"
+        echo -e "${red}║                            ${yellow}PERINGATAN${red}                                 ║${neutral}"
         echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${red}    ⚠️ Akses Anda akan berakhir dalam ${days_left} hari!       ${neutral}"
-        echo -e "${red}    Segera hubungi developer untuk perpanjangan akses.                 ${neutral}"
-        echo -e "${red}    📱 Telegram: https://t.me/Alrescha79                               ${neutral}"
+        echo -e "${red}             ⚠️ Akses Anda akan berakhir dalam ${days_left} hari!       ${neutral}"
+        echo -e ""
+        echo -e "${red}        Hubungi developer untuk perpanjangan akses.                 ${neutral}"
+        echo -e "${red}        Telegram: https://t.me/Alrescha79                               ${neutral}"
         echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         echo -e ""
     fi
@@ -358,8 +359,7 @@ display_menu() {
     echo -e ""
     
     echo -e "${gray}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${gray}                            ${green}INFORMASI SCRIPT                           ${neutral}"
-    echo -e "              ${green}SCRIPT VERSION:${neutral} 1.0.1    │    ${green}AUTHOR:${neutral} Alrescha79"
+    echo -e "  ══════════    ${green}Versi:${neutral} 1.0.1   ║   ${green}Developer:${neutral} Alrescha79${neutral}    ═══════════"
     echo -e "${gray}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     

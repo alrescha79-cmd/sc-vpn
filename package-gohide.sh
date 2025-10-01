@@ -7,7 +7,7 @@ NC='\e[0m'
 clear
 
 echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green}   INSTALLASI Add package Alrescha79       ${neutral}"
+echo -e "${green}   Install Add package Alrescha79       ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 
 
@@ -20,7 +20,7 @@ wget -q -O /usr/local/bin/add-ssh "https://raw.githubusercontent.com/alrescha79-
 clear
 
 echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green} INSTALLASI delete package Alrescha79      ${neutral}"
+echo -e "${green} Install delete package Alrescha79      ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 cd
 wget -q -O /usr/local/bin/del-vmess "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/dellaccvmess.sh" && chmod +x /usr/local/bin/del-vmess
@@ -33,7 +33,7 @@ clear
 
 
 echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green} INSTALLASI Check  package Alrescha79      ${neutral}"
+echo -e "${green} Install Check  package Alrescha79      ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 cd
 
@@ -46,7 +46,7 @@ wget -q -O /usr/local/bin/check-vmess "https://raw.githubusercontent.com/alresch
 
 
 echo -e "${blue}─────────────────────────────────────────${neutral}"
-echo -e "${green} INSTALLASI renew package Alrescha79      ${neutral}"
+echo -e "${green} Install renew package Alrescha79      ${neutral}"
 echo -e "${blue}─────────────────────────────────────────${neutral}"
 cd
  

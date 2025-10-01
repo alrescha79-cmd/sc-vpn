@@ -23,20 +23,20 @@ domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 
 # Exception handling for missing configuration files
 if [ ! -f "/etc/xray/trojan/config.json" ]; then
-    echo "File konfigurasi Trojan tidak ditemukan. Membuat file baru..."
+    echo "Trojan configuration file not found. Creating a new file..."
     mkdir -p /etc/xray/trojan
     echo '{"inbounds": []}' > /etc/xray/trojan/config.json
 fi
 
 # Exception handling for missing directory
 if [ ! -d "/etc/xray/trojan" ]; then
-    echo "Direktori /etc/xray/trojan tidak ditemukan. Membuat direktori..."
+    echo "Directory /etc/xray/trojan not found. Creating directory..."
     mkdir -p /etc/xray/trojan
 fi
 
 # Exception handling for missing database file
 if [ ! -f "/etc/xray/trojan/.trojan.db" ]; then
-    echo "File database Trojan tidak ditemukan. Membuat file baru..."
+    echo "Trojan database file not found. Creating a new file..."
     touch /etc/xray/trojan/.trojan.db
 fi
 
@@ -44,37 +44,38 @@ clear
 
 # User data input
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "                       Tambah Akun Xray Trojan"
+echo -e "                       Add Xray Trojan Account"
 echo -e "══════════════════════════════════════════════════════════════════════"
 
 
 while true; do
-    read -p "   Nama: " user
+    read -p "   Name: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-        echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
-    continue
+        echo -e "${red}   Username cannot be empty${reset}"
+        continue
     fi
     if grep -q "^### $user " /etc/xray/trojan/config.json; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-    echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
+        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
         break
     else
         break
     fi
 done
 
-read -p "   Kata sandi/UUID: " uuid
+
+read -p "Password: " uuid
 
 until [[ $duration =~ ^[0-9]+$ ]]; do
-    read -p "   Masa aktif (hari): " duration
+    read -p "   Active period (days): " duration
 done
 until [[ $quota =~ ^[0-9]+$ ]]; do
-    read -p "   Kuota Pengguna (GB): " quota
+    read -p "   User Quota (GB): " quota
 done
 until [[ $ip_limit =~ ^[0-9]+$ ]]; do
-    read -p "   Batas IP Pengguna: " ip_limit
+    read -p "   User Limit (IP): " ip_limit
 done
 
 # Function to send Telegram notification
@@ -272,8 +273,8 @@ trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serv
 
 # Restart Trojan service
 if ! systemctl restart trojan@config > /dev/null 2>&1; then
-    echo -e "${red}Gagal memulai ulang layanan Trojan. Periksa log sistem untuk informasi lebih lanjut.${reset}"
-    send_telegram_notification "error" "$user" "Gagal memulai ulang layanan Trojan"
+    echo -e "${red}Failed to restart Trojan service. Please check system logs for more information.${reset}"
+    send_telegram_notification "error" "$user" "Failed to restart Trojan service"
     exit 1
 fi
 
@@ -290,7 +291,7 @@ if [ ! -d "/etc/xray/trojan" ]; then
     echo "Directory /etc/xray/trojan not found. Creating directory..."
     mkdir -p /etc/xray/trojan
     if [ $? -ne 0 ]; then
-    echo "Gagal membuat direktori /etc/xray/trojan. Pastikan Anda memiliki izin yang cukup."
+        echo "Failed to create directory /etc/xray/trojan. Make sure you have sufficient permissions."
         exit 1
     fi
 fi

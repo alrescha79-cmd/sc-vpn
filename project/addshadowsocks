@@ -19,17 +19,19 @@ ip_url="https://ip.yha.my.id/ip"
 city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
 pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
+uuid=$(cat /proc/sys/kernel/random/uuid)
+password=$(openssl rand -base64 16)
 
 # Exception handling if config file doesn't exist
 if [ ! -f "/etc/xray/shadowsocks/config.json" ]; then
-  echo "File konfigurasi Shadowsocks tidak ditemukan. Membuat file baru..."
+  echo "Shadowsocks config file not found. Creating a new file..."
   mkdir -p /etc/xray/shadowsocks
   echo '{"inbounds": []}' >/etc/xray/shadowsocks/config.json
 fi
 
 # Exception handling if shadowsocks directory doesn't exist
 if [ ! -d "/etc/xray/shadowsocks" ]; then
-  echo "Direktori /etc/xray/shadowsocks tidak ditemukan. Membuat direktori..."
+  echo "Directory /etc/xray/shadowsocks not found. Creating directory..."
   mkdir -p /etc/xray/shadowsocks
 fi
 
@@ -37,20 +39,20 @@ clear
 
 # User data input
 echo -e "════════════════════════════════════════════════════════════════════════"
-echo -e "                   Tambah Akun Xray Shadowsocks"
+echo -e "                   Add Xray Shadowsocks Account"
 echo -e "════════════════════════════════════════════════════════════════════════"
 
 while true; do
-  read -p "   Nama: " user
+    read -p "   Name: " user
     if [[ ${#user} -lt 3 || ! "$user" =~ ^[a-zA-Z0-9_-]+$ ]]; then
         printf "\033[1A\033[0J"
-    echo -e "${red}   Nama pengguna tidak boleh kosong${reset}"
+        echo -e "${red}   Username cannot be empty${reset}"
         continue
     fi
     if grep -q "^### $user " /etc/xray/shadowsocks/config.json; then
         random_number=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)
         user="${random_number}${user}"
-    echo -e "${yellow}   Nama pengguna sudah ada. Menggunakan nama baru: $user${reset}"
+        echo -e "${yellow}   Username already exists. New username used: $user${reset}"
         break
     else
         break
@@ -58,15 +60,15 @@ while true; do
 done
 echo ""
 echo -e "════════════════════════════════════════════════════════════════════════"
-echo "   Nama Pengguna : $user"
+echo "   Username : $user"
 until [[ $duration =~ ^[0-9]+$ ]]; do
-  read -p "   Masa aktif (hari): " duration
+  read -p "   Active period (days): " duration
 done
 until [[ $quota =~ ^[0-9]+$ ]]; do
-  read -p "   Kuota Pengguna (GB): " quota
+  read -p "   User Limit (GB): " quota
 done
 until [[ $ip_limit =~ ^[0-9]+$ ]]; do
-  read -p "   Batas IP Pengguna: " ip_limit
+  read -p "   User Limit (IP): " ip_limit
 done
 
 # Function to send Telegram notification
@@ -81,9 +83,9 @@ send_telegram_notification() {
         if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>✅ AKUN SHADOWSOCKS BERHASIL DIBUAT</b>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>✅ SHADOWSOCKS ACCOUNT CREATED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>👤 Username:</b> <code>$user</code>
 <b>🔐 Password:</b> <code>$password</code>
 <b>🌐 Host:</b> <code>$domain</code>
@@ -95,26 +97,26 @@ send_telegram_notification() {
 <b>📊 Quota:</b> <code>${quota} GB</code>
 <b>🔢 IP Limit:</b> <code>$ip_limit</code>
 <b>⏰ Expires:</b> <code>$exp</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🔗 WS Link:</b>
 <code>$ss_link_ws</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🔗 gRPC Link:</b>
 <code>$ss_link_grpc</code>
-<br>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         else
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
-<br>
-<b>❌ GAGAL MEMBUAT AKUN SHADOWSOCKS</b>
-<br>
-<b>👤 Nama Pengguna:</b> <code>$user</code>
-<b>🔐 Kata Sandi:</b> <code>$password</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>❌ SHADOWSOCKS ACCOUNT CREATION FAILED</b>
+<b>━━━━━━━━━━━━━━━━━━</b>
+<b>👤 Username:</b> <code>$user</code>
+<b>🔐 Password:</b> <code>$password</code>
 <b>🌐 Host:</b> <code>$domain</code>
-<b>❗ Kesalahan:</b> <code>$error_msg</code>
-<br>
+<b>❗ Error:</b> <code>$error_msg</code>
+<b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
         fi
@@ -122,7 +124,7 @@ send_telegram_notification() {
         curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
             -d "chat_id=$telegram_id" \
             -d "parse_mode=HTML" \
-            --data-urlencode "text=$message" > /dev/null 2>&1
+            -d "text=$message" > /dev/null 2>&1
     fi
 }
 
@@ -130,28 +132,24 @@ exp=$(date -d "$duration days" +"%Y-%m-%d")
 method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
-# Generate base64 encoded credentials for Shadowsocks links
-ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
-
-# Generate Shadowsocks links
-ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=%2Fwhatever%2Fss-ws;host=${domain};tls#${user}-WS"
-ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
-
-# Add user to config file (WS)
+# Add user to config file
 if ! sed -i '/#ssws$/a\### '"$user $exp"'\
-},{"password": "'"$password"'","method": "'"$method"'","email": "'"$user"'"}' /etc/xray/shadowsocks/config.json; then
-    echo -e "${red}Gagal menambahkan pengguna ke config.json (WS)${reset}"
-    send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (WS)"
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (WS)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (WS)"
+    exit 1
+fi
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+},{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
+    echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
+    send_telegram_notification "error" "$user" "Failed to add user to config.json (gRPC)"
     exit 1
 fi
 
-# Add user to config file (gRPC) 
-if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
-},{"password": "'"$password"'","method": "'"$method"'","email": "'"$user"'"}' /etc/xray/shadowsocks/config.json; then
-  echo -e "${red}Gagal menambahkan pengguna ke config.json (gRPC)${reset}"
-  send_telegram_notification "error" "$user" "Gagal menambahkan pengguna ke config.json (gRPC)"
-  exit 1
-fi
+# Generate Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/ss-ws;host=${domain};tls;network=ws;host=$domain#${user}-WS"
+ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
 
 # Create JSON config file
 cat >/var/www/html/shadowsocks-$user.txt <<-END
@@ -208,7 +206,7 @@ cat >/var/www/html/shadowsocks-$user.txt <<-END
             "address": "$domain",
             "level": 8,
             "method": "$method",
-            "password": "$password",
+            "password": "$uuid",
             "port": 443
           }
         ]
@@ -318,7 +316,7 @@ cat >/var/www/html/shadowsocks-$user.txt <<-END
             "address": "$domain",
             "level": 8,
             "method": "$method",
-            "password": "$password",
+            "password": "$uuid",
             "port": 443
           }
         ]
@@ -385,21 +383,21 @@ END
 
 # Check if OpenClash configuration file was created successfully
 if [ ! -f "/var/www/html/shadowsocks-$user.txt" ]; then
-    echo -e "${red}Gagal membuat file konfigurasi OpenClash${reset}"
-    send_telegram_notification "error" "$user" "Gagal membuat file konfigurasi OpenClash"
+    echo -e "${red}Failed to create OpenClash configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create OpenClash configuration file"
     exit 1
 fi
 
 # Restart service
 if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then
-  echo -e "${red}Gagal memulai ulang layanan Shadowsocks. Periksa log sistem untuk informasi lebih lanjut.${reset}"
-  send_telegram_notification "error" "$user" "Gagal memulai ulang layanan Shadowsocks"
+  echo -e "${red}Failed to restart Shadowsocks service. Please check system logs for more information.${reset}"
+  send_telegram_notification "error" "$user" "Failed to restart Shadowsocks service"
   exit 1
 fi
 
 # Exception handling if config file doesn't exist
 if [ ! -f "/etc/xray/shadowsocks/config.json" ]; then
-  echo "Peringatan: File konfigurasi Shadowsocks tidak ditemukan. Membuat file baru..."
+  echo "Warning: Shadowsocks config file not found. Creating a new file..."
   mkdir -p /etc/xray/shadowsocks
   echo '{"server":["::1", "0.0.0.0"],"mode":"tcp_and_udp"}' >/etc/xray/shadowsocks/config.json
   systemctl restart shadowsocks@config
@@ -498,4 +496,26 @@ echo -e "Expires On   : ${exp}"
   echo ""
 } >> "/etc/xray/shadowsocks/log-create-${user}.log"
 # Display account information
+
+clear
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Xray/Shadowsocks Account "
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Description  : ${user}"
+echo -e "Server Host  : ${domain}"
+echo -e "Location     : ${city}"
+echo -e "Port         : 443"
+echo -e "Method       : ${method}"
+echo -e "Password     : ${password}"
+echo -e "WS Path      : /whatever/ss-ws"
+echo -e "ServiceName  : ss-grpc"
+echo -e "Public Key   : ${pubkey}"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "SS WS Link   : ${ss_link_ws}"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "SS gRPC Link : ${ss_link_grpc}"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "OpenClash Format : https://${domain}:81/shadowsocks-${user}.txt"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Expires On   : ${exp}"
 

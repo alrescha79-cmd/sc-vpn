@@ -1430,7 +1430,7 @@ echo -e "${blue}═════════════════════�
 echo -e "${green}           Install SELESAI            ${neutral}"
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${green}  Selamat! Proses instalasi selesai.${neutral}"
-echo -e "${green}  ✓ Notifikasi Telegram telah dikirim.${neutral}"
+echo -e "${green}  Panel VPN Siap Digunakan Setelah Reboot.${neutral}"
 echo -e "${gray}Server akan otomatis reboot dalam 10 detik...${neutral}"
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 

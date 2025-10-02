@@ -48,7 +48,7 @@ ${CMD[1]} -y >/dev/null 2>&1
 touch $HOME/fim
 ) >/dev/null 2>&1 &
 tput civis
-echo -ne "  ${orange}Please wait while loading ${neutral}- ${orange}["
+echo -ne "  ${orange}Mohon tunggu sedang memuat ${neutral}- ${orange}["
 while true; do
 for ((i = 0; i < 18; i++)); do
 echo -ne "${green}#"
@@ -59,7 +59,7 @@ echo -e "${orange}]"
 sleep 1s
 tput cuu1
 tput dl1
-echo -ne "  ${orange}Please wait while loading ${neutral}- ${orange}["
+echo -ne "  ${orange}Mohon tunggu sedang memuat ${neutral}- ${orange}["
 done
 echo -e "${orange}]${neutral} -${green} OK !${neutral}"
 tput cnorm
@@ -75,7 +75,7 @@ fun_bar "systemctl restart $service"
 done
 clear
 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-echo -e "${orange}║                       ${green}RESTART SERVER SERVICES   ${orange}                      ║${neutral}"
+echo -e "${orange}║                 ${green}MULAI ULANG LAYANAN SERVER   ${orange}                        ║${neutral}"
 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
 echo -e ""
 }
@@ -85,14 +85,14 @@ echo -e "${orange}╔═══════════════════�
 echo -e "${orange}║                     ${green}VNSTAT BANDWIDTH STATISTICS   ${orange}                    ║${neutral}"
 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
 if ! command -v vnstat &>/dev/null; then
-echo -e "${red}Error: vnstat is not installed.${neutral}"
-echo -e "Please install vnstat first."
-read -n 1 -s -r -p "Press any key to return to the main menu"
+echo -e "${red}Error: vnstat belum terpasang.${neutral}"
+echo -e "Silakan instal vnstat terlebih dahulu."
+read -n 1 -s -r -p "Tekan tombol untuk kembali ke menu utama"
 return
 fi
 if [ -z "$(vnstat --iflist)" ]; then
-echo -e "${red}Error: No network interfaces available for vnstat.${neutral}"
-read -n 1 -s -r -p "Press any key to return to the main menu"
+echo -e "${red}Error: Tidak ada antarmuka jaringan untuk vnstat.${neutral}"
+read -n 1 -s -r -p "Tekan tombol untuk kembali ke menu utama"
 return
 fi
 vnstat
@@ -291,27 +291,27 @@ read -n1 -s -r -p "Tekan tombol apapun untuk kembali ke menu utama"; echo ""
 return
 }
 auto_backup() {
-local status=$(grep -qE "^SHELL" /etc/cron.d/backup && echo -e "\033[32m[ON]\033[0m" || echo -e "\033[31m[OFF]\033[0m")
+local status=$(grep -qE "^SHELL" /etc/cron.d/backup && echo -e "\033[32m[AKTIF]\033[0m" || echo -e "\033[31m[NONAKTIF]\033[0m")
 clear
 echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${green}         AUTO BACKUP SETTINGS         ${orange}│${neutral}"
+echo -e "${orange}│${green}     PENGATURAN CADANGAN OTOMATIS     ${orange}│${neutral}"
 echo -e "${orange}└──────────────────────────────────────┘${neutral}"
 echo -e "${orange}┌──────────────────────────────────────┐${neutral}"
-echo -e "${orange}│${neutral} AutoBackup Status: $status"
-echo -e "${orange}│${neutral} 1) Every 1 Hours"
-echo -e "${orange}│${neutral} 2) Every 1 Day"
-echo -e "${orange}│${neutral} 3) Every 1 Week"
-echo -e "${orange}│${neutral} 4) Every 1 Month"
-echo -e "${orange}│${neutral} 5) Disable AutoBackup"
-echo -e "${orange}│${neutral} x) Exit"
+echo -e "${orange}│${neutral} Status AutoBackup : $status"
+echo -e "${orange}│${neutral} 1) Setiap 1 Jam"
+echo -e "${orange}│${neutral} 2) Setiap 1 Hari"
+echo -e "${orange}│${neutral} 3) Setiap 1 Minggu"
+echo -e "${orange}│${neutral} 4) Setiap 1 Bulan"
+echo -e "${orange}│${neutral} 5) Nonaktifkan AutoBackup"
+echo -e "${orange}│${neutral} x) Kembali"
 echo -e "${orange}└──────────────────────────────────────┘${neutral}"
-read -p "Choose an option [1-5 or x]: " pilihan
+read -p "Pilih opsi [1-5 atau x]: " pilihan
 case $pilihan in
 1) echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n0 */1 * * * root /usr/bin/backuprestore backup" > /etc/cron.d/backup
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoBackup: Every 1 Hours"
+echo -e "${orange}│${neutral}      AutoBackup: Setiap 1 Jam"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
@@ -320,7 +320,7 @@ service cron restart > /dev/null 2>&1
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoBackup: Every 1 Day"
+echo -e "${orange}│${neutral}      AutoBackup: Setiap 1 Hari"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
@@ -329,7 +329,7 @@ service cron restart > /dev/null 2>&1
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoBackup: Every 1 Week"
+echo -e "${orange}│${neutral}      AutoBackup: Setiap 1 Minggu"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
@@ -338,7 +338,7 @@ service cron restart > /dev/null 2>&1
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoBackup: Every 1 Month"
+echo -e "${orange}│${neutral}      AutoBackup: Setiap 1 Bulan"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
@@ -348,7 +348,7 @@ if [ ! -f /etc/cron.d/backup ]; then
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral} AutoBackup Already ${red}Disabled${neutral}"
+echo -e "${orange}│${neutral} AutoBackup Sudah ${red}Nonaktif${neutral}"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 return
@@ -357,14 +357,14 @@ rm -f /etc/cron.d/backup
 clear
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e "${orange}│${neutral}"
-echo -e "${orange}│${neutral}      AutoBackup ${red}Disabled${neutral}"
+echo -e "${orange}│${neutral}      AutoBackup ${red}Dinonaktifkan${neutral}"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
 return
 ;;
 x|X) clear; read -n1 -s -r -p "Kembali ke menu utama"; return ;;
-*) echo "Invalid choice. Please try again."; return ;;
+*) echo "Pilihan tidak valid. Coba lagi."; return ;;
 esac
 read -n1 -s -r -p "Tekan tombol untuk kembali ke menu utama" 2>/dev/null
 return
@@ -383,9 +383,9 @@ echo -e "║ 2) Dropbear (2019)                                                 
 echo -e "║ 3) Dropbear (2022)                                                    ║"
 echo -e "║ 4) Dropbear (2024)                                                    ║"
 echo -e "║ 5) Dropbear (2025)                                                    ║"
-echo -e "║ x) Exit to menu                                                       ║"
+echo -e "║ x) Kembali                                                          ║"
 echo -e "╚═══════════════════════════════════════════════════════════════════════╝"
-read -p "Choose an option [1-5 or x]: " pilihan
+read -p "Pilih opsi [1-5 or x]: " pilihan
 case $pilihan in
 1) wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2017.75.tar.bz2
 bzip2 -cd dropbear-2017.75.tar.bz2 | tar xvf -
@@ -542,9 +542,9 @@ echo -e "       ${neutral} 2) Xray (V1.8.17)"
 echo -e "       ${neutral} 3) Xray (V24.10.31)"
 echo -e "       ${neutral} 4) Xray (V25.1.1)"
 echo -e "       ${neutral} 5) Xray (V25.2.18)"
-echo -e "       ${neutral} x) Exit to menu"
+echo -e "       ${neutral} x) Kembali"
 echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-read -p "Choose an option [1-5 or x]: " pilihan
+read -p "Pilih opsi [1-5 or x]: " pilihan
 case $pilihan in
 1) sudo mv /usr/local/bin/xray /usr/local/bin/xray.bak && \
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version 1.8.3
@@ -604,7 +604,7 @@ display_features() {
         echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
         echo -e "${neutral}${green} [1]${neutral} Periksa Sistem Berjalan    ║${neutral} ${green} [9]${neutral}  Perbarui Dropbear"
         echo -e "${neutral}${green} [2]${neutral} Periksa Penggunaan BW      ║${neutral}  ${green}[10]${neutral} Perbarui Skrip"
-        echo -e "${neutral}${green} [3]${neutral} Cadangan Otomatis Server   ║${neutral}  ${green}[11]${neutral} Muat Sistem Server"
+        echo -e "${neutral}${green} [3]${neutral} Cadangan Otomatis Server   ║${neutral}  ${green}[11]${neutral} Gotop (Monitor Sistem)"
         echo -e "${neutral}${green} [4]${neutral} Cadangkan/Pulihkan Server  ║${neutral}  ${green}[12]${neutral} Perbarui Versi X-ray"
         echo -e "${neutral}${green} [5]${neutral} Informasi Port             ║${neutral}  ${green}[13]${neutral} Info Layanan API Bot"
         echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Pengaturan Mulai Ulang Otomatis"
@@ -633,14 +633,10 @@ display_features() {
             x|X)
                 echo -e ""
                 echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-                echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
-                echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
-                echo -e "${green}║                                                                       ║${neutral}"
-                echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
-                echo -e "${green}║                                                                       ║${neutral}"
-                echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
+                echo -e "${green}║                     Kembali ke menu sebelumnya...                     ║${neutral}"
                 echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-                exit 0
+                # Keluar dari loop fitur tanpa mengakhiri shell induk
+                break
                 ;;
             *)
                 echo -e "   ${red}Pilihan tidak valid!${neutral}"

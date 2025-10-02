@@ -129,27 +129,23 @@ clear
 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
 echo -e "${orange}║                            ${green}INFORMASI PORT       ${orange}                      ║${neutral}"
 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-echo -e "  ${green}• SSH                : ${neutral}22, 443, 80"
-echo -e "  ${green}• Dropbear           : ${neutral}443, 109, 143"
-echo -e "  ${green}• SSH Websocket      : ${neutral}80, 443"
-echo -e "  ${green}• OpenVPN            : ${neutral}443, 1194, 2200"
-echo -e "  ${green}• Nginx              : ${neutral}80, 81, 443"
-echo -e "  ${green}• Haproxy            : ${neutral}80, 443"
-echo -e "  ${green}• DNS                : ${neutral}53, 443"
-echo -e "  ${green}• XRAY Vmess         : ${neutral}80, 443"
-echo -e "  ${green}• XRAY Vless         : ${neutral}80, 443"
-echo -e "  ${green}• Trojan             : ${neutral}443"
-echo -e "  ${green}• Shadowsocks        : ${neutral}443"
-echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-echo -e "  ${yellow}• Time Zone          : ${neutral}Asia/Jakarta (GMT +7)"
+echo -e "   ${green}• SSH           : ${neutral}22, 443, 80      ║   ${green}• Shadowsocks : ${neutral}443"
+echo -e "   ${green}• Dropbear      : ${neutral}443, 109, 143    ║   ${green}• Trojan      : ${neutral}443"
+echo -e "   ${green}• SSH Websocket : ${neutral}80, 443          ║   ${green}• XRAY Vless  : ${neutral}80, 443"
+echo -e "   ${green}• OpenVPN       : ${neutral}443, 1194, 2200  ║   ${green}• XRAY Vmess  : ${neutral}80, 443"
+echo -e "   ${green}• Nginx         : ${neutral}80, 81, 443      ║   ${green}• DNS         : ${neutral}53, 44"
+echo -e "   ${green}• Haproxy       : ${neutral}80, 443          ║"
+echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+echo -e "  ${yellow}• Time Zone             : ${neutral}Asia/Jakarta (GMT +7)"
 if [[ -f /etc/cron.d/daily_reboot ]]; then
 reboot_time=$(grep -oP '^\d+\s+\d+' /etc/cron.d/daily_reboot | head -1 | awk '{printf "%02d:%02d", $2, $1}')
-echo -e "  ${yellow}• Otomatis Restart  : ${neutral}${reboot_time} GMT +7"
+echo -e "  ${yellow}• Otomatis Restart      : ${neutral}${reboot_time} GMT +7"
 else
-echo -e "  ${yellow}• Otomatis Restart  : ${neutral}Tidak Aktif"
+echo -e "  ${yellow}• Otomatis Restart      : ${neutral}Tidak Aktif"
 fi
 echo -e "  ${yellow}• Hapus Otomatis Expired: ${neutral}Aktif"
-echo -e "${orange}─────────────────────────────────────────${neutral}"
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
 read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu utama"
 return
@@ -625,7 +621,38 @@ display_features() {
             8) nano /etc/gerhanatunnel.txt; clear ;;
             9) echo -e "${red}PERINGATAN:${neutral} Fitur ini masih ${yellow}eksperimental${neutral}. Bisa menyebabkan kerusakan sistem panel VPN."; read -p " Lanjutkan pembaruan Dropbear? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; dropbear_update ;;
             10) echo -e "${red}PERINGATAN:${neutral} Pembaruan skrip masih ${yellow}eksperimental${neutral}. Bisa merusak konfigurasi."; read -p " Lanjutkan? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; update_script ;;
-            11) gotop ;;
+            11)
+                # Countdown sebelum menjalankan gotop dengan opsi batal Ctrl+C
+                if ! command -v gotop >/dev/null 2>&1; then
+                    echo -e "${red}gotop belum terpasang. Silakan instal terlebih dahulu.${neutral}"
+                    sleep 2
+                    continue
+                fi
+                echo -e "${orange}Menjalankan monitor sistem (gotop) dalam 5 detik...${neutral}"
+                echo -e "${yellow}Tekan Ctrl+C sekarang untuk membatalkan dan kembali ke menu.${neutral}"
+                cancel_flag=0
+                (
+                  trap 'cancel_flag=1' INT
+                  for i in 5 4 3 2 1; do
+                      if [ "$cancel_flag" = 1 ]; then break; fi
+                      printf " Mulai dalam %s detik... (Ctrl+C untuk batal)\r" "$i"
+                      sleep 1
+                  done
+                  echo -e ""
+                  if [ "$cancel_flag" = 1 ]; then
+                      echo -e "${red}Dibatalkan.${neutral}"
+                      exit 99
+                  fi
+                  exit 0
+                )
+                rc=$?
+                if [ $rc -eq 99 ]; then
+                    # dibatalkan
+                    sleep 1
+                    continue
+                fi
+                gotop
+                ;;
             12) echo -e "${red}PERINGATAN:${neutral} Pembaruan versi Xray masih ${yellow}eksperimental${neutral}. Pastikan Anda punya backup."; read -p " Lanjutkan update Xray? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; xray_update ;;
             13) echo -e "${red}PERINGATAN:${neutral} Layanan API Bot masih ${yellow}eksperimental${neutral}. Bisa mempengaruhi stabilitas."; read -p " Lanjutkan membuka layanan API Bot? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; bot client ;;
             14) setting_reboot_jam_reboot ;;

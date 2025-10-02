@@ -23,11 +23,10 @@
 ## 🧭 Ringkasan (Overview)
 
 **Tampilan Utama**  
-![Tampilan utama](img/panel.png)
-![Tampilan utama](img/menu-utama.png)
+![Tampilan utama](img/image.png)
 
 **Contoh Notifikasi Telegram**  
-![Notifikasi Telegram](img/telegram-notif.png)
+![Notifikasi Telegram](img/notif-tele.png)
 
 **Tujuan proyek ini:**
 
@@ -72,6 +71,8 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 | Backup / Restore | Backup data (akun, konfigurasi, dll) dan restore ketika diperlukan |
 | Optimasi Kernel | Dukungan BBR & tweak jaringan (bila diaktifkan) |
 | Modular | Mudah menambah protokol / handler baru |
+| Dukungan Multi-OS | Dukungan untuk berbagai distro berbasis Debian/Ubuntu |
+| Swap Ram | Otomatis setup swap ram sebesar 5GB |
 
 ---
 
@@ -162,6 +163,7 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 ### Sistem Operasi yang Direkomendasikan
 
 ![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Ubuntu 24.04](https://img.shields.io/badge/Ubuntu-24.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
 #### Catatan
 
@@ -173,7 +175,7 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 
 ## ⏰ Auto Reboot
 
-Tidak aktif default. Lihat [Konfigurasi Auto Reboot](./install.md#-konfigurasi-auto-reboot).
+Otomatis reboot VPS setiap hari pada jam 05:00 WIB. Anda dapat mengubah jadwal ini atau menonaktifkannya sesuai kebutuhan.
 
 ---
 

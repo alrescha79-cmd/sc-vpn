@@ -105,7 +105,7 @@ Pastikan Anda berada di menu utama, jika tidak, jalankan perintah `menu`.
 
 1. Pilih opsi `6` untuk setup notifikasi Telegram.
 2. Konfirmasi dengan `y` (Yes) jika ingin melanjutkan dan `n` (No) untuk membatalkan.
-![Telegram Setup](img/setup-tele.png)
+![Telegram Setup](img/setuptele.png)
 3. Masukkan `Token Bot` Telegram Anda.
 4. Masukkan `Chat ID` Telegram Anda.
 5. Klik `Enter` untuk melanjutkan, bot akan berjalan otomatis sebagai service.
@@ -217,12 +217,28 @@ Perintah-perintah berikut (di-install oleh `package-gohide.sh` atau bagian setup
 
 ## ⏰ Konfigurasi Auto Reboot
 
-Secara default TIDAK dipasang. Jika ingin menyalakan auto reboot harian pukul 04:00:
+Secara default auto reboot harian pukul 05:00. Jika ingin mengubah jadwal atau menonaktifkannya, ikuti langkah berikut:
+
+### Menambahkan Auto Reboot menggunakan Menu
+
+1. Pastikan Anda berada di menu utama, jika tidak, jalankan perintah `menu`.
+2. Pilih opsi `8` untuk masuk ke menu pengaturan sistem.
+![Menu Sistem](img/pengaturan.png)
+3. Pilih `14` masuk ke menu pengaturan auto reboot.
+![Menu Auto Reboot](img/set-jam.png)
+4. Pilih `1` untuk mengubah/menambahkan jadwal auto reboot.
+5. Masukkan jam dalam format 24 jam (HH:MM), contoh `02:00` untuk setiap jam 2 pagi.
+6. Pilih `y` untuk menyimpan perubahan.
+7. `Enter` untuk kembali ke menu pengaturan sistem.
+
+### Menambahkan Auto Reboot menggunakan Crontab
+
+pastikan Anda tidak berada di `menu` utama, jika tidak, jalankan perintah `Ctrl C` untuk keluar dari menu utama, lalu jalankan perintah berikut:
 
 ```bash
 crontab -l > /tmp/cron.txt
 sed -i "/reboot$/d" /tmp/cron.txt
-echo -e "\n"'0 4 * * * '"$(which reboot)" >> /tmp/cron.txt
+echo -e "\n"'0 5 * * * '"$(which reboot)" >> /tmp/cron.txt
 crontab /tmp/cron.txt
 rm -rf /tmp/cron.txt
 ```

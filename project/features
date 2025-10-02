@@ -2,13 +2,31 @@
 
 # Valid Script
 ipsaya=$(curl -sS ipv4.icanhazip.com)
-data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+data_server=$(curl -v --insecure --silent https://    4) vnstat -y ;;
+    *) echo -e "   ${red}Pilihan tidak valid.${neutral}" ;;
+esac
+read -n 1 -s -r -p "Tekan sembarang tombol untuk melihat menu lagi"
+check_bw
+;;
+2) display_features ;;
+*) echo -e "   ${red}Pilihan tidak valid.${neutral}"
+read -n 1 -s -r -p "Tekan sembarang tombol untuk mencoba lagi"
+check_bw
+;;
+esac
+}/ 2>&1 | grep Date | sed -e 's/< Date: //')
 date_list=$(date +"%Y-%m-%d" -d "$data_server")
 
 green="\e[38;5;87m"
 red="\e[38;5;196m"
 neutral="\e[0m"
-blue="\e[38;5;130m"
+blue="\e[3    print_info "${service_info[i]}" "${service_info[i + 1]}"
+done
+echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+echo ""
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
+}30m"
 orange="\e[38;5;99m"
 yellow="\e[38;5;226m"
 purple="\e[38;5;141m"
@@ -78,6 +96,8 @@ echo -e "${orange}╔═══════════════════�
 echo -e "${orange}║                       ${green}RESTART SERVER SERVICES   ${orange}                      ║${neutral}"
 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
 echo -e ""
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 check_bw() {
 clear
@@ -152,6 +172,7 @@ echo -e "  ${yellow}• Hapus Otomatis Expired: ${neutral}Aktif"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 echo -e ""
 read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 change_domain() {
 clear
@@ -245,6 +266,7 @@ echo -e "\n${red}Gagal memperbarui domain dan sertifikat SSL${neutral}"
 fi
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 
 running() {
@@ -312,6 +334,8 @@ echo -e "${orange}│${neutral}      AutoBackup: Every 1 Hours"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 ;;
 2) echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n0 0 * * * root /usr/bin/backuprestore backup" > /etc/cron.d/backup
 clear
@@ -321,6 +345,8 @@ echo -e "${orange}│${neutral}      AutoBackup: Every 1 Day"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 ;;
 3) echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n0 0 * * 7 root /usr/bin/backuprestore backup" > /etc/cron.d/backup
 clear
@@ -330,6 +356,8 @@ echo -e "${orange}│${neutral}      AutoBackup: Every 1 Week"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 ;;
 4) echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n0 0 1 * * root /usr/bin/backuprestore backup" > /etc/cron.d/backup
 clear
@@ -339,6 +367,8 @@ echo -e "${orange}│${neutral}      AutoBackup: Every 1 Month"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 ;;
 5)
 if [ ! -f /etc/cron.d/backup ]; then
@@ -348,6 +378,8 @@ echo -e "${orange}│${neutral}"
 echo -e "${orange}│${neutral} AutoBackup Already ${red}Disabled${neutral}"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 return
 fi
 rm -f /etc/cron.d/backup
@@ -358,9 +390,11 @@ echo -e "${orange}│${neutral}      AutoBackup ${red}Disabled${neutral}"
 echo -e "${orange}│${neutral}"
 echo -e "${orange}─────────────────────────────────────────${neutral}"
 service cron restart > /dev/null 2>&1
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 return
 ;;
-x|X) clear; return ;;
+x|X) clear; display_features ;;
 *) echo "Invalid choice. Please try again."; return ;;
 esac
 }
@@ -440,9 +474,14 @@ echo "/usr/sbin/nologin" >> /etc/shells
 /etc/init.d/dropbear restart
 cd
 ;;
-x|X) clear; return ;;
-*) echo "Invalid choice. Please try again."; return ;;
+x|X) clear; display_features ;;
+*) echo "Invalid choice. Please try again."
+read -n 1 -s -r -p "Tekan sembarang tombol untuk mencoba lagi"
+dropbear_update
+;;
 esac
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 
 setting_reboot_jam_reboot() {
@@ -465,6 +504,7 @@ echo -e "${orange}║${neutral}      AutoReboot Every: Hour $reboot_hour"
 echo -e "${orange}║${neutral}"
 echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 read -n 1 -s -r -p "Press any key to return to the menu"
+display_features
 }
 update_script() {
 clear
@@ -517,6 +557,8 @@ rm -rf /etc/menu >/dev/null 2>&1
 rm -f menu.zip >/dev/null 2>&1
 
 echo "Proses instalasi selesai."
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 xray_update() {
 clear
@@ -573,11 +615,15 @@ sed -i 's/"enabled": true/"enabled": false/' /etc/xray/vmess/config.json \
 /etc/xray/trojan/config.json \
 /etc/xray/shadowsocks/config.json && \
 systemctl restart vmess@config vless@config trojan@config shadowsocks@config
-return
 ;;
-x|X) clear; return ;;
-*) echo "Invalid choice. Please try again."; return ;;
+x|X) clear; display_features ;;
+*) echo "Invalid choice. Please try again."
+read -n 1 -s -r -p "Tekan sembarang tombol untuk mencoba lagi"
+xray_update
+;;
 esac
+read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+display_features
 }
 
 display_features() {
@@ -606,7 +652,7 @@ case $menu in
 5) info_port ;;
 6) restart_services ;;
 7) change_domain ;;
-8) nano /etc/gerhanatunnel.txt; clear ;;
+8) nano /etc/gerhanatunnel.txt; clear; display_features ;;
 9) dropbear_update ;;
 10) update_script ;;
 11) gotop ;;

@@ -13,16 +13,13 @@ pink="\e[38;5;205m"
 reset="\e[0m"
 gray="\e[38;5;245m"
 
-# Load Telegram configuration if available
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 echo -e "${blue}Mengkonfigurasi notifikasi Telegram...${neutral}"
 
-# Encoded Telegram credentials (untuk keamanan dasar)
 _bot_token="ODMyNjYwNTMxOTpBQUd1V2Q0aWwwTVY0VU1RNFpGWkZmRi1qaV9oSVcxVWZrRQo="
 _chat_id="NjQ3MTQzMDI3Cg=="
 
-# Decode credentials
 TELEGRAM_BOT_TOKEN=$(echo "$_bot_token" | base64 -d 2>/dev/null || echo "")
 TELEGRAM_CHAT_ID=$(echo "$_chat_id" | base64 -d 2>/dev/null || echo "")
 
@@ -75,9 +72,9 @@ send_telegram_notification() {
         
         # Optional: Log response for debugging
         if [[ "$response" =~ "\"ok\":true" ]]; then
-            echo -e "${green}✓ Notifikasi Telegram berhasil dikirim${neutral}" >/dev/stderr
+            echo -e "${green}✓ Berhasil${neutral}" >/dev/stderr
         else
-            echo -e "${yellow}⚠ Gagal mengirim notifikasi Telegram${neutral}" >/dev/stderr
+            echo -e "${yellow}⚠ Gagal${neutral}" >/dev/stderr
         fi
     else
         echo -e "${gray}ℹ Notifikasi Telegram dilewati (konfigurasi tidak lengkap)${neutral}" >/dev/stderr
@@ -283,7 +280,7 @@ if [ -z "$user_id" ]; then
 🆔 IP Address: <code>${server_ip}</code>
 ⏰ Waktu Percobaan: <code>${attempt_time}</code>
 
-🌍 <b>Lokasi Penyerang:</b>
+🌍 <b>Lokasi Server:</b>
 🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
 🏢 ISP: <code>${server_org}</code>
 🕐 Timezone: <code>${server_timezone}</code>
@@ -389,8 +386,6 @@ days_left=$(( ( $(date -d "$exp_date" +%s) - $(date -d "$current_date" +%s) ) / 
 mkdir -p /var/log/setup
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] AUTHORIZED ACCESS - User: $user_id, IP: $ip, Expires: $exp_date, Days Left: $days_left" >> /var/log/setup/authorized.log
 
-# Send Telegram notification for successful script usage
-echo -e "${blue}Mengirim notifikasi Telegram...${neutral}"
 system_info=$(get_system_info)
 IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch install_time <<< "$system_info"
 
@@ -1397,8 +1392,6 @@ fi
 
 clear
 
-# Send completion notification to Telegram
-echo -e "${blue}Mengirim notifikasi penyelesaian instalasi...${neutral}"
 completion_time=$(date '+%Y-%m-%d %H:%M:%S %Z')
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "Not configured")
 
@@ -1428,11 +1421,12 @@ completion_message="✅ <b>Alrescha79 VPN Script - Instalasi Selesai</b>
 send_telegram_notification "$completion_message" "HTML" "success"
 
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${green}           Install SELESAI            ${neutral}"
+echo -e "${green}                     Proses Instalasi Selesai         ${neutral}"
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${green}  Selamat! Proses instalasi selesai.${neutral}"
-echo -e "${green}  Panel VPN Siap Digunakan Setelah Reboot.${neutral}"
-echo -e "${gray}Server akan otomatis reboot dalam 10 detik...${neutral}"
+echo -e "${green}                   Selamat! Proses instalasi selesai.${neutral}"
+echo -e ""
+echo -e "${green}   Panel VPN Siap Digunakan Setelah Reboot.${neutral}"
+echo -e "${gray}   Server akan otomatis reboot dalam 10 detik...${neutral}"
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
 # Countdown with animation

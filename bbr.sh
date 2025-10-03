@@ -1,8 +1,4 @@
 #!/bin/bash
-# Edition : Stable Edition V3.0
-# Author  : SANZ PROJECT
-# (C) Copyright 2019
-# =========================================
 
 red='\e[1;31m'
 green='\e[0;32m'

@@ -1389,6 +1389,87 @@ if [ -d "/root/rmck" ]; then
     rm -rf /root/rmck
 fi
 
+# Install License Monitor
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                    Installing License Monitor           ${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+
+# Download license monitor files
+license_monitor_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/check-license.sh"
+license_service_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/license-monitor.service"
+license_timer_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/license-monitor.timer"
+
+echo -e "${yellow}Downloading license monitor files...${neutral}"
+
+# Download main script
+if wget -O /usr/bin/check-license "$license_monitor_url" >/dev/null 2>&1; then
+    chmod +x /usr/bin/check-license
+    echo -e "${green}✓ License monitor script downloaded and installed${neutral}"
+else
+    echo -e "${red}✗ Failed to download license monitor script${neutral}"
+fi
+
+# Download systemd service file
+if wget -O /etc/systemd/system/license-monitor.service "$license_service_url" >/dev/null 2>&1; then
+    echo -e "${green}✓ License monitor service file installed${neutral}"
+else
+    echo -e "${red}✗ Failed to download license monitor service file${neutral}"
+fi
+
+# Download systemd timer file
+if wget -O /etc/systemd/system/license-monitor.timer "$license_timer_url" >/dev/null 2>&1; then
+    echo -e "${green}✓ License monitor timer file installed${neutral}"
+else
+    echo -e "${red}✗ Failed to download license monitor timer file${neutral}"
+fi
+
+# Configure systemd
+echo -e "${yellow}Configuring license monitor service...${neutral}"
+systemctl daemon-reload
+
+if systemctl enable license-monitor.timer >/dev/null 2>&1; then
+    echo -e "${green}✓ License monitor timer enabled${neutral}"
+else
+    echo -e "${red}✗ Failed to enable license monitor timer${neutral}"
+fi
+
+if systemctl start license-monitor.timer >/dev/null 2>&1; then
+    echo -e "${green}✓ License monitor timer started${neutral}"
+else
+    echo -e "${red}✗ Failed to start license monitor timer${neutral}"
+fi
+
+# Save current license info for monitoring
+echo "VALID|$user_id|$exp_date|$days_left" > /var/log/setup/license_status
+echo "SERVICES_RUNNING" > /var/log/setup/services_status
+
+echo -e "${green}✓ License Monitor successfully installed and configured${neutral}"
+echo -e "${gray}  - Automatic license checking every hour${neutral}"
+echo -e "${gray}  - Services will be managed based on license status${neutral}"
+echo -e "${gray}  - Telegram notifications enabled${neutral}"
+echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
+
+# Send license monitor installation notification
+license_monitor_message="🔧 <b>License Monitor Installed</b>
+
+🎯 <b>Fitur Aktif:</b>
+✅ Pengecekan lisensi otomatis setiap jam
+✅ Auto-stop layanan saat lisensi expired
+✅ Auto-start layanan saat lisensi diperpanjang
+✅ Notifikasi Telegram real-time
+
+📊 <b>Status Saat Ini:</b>
+👤 User ID: <code>${user_id}</code>
+📅 Expired: <code>${exp_date}</code>
+⏳ Sisa: <code>${days_left} hari</code>
+
+🛠️ <b>Perintah Monitor:</b>
+<code>check-license --status</code>
+<code>systemctl status license-monitor.timer</code>
+
+🔒 <b>Keamanan:</b> Server dilindungi otomatis"
+
+send_telegram_notification "$license_monitor_message" "HTML" "general"
 
 clear
 

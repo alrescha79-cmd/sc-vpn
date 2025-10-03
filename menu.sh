@@ -59,6 +59,8 @@ wget -q -O trialvless "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/r
 wget -q -O trialssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialssh"
 wget -q -O trialshadowsoks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialshadowsoks"
 
+# Download license checker
+wget -q -O check-license "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/check-license.sh"
 
 chmod +x addshadowsocks
 chmod +x addssh
@@ -106,7 +108,7 @@ chmod +x trialvmess
 chmod +x trialvless
 chmod +x trialssh
 chmod +x trialshadowsoks
-
+chmod +x check-license
 
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${green}                               Install package            ${neutral}"

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Alrescha79 VPN License Monitor every hour
+Requires=license-monitor.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

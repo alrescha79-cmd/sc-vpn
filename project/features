@@ -79,6 +79,7 @@ echo -e "${orange}║                 ${green}MULAI ULANG LAYANAN SERVER   ${ora
 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
 echo -e ""
 }
+
 check_bw() {
 clear
 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
@@ -106,13 +107,13 @@ case $choice in
 1)
 echo -e "\nRentang Waktu :"
 echo -e "     ${green}1.${neutral} Hari ini"
-echo -e "     ${green}2.${neutral} Kemarin"
+echo -e "     ${green}2.${neutral} Minggu ini"
 echo -e "     ${green}3.${neutral} Bulan ini"
 echo -e "     ${green}4.${neutral} Tahun ini"
 read -p " Pilih rentang waktu (1-4): " period
 case $period in
-1) vnstat -d ;;
-2) vnstat -d 1 ;;
+1) vnstat -d 1 ;;
+2) vnstat -d ;;
 3) vnstat -m ;;
 4) vnstat -y ;;
 *) echo -e "   ${red}Pilihan tidak valid.${neutral}" ;;
@@ -709,7 +710,12 @@ display_features() {
             x|X)
                 echo -e ""
                 echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-                echo -e "${green}║                       Kembali ke menu utama...                        ║${neutral}"
+                echo -e "${green}║                    Terima kasih telah menggunakan                     ║${neutral}"
+                echo -e "${green}║                       ALRESCHA79 VPN PANEL                            ║${neutral}"
+                echo -e "${green}║                                                                       ║${neutral}"
+                echo -e "${green}║                 📱 Telegram: https://t.me/Alrescha79                  ║${neutral}"
+                echo -e "${green}║                                                                       ║${neutral}"
+                echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
                 echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
                 return
                 ;;

@@ -374,13 +374,20 @@ display_menu() {
             setup_bot_telegram 
             ;;
         7 | 07) 
-            echo -e "${cyan}Membuka Bot Server...${neutral}"
-            bot server 
+            if [ ! -f /usr/bin/botserver ]; then
+                echo -e "${red}Error: Bot server belum diinstall. Silahkan install terlebih dahulu.${neutral}"
+                echo -e "${yellow}Kembali ke menu utama dalam 5 detik...${neutral}"
+                sleep 5
+                display_menu
+                return
+            fi
+            echo -e "${cyan}Membuka menu Bot Telegram...${neutral}"
+            menu_bot_telegram 
+            display_menu 
             ;;
         8 | 08) 
             echo -e "${cyan}Membuka menu Features...${neutral}"
             features
-            # Setelah kembali dari features, tampilkan menu lagi
             display_menu
             ;;
         x | X)

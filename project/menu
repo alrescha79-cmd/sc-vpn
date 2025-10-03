@@ -379,7 +379,9 @@ display_menu() {
             ;;
         8 | 08) 
             echo -e "${cyan}Membuka menu Features...${neutral}"
-            features 
+            features
+            # Setelah kembali dari features, tampilkan menu lagi
+            display_menu
             ;;
         x | X)
             echo -e ""
@@ -392,7 +394,7 @@ display_menu() {
             echo -e "${green}║            Ketik perintah ${yellow}menu${green} untuk membuka panel kembali            ║${neutral}"
             echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
             echo -e ""
-            exit 1
+            exit 0
             ;;
         *)
             echo -e ""

@@ -711,7 +711,7 @@ display_features() {
                 echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
                 echo -e "${green}║                       Kembali ke menu utama...                        ║${neutral}"
                 echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-                menu
+                return
                 ;;
             *)
                 echo -e "   ${red}Pilihan tidak valid!${neutral}"
@@ -721,4 +721,6 @@ display_features() {
     done
 }
 # === CALL MENU (LOOP) ===
-display_features
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    display_features
+fi

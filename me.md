@@ -25,6 +25,9 @@
 **Tampilan Utama**  
 ![Tampilan utama](img/image.png)
 
+**Tampilan gotop (Sistem monitoring)**  
+![Tampilan gotop](img/gotop.png)
+
 **Contoh Notifikasi Telegram**  
 ![Notifikasi Telegram](img/notif-tele.png)
 

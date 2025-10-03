@@ -277,6 +277,7 @@ END
 
 # Generate Trojan links
 trojan_tls="trojan://${uuid}@${domain}:443?path=%2Fwhatever%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
+trojan_non="trojan://${uuid}@${domain}:80?path=%2Fwhatever%2Ftrojan-ws&host=${domain}&type=ws#${user}"
 trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
 
 # Restart Trojan service
@@ -351,6 +352,8 @@ send_telegram_notification "success" "$user"
     echo "══════════════════════════════════════════════════════════════════════"
     echo "TLS Link     : ${trojan_tls}"
     echo "══════════════════════════════════════════════════════════════════════"
+    echo "Non-TLS Link : ${trojan_non}"
+    echo "══════════════════════════════════════════════════════════════════════"
     echo "GRPC Link    : ${trojan_grpc}"
     echo "══════════════════════════════════════════════════════════════════════"
     echo "OpenClash Format : https://${domain}:81/trojan-${user}.txt"
@@ -378,6 +381,8 @@ echo -e "Password     : ${uuid}"
 echo -e "Public Key   : ${pubkey}"
 echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "TLS Link     : ${trojan_tls}"
+echo -e "══════════════════════════════════════════════════════════════════════"
+echo -e "Non-TLS Link : ${trojan_non}"
 echo -e "══════════════════════════════════════════════════════════════════════"
 echo -e "GRPC Link    : ${trojan_grpc}"
 echo -e "══════════════════════════════════════════════════════════════════════"

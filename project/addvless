@@ -21,8 +21,11 @@ pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
 # uuid=$(cat /proc/sys/kernel/random/uuid)
 
+clear
+
+# User data input
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "                       Tambah Akun Vless                       "
+echo -e "                       Tambah Akun vless                       "
 echo -e "══════════════════════════════════════════════════════════════════════"
 
 while true; do
@@ -41,8 +44,6 @@ while true; do
         break
     fi
 done
-
-
 
 read -p "Password: " uuid
 until [[ $duration =~ ^[0-9]+$ ]]; do
@@ -127,14 +128,13 @@ send_telegram_notification() {
     fi
 }
 
-
 # Account creation process
 exp=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vless/config.json" ]; then
-    echo -e "${red}Vless configuration file not found. Creating new file...${reset}"
-    mkdir -p /etc/xray/vless
+    echo "Configuration file not found. Creating new file..."
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
 fi
+
 if ! sed -i '/#vless$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
     echo -e "${red}Failed to add user to config.json${reset}"
@@ -165,6 +165,13 @@ cat >/etc/xray/vless/$user-tls.json <<EOF
 }
 EOF
 
+# Check if TLS configuration file was created successfully
+if [ ! -f "/etc/xray/vless/$user-tls.json" ]; then
+    echo -e "${red}Failed to create TLS configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create TLS configuration file"
+    exit 1
+fi
+
 cat >/etc/xray/vless/$user-non.json <<EOF
 {
     "v": "2",
@@ -180,6 +187,13 @@ cat >/etc/xray/vless/$user-non.json <<EOF
     "tls": "none"
 }
 EOF
+
+# Check if Non-TLS configuration file was created successfully
+if [ ! -f "/etc/xray/vless/$user-non.json" ]; then
+    echo -e "${red}Failed to create Non-TLS configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create Non-TLS configuration file"
+    exit 1
+fi
 
 cat >/etc/xray/vless/$user-grpc.json <<EOF
 {
@@ -197,17 +211,25 @@ cat >/etc/xray/vless/$user-grpc.json <<EOF
 }
 EOF
 
+# Check if GRPC configuration file was created successfully
+if [ ! -f "/etc/xray/vless/$user-grpc.json" ]; then
+    echo -e "${red}Failed to create GRPC configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create GRPC configuration file"
+    exit 1
+fi
+
 # Create configuration file for OpenClash
 cat >/var/www/html/vless-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
-# Vless WS (CDN) Format
+# Format vless WS (CDN)
 ══════════════════════════════════════════════════════════════════════
 
-- name: Vless-$user-WS (CDN)
+- name: vless-$user-WS (CDN)
   type: vless
   server: ${domain}
   port: 443
   uuid: ${uuid}
+  alterId: 0
   cipher: auto
   udp: true
   tls: true
@@ -219,14 +241,15 @@ cat >/var/www/html/vless-$user.txt <<-END
     headers:
       Host: ${domain}
 ══════════════════════════════════════════════════════════════════════
-# Vless WS (CDN) Non TLS Format
+# Format vless WS (CDN) Non TLS
 ══════════════════════════════════════════════════════════════════════
 
-- name: Vless-$user-WS (CDN) Non TLS
+- name: vless-$user-WS (CDN) Non TLS
   type: vless
   server: ${domain}
   port: 80
   uuid: ${uuid}
+  alterId: 0
   cipher: auto
   udp: true
   tls: false
@@ -238,14 +261,15 @@ cat >/var/www/html/vless-$user.txt <<-END
     headers:
       Host: ${domain}
 ══════════════════════════════════════════════════════════════════════
-# Vless gRPC (SNI) Format
+# Format vless gRPC (SNI)
 ══════════════════════════════════════════════════════════════════════
 
-- name: Vless-$user-gRPC (SNI)
+- name: vless-$user-gRPC (SNI)
   server: ${domain}
   port: 443
   type: vless
   uuid: ${uuid}
+  alterId: 0
   cipher: auto
   network: grpc
   tls: true
@@ -255,32 +279,39 @@ cat >/var/www/html/vless-$user.txt <<-END
     grpc-service-name: vless-grpc
 
 ══════════════════════════════════════════════════════════════════════
-# Vless Account Links
+# vless Account Links
 ══════════════════════════════════════════════════════════════════════
-TLS Link : vless://${uuid}@${domain}:443?path=/whatever/vless&security=tls&encryption=none&host=${domain}&type=ws#${user}-WS-TLS
+TLS Link : vless://$(base64 -w 0 /etc/xray/vless/$user-tls.json)
 ══════════════════════════════════════════════════════════════════════
-Non-TLS Link : vless://${uuid}@${domain}:80?path=/whatever/vless&encryption=none&host=${domain}&type=ws#${user}-WS-NTLS
+Non-TLS Link : vless://$(base64 -w 0 /etc/xray/vless/$user-non.json)
 ══════════════════════════════════════════════════════════════════════
-GRPC Link : vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}-gRPC
+GRPC Link : vless://$(base64 -w 0 /etc/xray/vless/$user-grpc.json)
 ══════════════════════════════════════════════════════════════════════
 
 END
 
-# Generate Vless links
-vless_tls="vless://${uuid}@${domain}:443?path=/whatever/vless&security=tls&encryption=none&host=${domain}&type=ws#${user}-WS-TLS"
-vless_non="vless://${uuid}@${domain}:80?path=/whatever/vless&encryption=none&host=${domain}&type=ws#${user}-WS-NTLS"
-vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}-gRPC"
+# Check if OpenClash configuration file was created successfully
+if [ ! -f "/var/www/html/vless-$user.txt" ]; then
+    echo -e "${red}Failed to create OpenClash configuration file${reset}"
+    send_telegram_notification "error" "$user" "Failed to create OpenClash configuration file"
+    exit 1
+fi
 
-# Restart services
-if ! systemctl restart vless@config >/dev/null 2>&1; then
-    echo -e "${red}Failed to restart vless service. Please check system logs for more information.${reset}"
+# Generate vless links
+vless_tls="vless://$(base64 -w 0 /etc/xray/vless/$user-tls.json)"
+vless_non="vless://$(base64 -w 0 /etc/xray/vless/$user-non.json)"
+vless_grpc="vless://$(base64 -w 0 /etc/xray/vless/$user-grpc.json)"
+
+# Restart service
+if ! systemctl restart vless@config; then
+    echo -e "${red}Failed to restart vless service${reset}"
     send_telegram_notification "error" "$user" "Failed to restart vless service"
     exit 1
 fi
 
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vless/config.json" ]; then
-    echo "Warning: Vless configuration file not found. Creating new file..."
+    echo "Warning: vless configuration file not found. Creating new file..."
     mkdir -p /etc/xray/vless
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
     systemctl restart vless@config
@@ -292,13 +323,25 @@ if [ ! -d "/etc/xray/vless" ]; then
     mkdir -p /etc/xray/vless
     if [ $? -ne 0 ]; then
         echo "Failed to create directory /etc/xray/vless. Make sure you have sufficient permissions."
+        send_telegram_notification "error" "$user" "Failed to create directory /etc/xray/vless"
+        exit 1
+    fi
+fi
+
+# Exception if configuration file doesn't exist
+if [ ! -f "/etc/xray/vless/config.json" ]; then
+    echo "vless configuration file not found. Creating new file..."
+    echo '{"inbounds": []}' >/etc/xray/vless/config.json
+    if [ $? -ne 0 ]; then
+        echo "Failed to create vless configuration file. Make sure you have sufficient permissions."
+        send_telegram_notification "error" "$user" "Failed to create vless configuration file"
         exit 1
     fi
 fi
 
 # Set default values if empty
-[ -z ${ip_limit} ] && ip_limit="0"
-[ -z ${quota} ] && quota="0"
+ip_limit=${ip_limit:-0}
+quota=${quota:-0}
 
 # Convert Quota to bytes
 quota_bytes=$((${quota} * 1024 * 1024 * 1024))
@@ -313,13 +356,15 @@ fi
 db_file="/etc/xray/vless/.vless.db"
 temp_file="/etc/xray/vless/.vless.db.tmp"
 
-# Remove old entry if exists
-if [ -f "$db_file" ]; then
-    grep -v "^### ${user} " "$db_file" >"$temp_file"
-    mv "$temp_file" "$db_file"
-else
+# Exception if database file doesn't exist
+if [ ! -f "$db_file" ]; then
+    echo "Warning: vless database file not found. Creating new file..."
     touch "$db_file"
 fi
+
+# Remove old entry if exists
+grep -v "^### ${user} " "$db_file" >"$temp_file"
+mv "$temp_file" "$db_file"
 
 # Add new entry
 echo "### ${user} ${exp} ${uuid}" >>"$db_file"
@@ -327,50 +372,52 @@ echo "### ${user} ${exp} ${uuid}" >>"$db_file"
 # Send success notification to Telegram
 send_telegram_notification "success" "$user"
 
-# Save log
+# Save original log
 {
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "xray/vless account    "
+    echo "Xray/vless Account    "
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "description  : ${user}"
-    echo "host server  : ${domain}"    
+    echo "remarks      : ${user}"
+    echo "host_server  : ${domain}"    
     echo "location     : $city"
-    echo "port tls     : 443"
-    echo "port non tls : 80, 8080"
-    echo "port dns     : 443, 53"
-    echo "port grpc    : 443"
+    echo "location     : $kota"
+    echo "port_tls     : 443"
+    echo "port_nontls  : 80, 8080"
+    echo "port_dns     : 443, 53"
+    echo "port_grpc    : 443"
+    echo "alterid      : 0"
     echo "security     : auto"
-    echo "network      : ws or grpc"
+    echo "network      : WS or gRPC"
     echo "path         : /whatever/vless"
     echo "servicename  : vless-grpc"
-    echo "user id      : ${uuid}"
-    echo "public key   : ${pubkey}"
+    echo "user_id      : ${uuid}"
+    echo "public_key   : ${pubkey}"
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "tls link     : ${vless_tls}"
+    echo "tls_link     : ${vless_tls}"
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "ntls link    : ${vless_non}"
+    echo "ntls_link    : ${vless_non}"
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "grpc link    : ${vless_grpc}"
+    echo "grpc_link    : ${vless_grpc}"
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "openclash format : https://${domain}:81/vless-$user.txt"
+    echo "openclash_format : https://${domain}:81/vless-$user.txt"
     echo "══════════════════════════════════════════════════════════════════════"
-    echo "expires on   : $exp"
+    echo "expires_on   : $exp"
     echo ""
 } >> /etc/xray/vless/log-create-${user}.log
 
-clear
 # Display account information
 clear 
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "Xray/vless Account"
+echo -e "Xray/vless Account    "
 echo -e "══════════════════════════════════════════════════════════════════════"
-echo -e "Description  : ${user}"
+echo -e "Remarks      : ${user}"
 echo -e "Host Server  : ${domain}"
 echo -e "Location     : $city"
 echo -e "Port TLS     : 443"
 echo -e "Port non TLS : 80, 8080"
 echo -e "Port DNS     : 443, 53"
 echo -e "Port GRPC    : 443"
+echo -e "AlterId      : 0"
 echo -e "Security     : auto"
 echo -e "Network      : WS or gRPC"
 echo -e "Path         : /whatever/vless "

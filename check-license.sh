@@ -330,7 +330,7 @@ case "$1" in
         fi
         
         if [ -f "$SERVICES_STATUS_FILE" ]; then
-            local services_status=$(cat "$SERVICES_STATUS_FILE")
+            services_status=$(cat "$SERVICES_STATUS_FILE")
             echo -e "${blue}Status Layanan:${neutral} $services_status"
         else
             echo -e "${yellow}Status layanan tidak diketahui${neutral}"

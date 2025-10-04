@@ -306,6 +306,45 @@ display_menu() {
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
     
+    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${green}║                          NOTIFIKASI TELEGRAM                          ║${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    # Status Bot Telegram
+    bot_token_status="${red}Tidak Aktif${neutral}"
+    chat_id_status="${red}Tidak Aktif${neutral}"
+    masked_token="-"
+    need_setup_msg=""
+    if [ -f /root/.vars ]; then
+        # shellcheck disable=SC1091
+        source /root/.vars 2>/dev/null
+        if [ -n "${bot_token}" ]; then
+            bot_token_status="${green}Aktif${neutral}"
+            # Masking: 8 awal & 4 akhir jika panjang cukup
+            if [ ${#bot_token} -ge 15 ]; then
+                masked_token="${bot_token:0:8}***${bot_token: -4}"
+            else
+                masked_token="${bot_token:0:4}***"
+            fi
+        fi
+        if [ -n "${telegram_id}" ]; then
+            chat_id_status="${green}Aktif${neutral} (${telegram_id})"
+        fi
+    else
+        need_setup_msg="${yellow}File /root/.vars belum ada. Gunakan opsi [6] untuk setup bot notifikasi.${neutral}"
+    fi
+    # Jika salah satu belum aktif beri pesan lanjutan
+    if [ "${bot_token_status}" != "${green}Aktif${neutral}" ] || [ "${chat_id_status}" != "${green}Aktif${neutral} (${telegram_id})" ]; then
+        [ -z "${need_setup_msg}" ] && need_setup_msg="${yellow}Bot notifikasi belum lengkap. Gunakan opsi [6] untuk konfigurasi.${neutral}"
+    fi
+    echo -e "                   ${white}BOT Token   : ${bot_token_status} ${light_gray}(${masked_token})${neutral}"
+    echo -e "                   ${white}CHAT ID     : ${chat_id_status}${neutral}"
+    if [ -n "${need_setup_msg}" ]; then
+        echo -e "                   ${need_setup_msg}"
+    fi            
+    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"

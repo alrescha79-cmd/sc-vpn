@@ -521,61 +521,7 @@ EOF
   echo -e "${orange}═══════════════════════════════════════════════════════════════════════${neutral}"
   read -n1 -s -p "  Tekan tombol untuk kembali ke menu utama"
 }
-update_script() {
-clear
-echo -e "${red}PERINGATAN:${neutral} Pembaruan skrip ini ${yellow}eksperimental${neutral}. Pastikan Anda sudah memiliki backup sebelum melanjutkan."
-loading_bar() {
-    local total=$1
-    local current=0
-    local width=50
-    local filled
-    local empty
 
-    filled="▰"
-    empty="▱"
-
-    while [ "$current" -le "$total" ]; do
-        # Menghitung berapa banyak simbol terisi
-        local filled_count=$((current * width / total))
-        local empty_count=$((width - filled_count))
-
-        # Membuat bar loading
-        local bar=$(printf "%${filled_count}s" | tr ' ' "$filled")
-        bar+=$(printf "%${empty_count}s" | tr ' ' "$empty")
-
-        # Menampilkan bar
-        printf "\r[${bar}] %d%%" $((current * 100 / total))
-        sleep 0.1
-        ((current++))
-    done
-    printf "\n"
-}
-
-echo "Memulai proses instalasi, mohon tunggu..."
-
-mkdir -p /etc/menu
-cd /etc/menu
-
-url="https://github.com/joytun21/gabut/raw/main/ssh/project.zip"
-
-wget -O menu.zip "$url" >/dev/null 2>&1 &
-PID=$!
-loading_bar 100
-wait $PID
-
-# msbreewc
-7z e -pmOdgholrty9978 menu.zip >/dev/null 2>&1
-chmod +x * >/dev/null 2>&1
-
-mv * /usr/bin >/dev/null 2>&1
-
-rm -rf /etc/menu >/dev/null 2>&1
-rm -f menu.zip >/dev/null 2>&1
-
-echo "Proses instalasi selesai."
-read -n1 -s -r -p "Tekan tombol untuk kembali ke menu utama" 2>/dev/null
-return
-}
 xray_update() {
 clear
 echo -e "${red}PERINGATAN:${neutral} Pembaruan versi Xray ${yellow}eksperimental${neutral}. Pastikan konfigurasi & data sudah di-backup."
@@ -641,6 +587,88 @@ read -n1 -s -r -p "Tekan tombol untuk kembali ke menu utama" 2>/dev/null
 return
 }
 
+Check_izin_skrip() {
+    while true; do
+        clear
+        echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+        echo -e "${orange}║                         INFORMASI IZIN SKRIP                          ║${neutral}"
+        echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+        echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+        echo -e "       ${neutral}${green} [1]${neutral} Cek Izin Penggunaan Skrip"
+        echo -e "       ${neutral}${green} [2]${neutral} Status Izin Penggunaan Skrip"
+        echo -e "      ${neutral} ${red} [x]${neutral} Kembali"
+        echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+        echo -e ""
+        read -p "Pilih opsi [1-2 or x]: " pilihan
+        
+        case $pilihan in
+            1)
+                echo -e ""
+                echo -e "${blue}Menjalankan pengecekan izin lisensi lengkap...${neutral}"
+                echo -e ""
+                if command -v check-license >/dev/null 2>&1; then
+                    check-license --check
+                else
+                    echo -e "${red}Error: License monitor belum terinstall.${neutral}"
+                    echo -e "${yellow}Silakan jalankan setup script terlebih dahulu.${neutral}"
+                fi
+                echo -e ""
+                read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+                ;;
+            2)
+                echo -e ""
+                echo -e "${blue}Menampilkan status izin lisensi...${neutral}"
+                echo -e ""
+                if command -v check-license >/dev/null 2>&1; then
+                    check-license --status
+                else
+                    echo -e "${red}Error: License monitor belum terinstall.${neutral}"
+                    echo -e "${yellow}Silakan jalankan setup script terlebih dahulu.${neutral}"
+                fi
+                echo -e ""
+                read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
+                ;;
+            x|X)
+                return
+                ;;
+            *)
+                echo -e "   ${red}Pilihan tidak valid!${neutral}"
+                sleep 1.5
+                ;;
+        esac
+    done
+}
+
+uninstall_panel_vpn() {
+    clear
+    echo -e "${red}PERINGATAN:${neutral} Fitur ini akan menghapus semua konfigurasi panel VPN dan layanan terkait."
+    echo -e "Pastikan Anda sudah melakukan backup data penting sebelum melanjutkan."
+    echo -e ""
+    echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${orange}║                         UNINSTALL PANEL VPN                           ║${neutral}"
+    echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${orange}║${neutral}                     ${yellow}TATA CARA UNINSTALL VPN PANEL${neutral}                     ${orange}║${neutral}"
+    echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${neutral} ${green}Step 1:${neutral} Keluar dari menu ini dengan menekan ${red}Ctrl+C${neutral}"
+    echo -e ""
+    echo -e "${neutral} ${green}Step 2:${neutral} Jalankan perintah berikut:"
+    echo -e "${neutral}                                                                       ${neutral}"
+    echo -e "${neutral} ${blue}wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/dev/uninstall.sh && chmod +x uninstall.sh && sudo ./uninstall.sh${neutral} "
+    echo -e ""
+    echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${neutral} ${yellow}CATATAN PENTING:${neutral}"
+    echo -e "${neutral} • Script uninstall akan menghapus semua komponen VPN"
+    echo -e "${neutral} • SSH access akan TETAP AMAN dan tidak akan dihapus"
+    echo -e "${neutral} • Backup data penting sebelum menjalankan uninstall"
+    echo -e "${neutral} • Proses tidak dapat dibatalkan setelah konfirmasi"
+    echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    echo -e ""
+    echo -e "${yellow}Tekan Ctrl+C untuk keluar dari menu dan jalankan perintah di atas.${neutral}"
+    echo -e ""
+    read -n 1 -s -r -p "Atau tekan sembarang tombol untuk kembali ke menu utama"
+}
+
 display_features() {
     while true; do
         clear
@@ -648,12 +676,12 @@ display_features() {
         echo -e "${orange}║                      ${green} MENU PENGATURAN SISTEM & FITUR ${orange}                 ║${neutral}"
         echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
         echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${neutral}${green} [1]${neutral} Periksa Sistem Berjalan    ║${neutral} ${green} [9]${neutral}  Perbarui Dropbear"
-        echo -e "${neutral}${green} [2]${neutral} Periksa Penggunaan BW      ║${neutral}  ${green}[10]${neutral} Perbarui Skrip"
+            echo -e "${neutral}${green} [1]${neutral} Periksa Sistem Berjalan    ║${neutral} ${green} [9]${neutral}  Perbarui Dropbear"
+            echo -e "${neutral}${green} [2]${neutral} Periksa Penggunaan BW      ║${neutral}  ${green}[10]${neutral} Perbarui Versi X-ray"
         echo -e "${neutral}${green} [3]${neutral} Cadangan Otomatis Server   ║${neutral}  ${green}[11]${neutral} Gotop (Monitor Sistem)"
-        echo -e "${neutral}${green} [4]${neutral} Cadangkan/Pulihkan Server  ║${neutral}  ${green}[12]${neutral} Perbarui Versi X-ray"
-        echo -e "${neutral}${green} [5]${neutral} Informasi Port             ║${neutral}  ${green}[13]${neutral} Info Layanan API Bot"
-        echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Pengaturan Mulai Ulang Otomatis"
+        echo -e "${neutral}${green} [4]${neutral} Cadangkan/Pulihkan Server  ║${neutral}  ${green}[12]${neutral} Pengaturan Mulai Ulang Otomatis"
+        echo -e "${neutral}${green} [5]${neutral} Informasi Port             ║${neutral}  ${green}[13]${neutral} Cek Izin Skrip"
+        echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Uninstall Panel VPN"
         echo -e "${neutral}${green} [7]${neutral} Ubah Domain Server         ║${neutral}  ${green}[15]${neutral} Mulai Ulang Server"
         echo -e "${neutral}${green} [8]${neutral} Ubah Banner Server         ║${neutral} ${red} [x]${neutral}  Keluar dari Pengaturan Sistem"
         echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
@@ -670,7 +698,7 @@ display_features() {
             7) change_domain ;;
             8) nano /etc/gerhanatunnel.txt; clear ;;
             9) echo -e "${red}PERINGATAN:${neutral} Fitur ini masih ${yellow}eksperimental${neutral}. Bisa menyebabkan kerusakan sistem panel VPN."; read -p " Lanjutkan pembaruan Dropbear? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; dropbear_update ;;
-            10) echo -e "${red}PERINGATAN:${neutral} Pembaruan skrip masih ${yellow}eksperimental${neutral}. Bisa merusak konfigurasi."; read -p " Lanjutkan? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; update_script ;;
+            10) echo -e "${red}PERINGATAN:${neutral} Pembaruan versi Xray masih ${yellow}eksperimental${neutral}. Pastikan Anda punya backup."; read -p " Lanjutkan update Xray? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; xray_update ;;
             11)
                 # Countdown sebelum menjalankan gotop dengan opsi batal Ctrl+C
                 if ! command -v gotop >/dev/null 2>&1; then
@@ -703,9 +731,9 @@ display_features() {
                 fi
                 gotop
                 ;;
-            12) echo -e "${red}PERINGATAN:${neutral} Pembaruan versi Xray masih ${yellow}eksperimental${neutral}. Pastikan Anda punya backup."; read -p " Lanjutkan update Xray? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; xray_update ;;
-            13) echo -e "${red}PERINGATAN:${neutral} Layanan API Bot masih ${yellow}eksperimental${neutral}. Bisa mempengaruhi stabilitas."; read -p " Lanjutkan membuka layanan API Bot? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; bot client ;;
-            14) setting_reboot_jam_reboot ;;
+            12) setting_reboot_jam_reboot ;;
+            13) check_izin_skrip ;;
+            14) uninstall_panel_vpn ;;
             15) read -p " Apakah Anda yakin ingin reboot server? (y/n): " ans; [[ $ans =~ ^[Yy]$ ]] && reboot ;;
             x|X)
                 echo -e ""

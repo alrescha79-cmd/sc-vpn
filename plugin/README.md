@@ -3,7 +3,7 @@
 
  instal plugin hide backend :
    ```bash
-    wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/package-gohide.sh && chmod +x package-gohide.sh && bash package-gohide.sh
+    wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/package-gohide.sh && chmod +x package-gohide.sh && bash package-gohide.sh
     cd 
     rm -rf package-gohide.sh
    ```

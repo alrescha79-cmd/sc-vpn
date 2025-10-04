@@ -331,7 +331,7 @@ display_menu() {
             chat_id_status="${green}Aktif${neutral} (${telegram_id})"
         fi
     else
-        need_setup_msg="${yellow}File /root/.vars belum ada. Gunakan opsi [6] untuk setup bot notifikasi.${neutral}"
+        need_setup_msg="${yellow}Gunakan opsi [6] untuk setup bot notifikasi.${neutral}"
     fi
     # Jika salah satu belum aktif beri pesan lanjutan
     if [ "${bot_token_status}" != "${green}Aktif${neutral}" ] || [ "${chat_id_status}" != "${green}Aktif${neutral} (${telegram_id})" ]; then
@@ -340,7 +340,7 @@ display_menu() {
     echo -e "                   ${white}BOT Token   : ${bot_token_status} ${light_gray}(${masked_token})${neutral}"
     echo -e "                   ${white}CHAT ID     : ${chat_id_status}${neutral}"
     if [ -n "${need_setup_msg}" ]; then
-        echo -e "                   ${need_setup_msg}"
+        echo -e "  ${need_setup_msg}"
     fi            
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""

@@ -43,6 +43,8 @@
 
 ## 💻 Instalasi
 
+### Instalasi Baru
+
 Pastikan sudah berada di user `root`, lalu jalankan perintah berikut:
 
 ```bash
@@ -54,6 +56,16 @@ screen -S setup ./setup.sh
 ```
 
 Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
+
+### Hapus Instalasi
+
+Jika ingin menghapus instalasi, jalankan perintah berikut:
+
+```bash
+wget -O uninstaller.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/dev/uninstall.sh && chmod +x uninstaller.sh && sudo ./uninstaller.sh
+```
+
+Lihat [Panduan Uninstall](./uninstall.md) untuk instruksi lengkap.
 
 ---
 
@@ -76,10 +88,12 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 | Modular | Mudah menambah protokol / handler baru |
 | Dukungan Multi-OS | Dukungan untuk berbagai distro berbasis Debian/Ubuntu |
 | Swap Ram | Otomatis setup swap ram sebesar 5GB |
+| Gotop | Monitoring resource VPS secara real-time via terminal |
 
 ---
 
 ## Fitur Bot Telegram (Opsional)
+
 | Fitur | Deskripsi Ringkas |
 |-------|-------------------|
 | Manajemen Akun | Tambah / Hapus / Cek / Perpanjang akun via bot |
@@ -119,14 +133,18 @@ Lihat [Panduan Instalasi](./install.md) untuk instruksi lengkap.
 1. Jalankan instalasi dasar (lihat [install.md](./install.md)).
 2. Verifikasi service (misal: `systemctl status xray` atau `ss -tulpn`).
 3. Masuk ke menu utama jika tidak otomatis muncul:
+
    ```bash
    menu
    ```
+
 4. Tampilkan detail akun & link / JSON konfigurasi.
 5. (Opsional) Instal API:
+
    ```bash
    bash golang/rest-go.sh
    ```
+
 6. Integrasikan dengan panel / bot.
 
 ---
@@ -191,21 +209,10 @@ Otomatis reboot VPS setiap hari pada jam 05:00 WIB. Anda dapat mengubah jadwal i
 
 ---
 
-## 🤝 Kontribusi
-
-1. Fork repository
-2. Buat branch fitur: `git checkout -b fitur-baru`
-3. Commit: `git commit -m "Tambah fitur X"`
-4. Push: `git push origin fitur-baru`
-5. Buka Pull Request
-
----
-
 ## 📜 Lisensi
 
 MIT License – lihat [LICENSE](./LICENSE).
 
-Copyright © 2025  
-[Alrescha79](https://github.com/alrescha79-cmd)
+Copyright (C) 2025 [Alrescha79](https://github.com/alrescha79-cmd). All rights reserved.
 
 ---

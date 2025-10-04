@@ -286,7 +286,6 @@ display_menu() {
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                            INFORMASI SISTEM                           ║${neutral}"
     echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "    ${white}SISTEM    : $(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' | head -c25)${neutral}"
     echo -e "    ${white}RAM       : $(free -m | awk 'NR==2 {printf "%s / %s MB", $3, $2}')${neutral}"
     echo -e "    ${white}UPTIME    : $(uptime -p 2>/dev/null | cut -d ' ' -f 2-4 | head -c25)${neutral}"
@@ -300,7 +299,6 @@ display_menu() {
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
     echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "                   ${white}USER ID     : $username ${sts}${neutral}"
     echo -e "                   ${white}MASA AKTIF  : $(datediff "$valid" "$today")${neutral}"            
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
@@ -308,7 +306,6 @@ display_menu() {
     
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                          NOTIFIKASI TELEGRAM                          ║${neutral}"
-    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     # Status Bot Telegram (hanya tampilkan Aktif / Tidak Aktif)
     bot_token_status="${red}Tidak Aktif${neutral}"
@@ -328,9 +325,9 @@ display_menu() {
             need_setup_msg="${yellow}Bot notifikasi belum lengkap. Gunakan menu [6] untuk konfigurasi.${neutral}"
         fi
     fi
-    echo -e "           ${white}BOT Token : ${bot_token_status}${neutral}  ║  ${white}CHAT ID : ${chat_id_status}${neutral}"
-    if [ -n "${need_setup_msg}" ]; then
-        echo -e "           ${need_setup_msg}"
+    echo -e "               ${white}BOT Token : ${bot_token_status}${neutral}  ║  ${white}CHAT ID : ${chat_id_status}${neutral}"
+    if [ -n "   ${need_setup_msg}" ]; then
+        echo -e "   ${need_setup_msg}"
     fi
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
@@ -338,7 +335,6 @@ display_menu() {
 
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
-    echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "           ${white}NGINX   : $(cek_status nginx)   ║  SSH/OVPN	: $(cek_status ssh)     ║  DROPBEAR : $(cek_status dropbear)"
     echo -e "           ${white}HAPROXY : $(cek_status haproxy)   ║  XRAY	: $(cek_status vmess@config)"
@@ -349,7 +345,6 @@ display_menu() {
     echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${blue}║                             JUMLAH AKUN                               ║${neutral}"
     echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "       SSH/OPENVPN : ${yellow}$(printf "%2s" "$ssh")${neutral} Akun    ║    SHADOWSOCKS : ${yellow}$(printf "%2s" "$ss")${neutral} Akun"
     echo -e "       VMESS XRAY  : ${yellow}$(printf "%2s" "$vm")${neutral} Akun    ║    TROJAN XRAY : ${yellow}$(printf "%2s" "$tr")${neutral} Akun"
     echo -e "       VLESS XRAY  : ${yellow}$(printf "%2s" "$vl")${neutral} Akun    ║"
@@ -358,7 +353,6 @@ display_menu() {
     
     echo -e "${magenta}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                              MENU UTAMA                               ║${neutral}"
-    echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${magenta}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e ""
     echo -e "       ${green}[1]${neutral} Kelola SSH/OpenVPN    ║     ${green}[5]${neutral} Kelola Shadowsocks"

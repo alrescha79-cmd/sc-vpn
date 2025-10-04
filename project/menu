@@ -339,18 +339,18 @@ display_menu() {
     fi
     echo -e "           ${white}BOT Token: ${bot_token_status} ${light_gray}(${masked_token})${neutral}  ║  ${white}CHAT ID: ${chat_id_status}${neutral}"
     echo -e ""
-    if [ -n "${need_setup_msg}" ]; then
+    if [ -n "  ${need_setup_msg}" ]; then
         echo -e "${need_setup_msg}"
     fi            
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
-
     echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                            STATUS LAYANAN                             ║${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "           ${white}WEBSOCKET : $(cek_status ws-stunnel)   ║  NGINX : $(cek_status nginx)     ║  DROPBEAR : $(cek_status dropbear)"
-    echo -e "           ${white}HAPROXY   : $(cek_status haproxy)    ║  XRAY  : $(cek_status vmess@config)     ║  SSH/OVPN : $(cek_status ssh)"
+    echo -e "           ${white}NGINX   : $(cek_status nginx)   ║  SSH/OVPN	: $(cek_status ssh)     ║  DROPBEAR : $(cek_status dropbear)"
+    echo -e "           ${white}HAPROXY : $(cek_status haproxy)    ║  XRAY	: O$(cek_status vmess@config)"
+    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
 

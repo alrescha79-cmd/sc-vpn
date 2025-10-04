@@ -22,7 +22,7 @@ wget -q -O backuprestore "https://raw.githubusercontent.com/alrescha79-cmd/sc-vp
 wget -q -O backuprestore.js "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/backuprestore.js"
 
 wget -q -O checkshadowsocks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/checkshadowsocks"
-wget -q -O chechssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/chechssh"
+wget -q -O checkssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/checkssh"
 wget -q -O checktrojan "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/checktrojan"
 wget -q -O checkvless "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/checkvless"
 wget -q -O checkvmess "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/checkvmess"

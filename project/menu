@@ -339,8 +339,8 @@ display_menu() {
     fi
     echo -e "           ${white}BOT Token: ${bot_token_status} ${light_gray}(${masked_token})${neutral}  ║  ${white}CHAT ID: ${chat_id_status}${neutral}"
     echo -e ""
-    if [ -n "  ${need_setup_msg}" ]; then
-        echo -e "${need_setup_msg}"
+    if [ -n "   ${need_setup_msg}" ]; then
+        echo -e "   ${need_setup_msg}"
     fi            
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
@@ -349,7 +349,7 @@ display_menu() {
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "           ${white}NGINX   : $(cek_status nginx)   ║  SSH/OVPN	: $(cek_status ssh)     ║  DROPBEAR : $(cek_status dropbear)"
-    echo -e "           ${white}HAPROXY : $(cek_status haproxy)    ║  XRAY	: O$(cek_status vmess@config)"
+    echo -e "           ${white}HAPROXY : $(cek_status haproxy)    ║  XRAY	: $(cek_status vmess@config)"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""

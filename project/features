@@ -587,7 +587,7 @@ read -n1 -s -r -p "Tekan tombol untuk kembali ke menu utama" 2>/dev/null
 return
 }
 
-Check_izin_skrip() {
+cek_izin_skrip() {
     while true; do
         clear
         echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
@@ -732,7 +732,7 @@ display_features() {
                 gotop
                 ;;
             12) setting_reboot_jam_reboot ;;
-            13) check_izin_skrip ;;
+            13) cek_izin_skrip ;;
             14) uninstall_panel_vpn ;;
             15) read -p " Apakah Anda yakin ingin reboot server? (y/n): " ans; [[ $ans =~ ^[Yy]$ ]] && reboot ;;
             x|X)

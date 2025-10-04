@@ -321,7 +321,7 @@ display_menu() {
             bot_token_status="${green}Aktif${neutral}"
         fi
         if [ -n "${telegram_id}" ]; then
-            chat_id_status="${green}Aktif${neutral})"
+            chat_id_status="${green}Aktif${neutral}"
         fi
     else
         need_setup_msg="${yellow}Notifikasi belum dikonfigurasi. Opsi [6] untuk setup bot notifikasi.${neutral}"
@@ -342,7 +342,7 @@ display_menu() {
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${cyan}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "           ${white}NGINX   : $(cek_status nginx)   ║  SSH/OVPN	: $(cek_status ssh)     ║  DROPBEAR : $(cek_status dropbear)"
-    echo -e "           ${white}HAPROXY : $(cek_status haproxy)    ║  XRAY	: $(cek_status vmess@config)"
+    echo -e "           ${white}HAPROXY : $(cek_status haproxy)   ║  XRAY	: $(cek_status vmess@config)"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""

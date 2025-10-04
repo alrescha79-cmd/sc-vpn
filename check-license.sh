@@ -72,14 +72,14 @@ display_license_status() {
     echo -e "${box_color}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${box_color}║                            INFORMASI LISENSI                          ║${neutral}"
     echo -e "${box_color}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}USER ID     : ${user_id}${neutral}                             ${box_color}║${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}STATUS      : ${status_color}${status_text}${neutral}                           ${box_color}║${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}EXPIRED     : ${exp_date}${neutral}                    ${box_color}║${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}MASA AKTIF  : $(datediff "$exp_date" "$current_date")${neutral}                      ${box_color}║${neutral}"
+    echo -e "                   ${white}USER ID     : ${user_id}${neutral}"
+    echo -e "                   ${white}STATUS      : ${status_color}${status_text}${neutral}"
+    echo -e "                   ${white}EXPIRED     : ${exp_date}${neutral}"
+    echo -e "                   ${white}MASA AKTIF  : $(datediff "$exp_date" "$current_date")${neutral}"
     echo -e "${box_color}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}SERVER IP   : ${ip_address}${neutral}                        ${box_color}║${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}HOSTNAME    : ${hostname}${neutral}                           ${box_color}║${neutral}"
-    echo -e "${box_color}║${neutral}                   ${white}WAKTU CEK   : ${current_date} ${current_time}${neutral}           ${box_color}║${neutral}"
+    echo -e "                   ${white}SERVER IP   : ${ip_address}${neutral}"
+    echo -e "                   ${white}HOSTNAME    : ${hostname}${neutral}"
+    echo -e "                   ${white}WAKTU CEK   : ${current_date} ${current_time}${neutral}"
     echo -e "${box_color}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 }
 
@@ -190,6 +190,7 @@ $(echo -e \"$stopped_services\")
 start_all_services() {
     local started_services=""
     echo -e "${green}Memulai layanan VPN...${neutral}"
+    echo -e "${gray}Silakan lihat Status Layanan untuk informasi lebih lanjut.${neutral}"
     
     for service in "${VPN_SERVICES[@]}"; do
         if ! systemctl is-active --quiet "$service" 2>/dev/null; then

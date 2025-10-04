@@ -338,6 +338,7 @@ display_menu() {
         [ -z "${need_setup_msg}" ] && need_setup_msg="${yellow}Bot notifikasi belum lengkap. Opsi [6] untuk konfigurasi.${neutral}"
     fi
     echo -e "           ${white}BOT Token: ${bot_token_status} ${light_gray}(${masked_token})${neutral}  ║  ${white}CHAT ID: ${chat_id_status}${neutral}"
+    echo -e ""
     if [ -n "${need_setup_msg}" ]; then
         echo -e "${need_setup_msg}"
     fi            

@@ -26,7 +26,7 @@ fi
 clear
 
 echo -e "${red}╔═══════════════════════════════════════════════════════════════════════════╗${neutral}"
-echo -e "${red}║                          UNINSTALLER VPN PANEL                           ║${neutral}"
+echo -e "${red}║                            UNINSTALLER VPN PANEL                          ║${neutral}"
 echo -e "${red}║                              Alrescha79 Script                            ║${neutral}"
 echo -e "${red}╚═══════════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
@@ -37,6 +37,11 @@ echo -e "${gray}  • Database pengguna dan log${neutral}"
 echo -e "${gray}  • Sertifikat SSL${neutral}"
 echo -e "${gray}  • Service dan cron jobs${neutral}"
 echo -e "${gray}  • Paket yang diinstal${neutral}"
+echo -e ""
+echo -e "${green}YANG TIDAK AKAN DIHAPUS:${neutral}"
+echo -e "${green}  ✓ SSH service dan konfigurasi (untuk akses remote)${neutral}"
+echo -e "${green}  ✓ Sistem operasi dasar${neutral}"
+echo -e "${green}  ✓ Paket sistem penting${neutral}"
 echo -e ""
 echo -e "${red}Tindakan ini TIDAK DAPAT DIBATALKAN!${neutral}"
 echo -e ""
@@ -65,9 +70,16 @@ show_success() {
     echo -e "${green}[SUCCESS]${neutral} $1"
 }
 
-# Stop all VPN services
-show_progress "Menghentikan semua service VPN..."
-services=(
+# Backup SSH configuration before proceeding
+show_progress "Backup konfigurasi SSH untuk keamanan..."
+if [ -f "/etc/ssh/sshd_config" ]; then
+    cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup.uninstall
+    echo -e "  ${green}✓${neutral} SSH config backed up"
+fi
+
+# Stop VPN services ONLY (exclude SSH and system services)
+show_progress "Menghentikan service VPN saja (SSH tetap aktif)..."
+vpn_services=(
     "vmess@config.service"
     "vless@config.service"
     "trojan@config.service"
@@ -79,12 +91,14 @@ services=(
     "limitquota.service"
     "badvpn.service"
     "nginx.service"
-    "dropbear.service"
+    "dropbear.service"  # Dropbear bukan SSH utama
     "openvpn.service"
     "xray.service"
+    "license-monitor.timer"      # License monitor
+    "license-monitor.service"    # License monitor
 )
 
-for service in "${services[@]}"; do
+for service in "${vpn_services[@]}"; do
     if systemctl is-active --quiet "$service" 2>/dev/null; then
         systemctl stop "$service" && echo -e "  ${green}✓${neutral} Stopped $service"
     fi
@@ -93,9 +107,9 @@ for service in "${services[@]}"; do
     fi
 done
 
-# Remove systemd service files
-show_progress "Menghapus file service systemd..."
-service_files=(
+# Remove systemd service files (VPN related only)
+show_progress "Menghapus file service VPN..."
+vpn_service_files=(
     "/etc/systemd/system/vmess@config.service"
     "/etc/systemd/system/vless@config.service"
     "/etc/systemd/system/trojan@config.service"
@@ -108,9 +122,11 @@ service_files=(
     "/etc/systemd/system/xray@.service.d/10-donot_touch_single_conf.conf"
     "/etc/systemd/system/xray@.service.d"
     "/lib/systemd/system/dropbear.service"
+    "/etc/systemd/system/license-monitor.service"
+    "/etc/systemd/system/license-monitor.timer"
 )
 
-for file in "${service_files[@]}"; do
+for file in "${vpn_service_files[@]}"; do
     if [ -f "$file" ] || [ -d "$file" ]; then
         rm -rf "$file" && echo -e "  ${green}✓${neutral} Removed $file"
     fi
@@ -119,7 +135,7 @@ done
 systemctl daemon-reload
 
 # Remove cron jobs
-show_progress "Menghapus cron jobs..."
+show_progress "Menghapus cron jobs VPN..."
 cron_files=(
     "/etc/cron.d/xp_all"
     "/etc/cron.d/daily_reboot"
@@ -132,9 +148,9 @@ for cron_file in "${cron_files[@]}"; do
     fi
 done
 
-# Remove configuration directories and files
-show_progress "Menghapus direktori dan file konfigurasi..."
-config_dirs=(
+# Remove VPN configuration directories and files
+show_progress "Menghapus direktori konfigurasi VPN..."
+vpn_config_dirs=(
     "/etc/xray"
     "/etc/vmess"
     "/etc/vless"
@@ -147,42 +163,43 @@ config_dirs=(
     "/home/daily_reboot"
 )
 
-for dir in "${config_dirs[@]}"; do
+for dir in "${vpn_config_dirs[@]}"; do
     if [ -d "$dir" ]; then
         rm -rf "$dir" && echo -e "  ${green}✓${neutral} Removed directory $dir"
     fi
 done
 
-# Remove configuration files
-config_files=(
+# Remove VPN configuration files (EXCLUDE SSH!)
+show_progress "Menghapus file konfigurasi VPN..."
+vpn_config_files=(
     "/etc/haproxy/haproxy.cfg"
     "/etc/nginx/conf.d/xray.conf"
     "/etc/nginx/nginx.conf"
-    "/etc/ssh/sshd_config"
+    # "/etc/ssh/sshd_config"  # ← DIHAPUS! SSH tidak boleh dihapus
     "/etc/default/dropbear"
     "/etc/init.d/dropbear"
     "/etc/dropbear/dropbear_dss_host_key"
     "/etc/gerhanatunnel.txt"
-    "/etc/pam.d/common-password"
+    # "/etc/pam.d/common-password"  # ← DIHAPUS! Sistem penting
     "/var/www/html/client-tcp.ovpn"
     "/var/www/html/client-udp.ovpn"
     "/var/www/html/client-ssl.ovpn"
     "/var/www/html/allovpn.zip"
-    "/root/.profile"
-    "/root/.bashrc"
+    # "/root/.profile"  # ← DIHAPUS! Bisa ada konfigurasi penting
+    # "/root/.bashrc"   # ← DIHAPUS! Bisa ada konfigurasi penting
     "/root/.key"
-    "/etc/shells"
+    # "/etc/shells"     # ← DIHAPUS! Sistem penting
 )
 
-for file in "${config_files[@]}"; do
+for file in "${vpn_config_files[@]}"; do
     if [ -f "$file" ]; then
         rm -f "$file" && echo -e "  ${green}✓${neutral} Removed $file"
     fi
 done
 
-# Remove binaries and executables
-show_progress "Menghapus binary dan executable..."
-binaries=(
+# Remove VPN binaries and executables
+show_progress "Menghapus binary dan executable VPN..."
+vpn_binaries=(
     "/usr/bin/gotop"
     "/usr/bin/ws.py"
     "/usr/bin/udp"
@@ -211,8 +228,8 @@ binaries=(
     "/usr/local/bin/renew-ssh"
 )
 
-# Add menu scripts from /usr/bin
-menu_scripts=(
+# VPN menu scripts from /usr/bin
+vpn_menu_scripts=(
     "/usr/bin/addshadowsocks"
     "/usr/bin/addssh"
     "/usr/bin/addtrojan"
@@ -252,13 +269,15 @@ menu_scripts=(
     "/usr/bin/trialvless"
     "/usr/bin/trialssh"
     "/usr/bin/trialshadowsoks"
-    "/usr/bin/check-license"
+    "/usr/bin/check-license"           # License monitor
+    "/usr/bin/install-license-monitor" # License monitor installer
+    "/usr/bin/uninstall-license-monitor" # License monitor uninstaller
 )
 
-# Combine all binaries
-all_binaries=("${binaries[@]}" "${menu_scripts[@]}")
+# Combine VPN binaries
+all_vpn_binaries=("${vpn_binaries[@]}" "${vpn_menu_scripts[@]}")
 
-for binary in "${all_binaries[@]}"; do
+for binary in "${all_vpn_binaries[@]}"; do
     if [ -f "$binary" ]; then
         rm -f "$binary" && echo -e "  ${green}✓${neutral} Removed $binary"
     fi
@@ -269,44 +288,53 @@ if [ -f "/etc/haproxy/yha.pem" ]; then
     rm -f "/etc/haproxy/yha.pem" && echo -e "  ${green}✓${neutral} Removed HAProxy certificate"
 fi
 
-# Remove swap file if created by the script
-show_progress "Menghapus swap file..."
+# Remove swap file if created by the script (but ask first)
+show_progress "Menangani swap file..."
 if [ -f "/swapfile" ]; then
-    swapoff /swapfile 2>/dev/null
-    rm -f /swapfile
-    # Remove from fstab
-    sed -i '/\/swapfile/d' /etc/fstab
-    echo -e "  ${green}✓${neutral} Removed swap file"
+    echo -e "${yellow}Ditemukan swap file. Apakah ingin menghapusnya?${neutral}"
+    read -p "Hapus swap file? (y/n): " remove_swap
+    if [[ "$remove_swap" =~ ^[Yy]$ ]]; then
+        swapoff /swapfile 2>/dev/null
+        rm -f /swapfile
+        sed -i '/\/swapfile/d' /etc/fstab
+        echo -e "  ${green}✓${neutral} Removed swap file"
+    else
+        echo -e "  ${yellow}↪${neutral} Swap file dipertahankan"
+    fi
 fi
 
-# Clean iptables rules
-show_progress "Membersihkan iptables rules..."
-iptables -t nat -F PREROUTING 2>/dev/null
-iptables -t nat -F POSTROUTING 2>/dev/null
-iptables -F 2>/dev/null
-iptables -X 2>/dev/null
-iptables-save > /etc/iptables/rules.v4 2>/dev/null
-echo -e "  ${green}✓${neutral} Cleaned iptables rules"
+# Clean VPN-related iptables rules (preserve SSH rules!)
+show_progress "Membersihkan iptables rules VPN (SSH rules dipertahankan)..."
+# Only remove specific VPN-related rules, not all rules
+# This is safer than flushing all tables
+echo -e "  ${yellow}↪${neutral} Manual cleanup required for iptables VPN rules"
+echo -e "  ${gray}  Gunakan: iptables -L untuk melihat rules aktif${neutral}"
 
-# Remove packages installed by the script
-show_progress "Menghapus paket yang diinstal..."
-packages_to_remove=(
+# Remove VPN packages (keep system packages!)
+show_progress "Menghapus paket VPN..."
+vpn_packages_to_remove=(
     "haproxy"
     "nginx"
     "openvpn"
     "easy-rsa"
-    "dropbear"
+    "dropbear"  # Dropbear bukan SSH utama
     "vnstat"
 )
 
-for package in "${packages_to_remove[@]}"; do
+for package in "${vpn_packages_to_remove[@]}"; do
     if dpkg -s "$package" >/dev/null 2>&1; then
-        apt-get remove --purge -y "$package" >/dev/null 2>&1 && echo -e "  ${green}✓${neutral} Removed package $package"
+        echo -e "${yellow}Hapus package $package? (y/n):${neutral}"
+        read -p "> " remove_pkg
+        if [[ "$remove_pkg" =~ ^[Yy]$ ]]; then
+            apt-get remove --purge -y "$package" >/dev/null 2>&1 && echo -e "  ${green}✓${neutral} Removed package $package"
+        else
+            echo -e "  ${yellow}↪${neutral} Package $package dipertahankan"
+        fi
     fi
 done
 
 # Remove nginx repository
-show_progress "Menghapus repository nginx..."
+show_progress "Menghapus repository VPN..."
 if [ -f "/etc/apt/sources.list.d/nginx.list" ]; then
     rm -f "/etc/apt/sources.list.d/nginx.list"
 fi
@@ -318,7 +346,6 @@ if [ -f "/etc/apt/preferences.d/99nginx" ]; then
 fi
 
 # Remove haproxy repository
-show_progress "Menghapus repository haproxy..."
 if [ -f "/etc/apt/sources.list.d/haproxy.list" ]; then
     rm -f "/etc/apt/sources.list.d/haproxy.list"
 fi
@@ -326,14 +353,8 @@ if [ -f "/usr/share/keyrings/haproxy.debian.net.gpg" ]; then
     rm -f "/usr/share/keyrings/haproxy.debian.net.gpg"
 fi
 
-# Remove Node.js if it was installed by the script
-show_progress "Menghapus Node.js dan npm packages..."
-if command -v npm >/dev/null 2>&1; then
-    npm uninstall -g express express-fileupload 2>/dev/null
-fi
-
 # Clean temporary files
-show_progress "Membersihkan file temporary..."
+show_progress "Membersihkan file temporary VPN..."
 temp_files=(
     "/tmp/gotop*"
     "/tmp/vnstat*"
@@ -347,44 +368,42 @@ for pattern in "${temp_files[@]}"; do
     rm -rf $pattern 2>/dev/null
 done
 
-# Reset sysctl configurations that were added by the script
-show_progress "Mereset konfigurasi sysctl..."
+# SAFELY reset sysctl configurations (only VPN-related)
+show_progress "Mereset konfigurasi sysctl VPN..."
 if [ -f "/etc/sysctl.conf.backup" ]; then
-    mv /etc/sysctl.conf.backup /etc/sysctl.conf
-    echo -e "  ${green}✓${neutral} Restored original sysctl.conf"
+    echo -e "${yellow}Ditemukan backup sysctl. Restore? (y/n):${neutral}"
+    read -p "> " restore_sysctl
+    if [[ "$restore_sysctl" =~ ^[Yy]$ ]]; then
+        mv /etc/sysctl.conf.backup /etc/sysctl.conf
+        echo -e "  ${green}✓${neutral} Restored original sysctl.conf"
+    fi
 else
-    # Remove specific lines added by the setup script
+    # Remove only specific VPN-related lines
     sed -i '/net.core.default_qdisc = fq/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control = bbr/d' /etc/sysctl.conf
-    sed -i '/net.ipv4.ip_forward=1/d' /etc/sysctl.conf
-    sed -i '/net.ipv4.conf.all.route_localnet=1/d' /etc/sysctl.conf
-    echo -e "  ${green}✓${neutral} Cleaned sysctl.conf"
+    # Keep these as they might be needed: net.ipv4.ip_forward, route_localnet
+    echo -e "  ${green}✓${neutral} Cleaned VPN-specific sysctl.conf entries"
 fi
 
-# Reset timezone
-show_progress "Mereset timezone ke default..."
-ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+# Don't reset timezone - user might have set it intentionally
+show_progress "Timezone dipertahankan..."
+echo -e "  ${yellow}↪${neutral} Timezone tidak direset ($(cat /etc/timezone 2>/dev/null || echo 'Unknown'))"
 
-# Clean systemd configurations
-show_progress "Membersihkan konfigurasi systemd..."
+# Clean systemd configurations (VPN-related only)
+show_progress "Membersihkan konfigurasi systemd VPN..."
 if [ -f "/etc/systemd/system.conf.backup" ]; then
-    mv /etc/systemd/system.conf.backup /etc/systemd/system.conf
+    echo -e "${yellow}Restore backup systemd config? (y/n):${neutral}"
+    read -p "> " restore_systemd
+    if [[ "$restore_systemd" =~ ^[Yy]$ ]]; then
+        mv /etc/systemd/system.conf.backup /etc/systemd/system.conf
+    fi
 else
+    # Remove only VPN-related systemd configs
     sed -i '/DefaultTimeoutStopSec=30s/d' /etc/systemd/system.conf
-    sed -i '/DefaultLimitCORE=infinity/d' /etc/systemd/system.conf
-    sed -i '/DefaultLimitNOFILE=65535/d' /etc/systemd/system.conf
 fi
 
-# Reset security limits
-show_progress "Mereset security limits..."
-if [ -f "/etc/security/limits.conf.backup" ]; then
-    mv /etc/security/limits.conf.backup /etc/security/limits.conf
-else
-    sed -i '/\* soft nofile 65535/d' /etc/security/limits.conf
-    sed -i '/\* hard nofile 65535/d' /etc/security/limits.conf
-    sed -i '/root soft nofile 51200/d' /etc/security/limits.conf
-    sed -i '/root hard nofile 51200/d' /etc/security/limits.conf
-fi
+# Don't reset security limits - they might be needed for system
+show_progress "Security limits dipertahankan untuk stabilitas sistem..."
 
 # Reload systemd and sysctl
 systemctl daemon-reload
@@ -395,46 +414,44 @@ show_progress "Membersihkan cache paket..."
 apt-get autoremove -y >/dev/null 2>&1
 apt-get autoclean >/dev/null 2>&1
 
-# Clean logs
-show_progress "Membersihkan log files..."
-> /var/log/auth.log
-> /var/log/syslog
-> /var/log/daemon.log
-journalctl --vacuum-time=1d >/dev/null 2>&1
+# Clean VPN logs only (keep system logs!)
+show_progress "Membersihkan log VPN saja..."
+if [ -d "/var/log/xray" ]; then
+    rm -rf /var/log/xray
+fi
+# Don't clean system logs as they're important for troubleshooting
 
 echo -e ""
 echo -e "${green}╔═══════════════════════════════════════════════════════════════════════════╗${neutral}"
 echo -e "${green}║                              UNINSTALL SELESAI                            ║${neutral}"
 echo -e "${green}╚═══════════════════════════════════════════════════════════════════════════╝${neutral}"
 echo -e ""
-echo -e "${green}Proses uninstall telah selesai!${neutral}"
+echo -e "${green}Proses uninstall VPN Panel telah selesai dengan aman!${neutral}"
 echo -e ""
 echo -e "${blue}Yang telah dihapus:${neutral}"
 echo -e "${gray}  ✓ Semua service VPN (Xray, OpenVPN, HAProxy, Nginx)${neutral}"
-echo -e "${gray}  ✓ Database pengguna dan konfigurasi${neutral}"
-echo -e "${gray}  ✓ Sertifikat SSL${neutral}"
-echo -e "${gray}  ✓ Cron jobs dan scheduled tasks${neutral}"
-echo -e "${gray}  ✓ Binary dan executable files${neutral}"
-echo -e "${gray}  ✓ Repository dan preferences${neutral}"
-echo -e "${gray}  ✓ Iptables rules${neutral}"
-echo -e "${gray}  ✓ Swap file${neutral}"
-echo -e "${gray}  ✓ Log files${neutral}"
+echo -e "${gray}  ✓ Database pengguna VPN dan konfigurasi${neutral}"
+echo -e "${gray}  ✓ Sertifikat SSL VPN${neutral}"
+echo -e "${gray}  ✓ Cron jobs VPN${neutral}"
+echo -e "${gray}  ✓ Binary dan executable VPN${neutral}"
+echo -e "${gray}  ✓ Repository VPN${neutral}"
+echo -e "${gray}  ✓ Log VPN${neutral}"
+echo -e "${gray}  ✓ License Monitor System${neutral}"
+echo -e ""
+echo -e "${green}Yang DIPERTAHANKAN untuk keamanan:${neutral}"
+echo -e "${green}  ✓ SSH service dan konfigurasi${neutral}"
+echo -e "${green}  ✓ Sistem operasi dasar${neutral}"
+echo -e "${green}  ✓ Log sistem${neutral}"
+echo -e "${green}  ✓ Konfigurasi jaringan dasar${neutral}"
+echo -e "${green}  ✓ User accounts dan permissions${neutral}"
+echo -e ""
+echo -e "${blue}Status SSH: ${green}AMAN - Akses remote tetap berfungsi${neutral}"
 echo -e ""
 echo -e "${yellow}REKOMENDASI:${neutral}"
-echo -e "${gray}  • Restart server untuk memastikan semua perubahan diterapkan${neutral}"
-echo -e "${gray}  • Periksa kembali apakah ada file konfigurasi yang tertinggal${neutral}"
-echo -e "${gray}  • Update sistem jika diperlukan${neutral}"
+echo -e "${gray}  • SSH tetap aktif dan aman untuk akses remote${neutral}"
+echo -e "${gray}  • Restart server tidak diperlukan (opsional)${neutral}"
+echo -e "${gray}  • Periksa service yang masih berjalan: systemctl list-units${neutral}"
 echo -e ""
 
-read -p "Apakah Anda ingin restart server sekarang? (y/n): " restart_choice
-
-if [[ "$restart_choice" =~ ^[Yy]$ ]]; then
-    echo -e "${blue}Server akan restart dalam 5 detik...${neutral}"
-    sleep 5
-    reboot
-else
-    echo -e "${yellow}Silakan restart server secara manual untuk menyelesaikan proses uninstall.${neutral}"
-fi
-
-echo -e ""
 echo -e "${blue}Terima kasih telah menggunakan Alrescha79 VPN Panel!${neutral}"
+echo -e "${gray}Akses SSH Anda tetap aman dan berfungsi normal.${neutral}"

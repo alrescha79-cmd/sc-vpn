@@ -5,6 +5,7 @@ red="\e[38;5;196m"
 green="\e[38;5;82m"
 yellow="\e[38;5;226m"
 blue="\e[38;5;39m"
+white="\e[1;37m"
 neutral="\e[0m"
 gray="\e[38;5;245m"
 
@@ -13,12 +14,75 @@ LICENSE_CHECK_FILE="/var/log/setup/license_status"
 LICENSE_LOG_FILE="/var/log/setup/license.log"
 SERVICES_STATUS_FILE="/var/log/setup/services_status"
 
+# Load configuration from /root/.vars if available
+if [ -f "/root/.vars" ]; then
+    source /root/.vars 2>/dev/null
+fi
+
 # Create directories if not exist
 mkdir -p /var/log/setup
 
 # Function to log messages
 log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LICENSE_LOG_FILE"
+}
+
+# Function to calculate date difference
+datediff() {
+    local exp_date="$1"
+    local current_date="$2"
+    local exp_epoch=$(date -d "$exp_date" +%s 2>/dev/null || echo "0")
+    local current_epoch=$(date -d "$current_date" +%s 2>/dev/null || echo "0")
+    local diff_days=$(( (exp_epoch - current_epoch) / 86400 ))
+    
+    if [ $diff_days -gt 0 ]; then
+        echo "$diff_days Hari Lagi"
+    elif [ $diff_days -eq 0 ]; then
+        echo "Expires Hari Ini"
+    else
+        echo "Expired $((-diff_days)) Hari yang Lalu"
+    fi
+}
+
+# Function to display license status with beautiful formatting
+display_license_status() {
+    local status="$1"
+    local user_id="$2"
+    local exp_date="$3"
+    local days_left="$4"
+    local current_date=$(date +%Y-%m-%d)
+    local current_time=$(date '+%H:%M:%S')
+    local hostname=$(hostname)
+    local ip_address=$(curl -s --connect-timeout 5 ipinfo.io/ip 2>/dev/null || echo "Unknown")
+    
+    # Determine status color and text
+    local status_color="$green"
+    local status_text="AKTIF"
+    local box_color="$green"
+    
+    if [ "$status" != "VALID" ] || [ $days_left -le 0 ]; then
+        status_color="$red"
+        status_text="EXPIRED"
+        box_color="$red"
+    elif [ $days_left -le 7 ]; then
+        status_color="$yellow"
+        status_text="SEGERA EXPIRED"
+        box_color="$yellow"
+    fi
+    
+    # Display beautiful license information
+    echo -e "${box_color}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+    echo -e "${box_color}║                            INFORMASI LISENSI                          ║${neutral}"
+    echo -e "${box_color}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}USER ID     : ${user_id}${neutral}                             ${box_color}║${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}STATUS      : ${status_color}${status_text}${neutral}                           ${box_color}║${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}EXPIRED     : ${exp_date}${neutral}                    ${box_color}║${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}MASA AKTIF  : $(datediff "$exp_date" "$current_date")${neutral}                      ${box_color}║${neutral}"
+    echo -e "${box_color}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}SERVER IP   : ${ip_address}${neutral}                        ${box_color}║${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}HOSTNAME    : ${hostname}${neutral}                           ${box_color}║${neutral}"
+    echo -e "${box_color}║${neutral}                   ${white}WAKTU CEK   : ${current_date} ${current_time}${neutral}           ${box_color}║${neutral}"
+    echo -e "${box_color}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
 }
 
 # Function to get system information
@@ -44,21 +108,39 @@ send_telegram_notification() {
     local parse_mode="${2:-HTML}"
     local notification_type="${3:-general}"
     
-    # Load Telegram settings from setup.sh variables if available
+    # Load Telegram settings with priority order
     local bot_token=""
     local chat_id=""
     
-    # Try to get from environment or decode base64
-    if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+    # 1. First priority: Check /root/.vars file
+    if [ -f "/root/.vars" ]; then
+        source /root/.vars 2>/dev/null
+        if [ -n "$bot_token" ]; then
+            # Use from .vars file
+            bot_token="$bot_token"
+        fi
+        if [ -n "$telegram_id" ]; then
+            # Use from .vars file
+            chat_id="$telegram_id"
+        fi
+    fi
+    
+    # 2. Second priority: Check environment variables
+    if [ -z "$bot_token" ] && [ -n "$TELEGRAM_BOT_TOKEN" ]; then
         bot_token="$TELEGRAM_BOT_TOKEN"
-    else
+    fi
+    
+    if [ -z "$chat_id" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+        chat_id="$TELEGRAM_CHAT_ID"
+    fi
+    
+    # 3. Third priority: Use base64 encoded defaults (fallback)
+    if [ -z "$bot_token" ]; then
         local _bot_token="ODMyNjYwNTMxOTpBQUd1V2Q0aWwwTVY0VU1RNFpGWkZmRi1qaV9oSVcxVWZrRQo="
         bot_token=$(echo "$_bot_token" | base64 -d 2>/dev/null || echo "")
     fi
     
-    if [ -n "$TELEGRAM_CHAT_ID" ]; then
-        chat_id="$TELEGRAM_CHAT_ID"
-    else
+    if [ -z "$chat_id" ]; then
         local _chat_id="NjQ3MTQzMDI3Cg=="
         chat_id=$(echo "$_chat_id" | base64 -d 2>/dev/null || echo "")
     fi
@@ -78,17 +160,17 @@ send_telegram_notification() {
 
 # Function to stop all services
 stop_all_services() {
-    echo -e "${yellow}Menghentikan semua layanan karena lisensi kadaluarsa...${neutral}"
+    echo -e "${yellow}Menghentikan layanan VPN karena lisensi kadaluarsa (SSH tetap aktif)...${neutral}"
     log_message "STOPPING ALL SERVICES - License expired"
     
-    # Stop main services
+    # Stop VPN services only (SSH excluded for remote access)
     local services=(
         "xray"
         "nginx" 
         "haproxy"
-        "dropbear"
-        "ssh"
-        "sshd"
+        "dropbear"  # Dropbear is alternative SSH, can be stopped
+        # "ssh"     # EXCLUDED - needed for remote access
+        # "sshd"    # EXCLUDED - needed for remote access
         "openvpn"
         "openvpn@server"
         "stunnel4"
@@ -111,15 +193,15 @@ stop_all_services() {
     
     # Save services status
     echo "SERVICES_STOPPED" > "$SERVICES_STATUS_FILE"
-    echo -e "${red}Semua layanan telah dihentikan karena lisensi kadaluarsa${neutral}"
+    echo -e "${red}Layanan VPN telah dihentikan karena lisensi kadaluarsa (SSH tetap aktif)${neutral}"
     
     # Send Telegram notification
     local system_info=$(get_system_info)
     IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch current_time <<< "$system_info"
     
-    local telegram_message="🚨 <b>LAYANAN DIHENTIKAN - LISENSI KADALUARSA</b>
+    local telegram_message="🚨 <b>LAYANAN VPN DIHENTIKAN - LISENSI KADALUARSA</b>
 
-⚠️ <b>Peringatan:</b> Semua layanan VPN telah dihentikan otomatis
+⚠️ <b>Peringatan:</b> Layanan VPN telah dihentikan otomatis karena lisensi kadaluarsa
 
 🌍 <b>Informasi Server:</b>
 🆔 IP Address: <code>${server_ip}</code>
@@ -128,13 +210,16 @@ stop_all_services() {
 🖥️ Hostname: <code>${server_hostname}</code>
 ⏰ Waktu: <code>${current_time}</code>
 
-🛑 <b>Layanan yang Dihentikan:</b>
+🛑 <b>Layanan VPN yang Dihentikan:</b>
 $(echo -e "$stopped_services")
+
+✅ <b>Layanan yang Tetap Aktif:</b>
+🔒 SSH - Akses remote tetap aman
+🔧 System services - Server tetap operasional
 
 💡 <b>Solusi:</b>
 1. Perpanjang lisensi script
-2. Jalankan ulang script setup
-3. Atau hubungi admin untuk perpanjangan
+2. Atau hubungi admin untuk informasi lebih lanjut
 
 📞 <b>Admin:</b> @Alrescha79"
 
@@ -143,17 +228,17 @@ $(echo -e "$stopped_services")
 
 # Function to start all services
 start_all_services() {
-    echo -e "${green}Memulai kembali semua layanan...${neutral}"
+    echo -e "${green}Memulai kembali layanan VPN...${neutral}"
     log_message "STARTING ALL SERVICES - License renewed"
     
-    # Start main services
+    # Start VPN services only (SSH excluded - always running)
     local services=(
         "nginx" 
         "haproxy"
         "xray"
-        "dropbear"
-        "ssh"
-        "sshd"
+        "dropbear"  # Dropbear is alternative SSH, can be started
+        # "ssh"     # EXCLUDED - should always run for remote access
+        # "sshd"    # EXCLUDED - should always run for remote access
         "openvpn"
         "openvpn@server"
         "stunnel4"
@@ -176,15 +261,15 @@ start_all_services() {
     
     # Update services status
     echo "SERVICES_RUNNING" > "$SERVICES_STATUS_FILE"
-    echo -e "${green}Semua layanan telah dimulai kembali${neutral}"
+    echo -e "${green}Layanan VPN telah dimulai kembali${neutral}"
     
     # Send Telegram notification
     local system_info=$(get_system_info)
     IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch current_time <<< "$system_info"
     
-    local telegram_message="✅ <b>LAYANAN DIMULAI KEMBALI - LISENSI VALID</b>
+    local telegram_message="✅ <b>LAYANAN VPN DIMULAI KEMBALI - LISENSI VALID</b>
 
-🎉 <b>Informasi:</b> Semua layanan VPN telah dimulai kembali
+🎉 <b>Informasi:</b> Layanan VPN telah dimulai kembali setelah lisensi diperpanjang
 
 🌍 <b>Informasi Server:</b>
 🆔 IP Address: <code>${server_ip}</code>
@@ -193,10 +278,14 @@ start_all_services() {
 🖥️ Hostname: <code>${server_hostname}</code>
 ⏰ Waktu: <code>${current_time}</code>
 
-🚀 <b>Layanan yang Dimulai:</b>
+🚀 <b>Layanan VPN yang Dimulai:</b>
 $(echo -e "$started_services")
 
-✅ <b>Status:</b> Semua layanan beroperasi normal
+🔒 <b>Layanan yang Selalu Aktif:</b>
+✅ SSH - Akses remote selalu tersedia
+✅ System services - Server operasional
+
+✅ <b>Status:</b> Semua layanan VPN beroperasi normal
 🔧 <b>Script:</b> Alrescha79 VPN Script
 
 📞 <b>Support:</b> @Alrescha79"
@@ -260,14 +349,22 @@ check_license() {
 
 # Main function
 main() {
-    echo -e "${blue}=== Alrescha79 VPN License Checker ===${neutral}"
-    echo -e "${gray}Waktu: $(date '+%Y-%m-%d %H:%M:%S')${neutral}"
-    echo ""
-    
     # Check if this is manual run or cron job
     if [ "$1" = "--silent" ]; then
         # Silent mode for cron
         exec > /dev/null 2>&1
+    fi
+    
+    # Display header for manual runs
+    if [ "$1" != "--silent" ]; then
+        echo ""
+        echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+        echo -e "${blue}║                      ALRESCHA79 VPN LICENSE CHECKER                   ║${neutral}"
+        echo -e "${blue}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+        echo -e "${neutral}  ${gray}Waktu: $(date '+%Y-%m-%d %H:%M:%S')${neutral}             "
+        echo -e "${neutral}  ${gray}Proses: Memeriksa validitas lisensi...${neutral}"
+        echo -e "${blue}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+        echo ""
     fi
     
     # Check current services status
@@ -278,29 +375,67 @@ main() {
     
     # Check license
     if check_license; then
-        echo -e "${green}✓ Lisensi valid${neutral}"
+        # Get license info for display
+        if [ -f "$LICENSE_CHECK_FILE" ]; then
+            IFS='|' read -r status user_id exp_date days_left < "$LICENSE_CHECK_FILE"
+            if [ "$1" != "--silent" ]; then
+                display_license_status "$status" "$user_id" "$exp_date" "$days_left"
+                echo ""
+            fi
+        fi
         
         # If services were stopped due to expired license, start them
         if [ "$current_services_status" = "SERVICES_STOPPED" ]; then
-            echo -e "${yellow}Mendeteksi layanan yang dihentikan, memulai kembali...${neutral}"
+            if [ "$1" != "--silent" ]; then
+                echo -e "${yellow}Mendeteksi layanan yang dihentikan, memulai kembali...${neutral}"
+            fi
             start_all_services
         else
-            echo -e "${green}✓ Semua layanan berjalan normal${neutral}"
+            if [ "$1" != "--silent" ]; then
+                echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${green}║                            STATUS LAYANAN                             ║${neutral}"
+                echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${neutral}                   ${white}VPN SERVICES : ${green}RUNNING${neutral}             "
+                echo -e "${neutral}                   ${white}SSH ACCESS   : ${green}ALWAYS ACTIVE${neutral}       "
+                echo -e "${neutral}                   ${white}MONITORING   : ${green}ACTIVE${neutral}              "
+                echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+            fi
         fi
         
     else
-        echo -e "${red}✗ Lisensi tidak valid atau kadaluarsa${neutral}"
+        if [ "$1" != "--silent" ]; then
+            echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${red}║                             LISENSI INVALID                           ║${neutral}"
+            echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+            echo -e "${neutral}                   ${white}STATUS      : ${red}EXPIRED/INVALID${neutral}     "
+            echo -e "${neutral}                   ${white}AKSI        : Menghentikan layanan VPN${neutral}"
+            echo -e "${neutral}                   ${white}SSH ACCESS  : ${green}TETAP AKTIF${neutral}         "
+            echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+            echo ""
+        fi
         
         # If services are running, stop them
         if [ "$current_services_status" != "SERVICES_STOPPED" ]; then
             stop_all_services
         else
-            echo -e "${red}✓ Layanan sudah dihentikan sebelumnya${neutral}"
+            if [ "$1" != "--silent" ]; then
+                echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${red}║                             STATUS LAYANAN                            ║${neutral}"
+                echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${neutral}                   ${white}VPN SERVICES : ${red}ALREADY STOPPED${neutral} "
+                echo -e "${neutral}                   ${white}SSH ACCESS   : ${green}ALWAYS ACTIVE${neutral}       "
+                echo -e "${neutral}                   ${white}REASON       : ${red}LICENSE EXPIRED${neutral}     "
+                echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+            fi
         fi
     fi
     
-    echo ""
-    echo -e "${gray}Log tersimpan di: $LICENSE_LOG_FILE${neutral}"
+    if [ "$1" != "--silent" ]; then
+        echo ""
+        echo -e "${gray}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+        echo -e "${gray}║${neutral}  ${gray}Log tersimpan di: $LICENSE_LOG_FILE${neutral}  ${gray}║${neutral}"
+        echo -e "${gray}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+    fi
 }
 
 # Handle command line arguments
@@ -318,23 +453,49 @@ case "$1" in
         stop_all_services
         ;;
     --status)
+        echo ""
         if [ -f "$LICENSE_CHECK_FILE" ]; then
             IFS='|' read -r status user_id exp_date days_left < "$LICENSE_CHECK_FILE"
-            echo -e "${blue}Status Lisensi:${neutral}"
-            echo -e "  User ID: $user_id"
-            echo -e "  Kadaluarsa: $exp_date"
-            echo -e "  Sisa hari: $days_left"
-            echo -e "  Status: $status"
+            display_license_status "$status" "$user_id" "$exp_date" "$days_left"
         else
-            echo -e "${red}Belum ada data lisensi${neutral}"
+            echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${red}║                            INFORMASI LISENSI                          ║${neutral}"
+            echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+            echo -e "${neutral}                   ${white}STATUS      : ${red}BELUM ADA DATA${neutral}         "
+            echo -e "${neutral}                   ${white}KETERANGAN  : Jalankan setup terlebih dahulu${ne"
+            echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         fi
         
+        echo ""
+        # Display services status with beautiful formatting
         if [ -f "$SERVICES_STATUS_FILE" ]; then
             services_status=$(cat "$SERVICES_STATUS_FILE")
-            echo -e "${blue}Status Layanan:${neutral} $services_status"
+            if [ "$services_status" = "SERVICES_RUNNING" ]; then
+                echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${green}║                            STATUS LAYANAN                             ║${neutral}"
+                echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${neutral}                   ${white}VPN SERVICES : ${green}RUNNING${neutral}             "
+                echo -e "${neutral}                   ${white}SSH ACCESS   : ${green}ALWAYS ACTIVE${neutral}       "
+                echo -e "${neutral}                   ${white}MONITORING   : ${green}ACTIVE${neutral}              "
+                echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+            else
+                echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${red}║                            STATUS LAYANAN                             ║${neutral}"
+                echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${neutral}                   ${white}VPN SERVICES : ${red}STOPPED${neutral}              "
+                echo -e "${neutral}                   ${white}SSH ACCESS   : ${green}ALWAYS ACTIVE${neutral}        "
+                echo -e "${neutral}                   ${white}REASON       : ${red}LICENSE EXPIRED${neutral}      "
+                echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+            fi
         else
-            echo -e "${yellow}Status layanan tidak diketahui${neutral}"
+            echo -e "${yellow}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+            echo -e "${yellow}║                            STATUS LAYANAN                             ║${neutral}"
+            echo -e "${yellow}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+            echo -e "${neutral}                   ${white}STATUS       : ${yellow}TIDAK DIKETAHUI${neutral}      "
+            echo -e "${neutral}                   ${white}KETERANGAN   : Jalankan cek lisensi dulu${neutral}"
+            echo -e "${yellow}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         fi
+        echo ""
         ;;
     --install-cron)
         # Install cron job to check license every hour

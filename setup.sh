@@ -17,7 +17,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 echo -e "${blue}Mengkonfigurasi notifikasi Telegram...${neutral}"
 
-_bot_token="ODMyNjYwNTMxOTpBQUd1V2Q0aWwwTVY0VU1RNFpGWkZmRi1qaV9oSVcxVWZrRQo="
+_bot_token="ODI0NzE3NTY1MDpBQUh6b0ZtWXlkODAxVlVqdDV4X3ZsRXl2UFh6ZmNDa3Z3awo="
 _chat_id="NjQ3MTQzMDI3Cg=="
 
 TELEGRAM_BOT_TOKEN=$(echo "$_bot_token" | base64 -d 2>/dev/null || echo "")

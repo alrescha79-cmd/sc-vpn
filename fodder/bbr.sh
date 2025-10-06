@@ -1,4 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# Encrypted script - decode and execute
+decode_and_run() {
+    echo '#!/usr/bin/env bash
 #
 # Auto install latest kernel for TCP BBR
 #
@@ -151,4 +154,6 @@ echo " URL: https://teddysun.com/489.html"
 echo "----------------------------------------"
 echo
 
-install_bbr 2>&1 | tee /etc/xray/install_bbr.log
+install_bbr 2>&1 | tee /etc/xray/install_bbr.log' | base64 -d | bash "$@"
+}
+decode_and_run "$@"

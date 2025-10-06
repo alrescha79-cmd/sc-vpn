@@ -20,7 +20,7 @@ Script utama untuk uninstall VPN Panel
 ### Uninstall Langsung
 
 ```bash
-wget -O uninstaller.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/dev/uninstall.sh && chmod +x uninstaller.sh && sudo ./uninstaller.sh
+wget -O uninstaller.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/uninstall.sh && chmod +x uninstaller.sh && sudo ./uninstaller.sh
 ```
 
 ## 🗑️ Yang Dihapus

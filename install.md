@@ -10,16 +10,15 @@ Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS
 
 - [Persiapan](#-persiapan)
 - [Instalasi](#-instalasi)
-- [Setup Notifikasi Telegram](#-setup-notifikasi-telegram)
-- [Instalasi Bot Telegram (Opsional)](#-instalasi-bot-telegram-opsional)
+- [Setup Notifikasi Telegram](#setup-notifikasi-telegram)
+- [Instalasi Bot Telegram (Opsional)](#instalasi-bot-telegram-opsional)
 - [Manajemen API](#-manajemen-api)
 - [Perintah Manajemen Akun](#-perintah-manajemen-akun)
 - [Konfigurasi Auto Reboot](#-konfigurasi-auto-reboot)
-- [Protokol Didukung](#-protokol-didukung)
 - [Manajemen API](#-manajemen-api)
 - [Perintah Manajemen Akun](#-perintah-manajemen-akun)
 - [Konfigurasi Auto Reboot](#-konfigurasi-auto-reboot)
-- [Setting Domain/Subdomain Support Wildcard di Cloudflare](#-setting-domainsubdomain-support-wildcard-di-cloudflare)
+- [Setting Domain/Subdomain Support Wildcard di Cloudflare](#setting-domainsubdomain-support-wildcard-di-cloudflare)
 - [Dukungan](#-dukungan)
 - [Lisensi](#-lisensi)
 
@@ -63,35 +62,36 @@ sudo su
 ```bash
 apt-get update && \
 apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd build-essential && \
-wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
+wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh && \
 chmod +x setup.sh && \
 screen -S setup ./setup.sh
 ```
 
 ### ⚠️ Informasi Penting
 
+Jika saat proses instalasi (Langkah 1) sesi terminal terputus, jangan jalankan ulang perintah instalasi dari awal. Cukup masuk kembali dan jalankan:
+
 - Pastikan file `setup.sh` sudah tersimpan di `/root/setup.sh`.
+
   ```bash
   ls
   ```
-- Jika saat proses instalasi (Langkah 1) sesi terminal terputus, jangan jalankan ulang perintah instalasi dari awal. Cukup masuk kembali dan jalankan:
-  ```bash
-  screen -r setup
-  ```
-- Jika `screen -r setup` tidak ada atau tidak berfungsi, jalankan ulang setup dengan perintah:
+
+- Jika ada, lanjutkan dengan menjalankan:
+
   ```bash
   ./setup.sh
   ```
-- Log instalasi dapat dilihat di:
-  ```
-  /root/syslog.log
-  ```
+
 - Masukkan `Domain/Subdomain` yang valid (A record mengarah ke IP VPS) saat diminta.
-- Setelah instalasi selesai, silakan klik `Enter` untuk `reboot`.
 - Setelah reboot, menu utama akan otomatis muncul. Jika tidak, jalankan perintah:
+
   ```bash
   menu
   ```
+
+- Jika ada masalah, silakan hubungi saya di Telegram: [@Alrescha79](https://t.me/Alrescha79)
+
 ---
 
 ## Setup Notifikasi Telegram
@@ -123,7 +123,7 @@ Jika ingin mengelola akun melalui bot Telegram, ikuti langkah berikut:
     && sysctl -w net.ipv6.conf.default.disable_ipv6=1 \
     && apt update -y \
     && apt install -y git curl dos2unix \
-    && curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/bot/start2 -o start2 \
+    && curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bot/start2 -o start2 \
     && dos2unix start2 \
     && bash start2 sellvpn \
     && [ $? -eq 0 ] && rm -f start2
@@ -162,7 +162,7 @@ Skrip menyediakan instalasi REST API (Go) untuk automasi manajemen akun.
 ### Instalasi API
 
 ```bash
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/golang/rest-go.sh
+wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/golang/rest-go.sh
 chmod +x rest-go.sh
 bash rest-go.sh
 ```
@@ -254,7 +254,7 @@ rm -rf /tmp/cron.txt
 
 ---
 
-### Setting Domain/Subdomain Support Wildcard di Cloudflare
+## Setting Domain/Subdomain Support Wildcard di Cloudflare
 
 1. Masuk ke dashboard Cloudflare.
 2. Pilih domain/subdomain yang digunakan.

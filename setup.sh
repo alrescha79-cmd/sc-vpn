@@ -15,8 +15,6 @@ gray="\e[38;5;245m"
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
-echo -e "${blue}Mengkonfigurasi notifikasi Telegram...${neutral}"
-
 _bot_token="ODI0NzE3NTY1MDpBQUh6b0ZtWXlkODAxVlVqdDV4X3ZsRXl2UFh6ZmNDa3Z3awo="
 _chat_id="NjQ3MTQzMDI3Cg=="
 

@@ -10,6 +10,7 @@ Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS
 
 - [Persiapan](#-persiapan)
 - [Instalasi](#-instalasi)
+- [Informasi Penting](#️-informasi-penting)
 - [Setup Notifikasi Telegram](#setup-notifikasi-telegram)
 - [Instalasi Bot Telegram (Opsional)](#instalasi-bot-telegram-opsional)
 - [Manajemen API](#-manajemen-api)
@@ -88,6 +89,12 @@ Jika saat proses instalasi (Langkah 1) sesi terminal terputus, jangan jalankan u
 
   ```bash
   menu
+  ```
+  
+- Jika tidak bisa masuk ke `opsi (8) Menu Features`, keluar dari `menu` dengan `CTRL  C`. Kemudian jalankan perintah:
+
+  ```bash
+  curl -o /usr/bin/features https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/features
   ```
 
 - Jika ada masalah, silakan hubungi saya di Telegram: [@Alrescha79](https://t.me/Alrescha79)
@@ -224,7 +231,7 @@ Secara default auto reboot harian pukul 05:00. Jika ingin mengubah jadwal atau m
 1. Pastikan Anda berada di menu utama, jika tidak, jalankan perintah `menu`.
 2. Pilih opsi `8` untuk masuk ke menu pengaturan sistem.
 ![Menu Sistem](img/pengaturan.png)
-3. Pilih `14` masuk ke menu pengaturan auto reboot.
+3. Pilih `12` masuk ke menu pengaturan auto reboot.
 ![Menu Auto Reboot](img/set-jam.png)
 4. Pilih `1` untuk mengubah/menambahkan jadwal auto reboot.
 5. Masukkan jam dalam format 24 jam (HH:MM), contoh `02:00` untuk setiap jam 2 pagi.

@@ -62,15 +62,27 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>✨ VLESS TRIAL ACCOUNT CREATED</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🔐 User ID:</b> <code>$uuid</code>
-<b>🌐 Host:</b> <code>$domain</code>
+<b>👤 Description:</b> <code>$user</code>
+<b>🌐 Host Server:</b> <code>$domain</code>
+<b>🌐 Host XrayDNS:</b> <code>$ns_domain</code>
 <b>📍 Location:</b> <code>$city</code>
-<b>🔎 VLESS WS Port:</b> <code>443</code>
-<b>🔍 VLESS gRPC Port:</b> <code>443</code>
+<b>� TLS Port:</b> <code>443</code>
+<b>� Non-TLS Port:</b> <code>80, 8080</code>
+<b>🌐 DNS Port:</b> <code>443, 53</code>
+<b>⚡ GRPC Port:</b> <code>443</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🔑 Public Key:</b> <code>$pubkey</code>
+<b>🛡️ Security:</b> <code>auto</code>
+<b>🌐 Network:</b> <code>WS or gRPC</code>
+<b>📁 Path:</b> <code>/whatever/vless</code>
+<b>⚙️ ServiceName:</b> <code>vless-grpc</code>
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
-<b>⏰ Expires:</b> <code>$expiration</code>
+<b>⏰ Expires On:</b> <code>$expiration</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>📱 TLS Link:</b> <code>$vless_tls</code>
+<b>📱 NTLS Link:</b> <code>$vless_non</code>
+<b>📱 GRPC Link:</b> <code>$vless_grpc</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -215,15 +227,15 @@ vless_tls="vless://${uuid}@${domain}:443?path=/whatever/vless&security=tls&encry
 vless_non="vless://${uuid}@${domain}:80?path=/whatever/vless&encryption=none&host=${domain}&type=ws#${user}-WS-NTLS"
 vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}-gRPC"
 
+# Send success notification with complete information
+send_telegram_notification "success" "$user" "$duration"
+
 # Restart service
 if ! systemctl restart vless@config > /dev/null 2>&1; then
     echo -e "${red}Failed to restart vless service. Please check system logs for more information.${reset}"
     send_telegram_notification "error" "$user" "$duration" "Failed to restart vless service"
     exit 1
 fi
-
-# Send success notification
-send_telegram_notification "success" "$user" "$duration"
 
 
 # Display account information

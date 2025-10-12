@@ -62,23 +62,23 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>✨ SHADOWSOCKS TRIAL ACCOUNT CREATED</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🔐 Password:</b> <code>$password</code>
-<b>🌐 Host:</b> <code>$domain</code>
+<b>👤 Description:</b> <code>$user</code>
+<b>🌐 Host Server:</b> <code>$domain</code>
+<b>🌐 Host XrayDNS:</b> <code>$ns_domain</code>
 <b>📍 Location:</b> <code>$city</code>
 <b>🔒 Port:</b> <code>443</code>
 <b>🔐 Method:</b> <code>$method</code>
-<b>📝 Path:</b> <code>/whatever/shadowsocks</code>
-<b>⚙️ Service:</b> <code>ss-grpc</code>
+<b>🔑 Password:</b> <code>$password</code>
+<b>� Path WS:</b> <code>/whatever/shadowsocks</code>
+<b>⚙️ ServiceName:</b> <code>ss-grpc</code>
+<b>🔑 Public Key:</b> <code>$pubkey</code>
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
-<b>⏰ Expires:</b> <code>$exp</code>
+<b>⏰ Expires On:</b> <code>$exp</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>🔗 WS Link:</b>
-<code>$ss_link_ws</code>
-<b>══════════════════════════════════════════════════════════════════════</b>
-<b>🔗 gRPC Link:</b>
-<code>$ss_link_grpc</code>
+<b>� SS WS Link:</b> <code>$ss_link_ws</code>
+<b>� SS gRPC Link:</b> <code>$ss_link_grpc</code>
+<b>🔗 OpenClash Format:</b> <code>https://$domain:81/shadowsocks-$user.txt</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -408,7 +408,6 @@ fi
 
 # Start trial session and send success notification
 tmux new-session -d -s "trial_shadowsocks_$user" "trial trialss $user $duration"
-send_telegram_notification "success" "$user" "$duration"
 send_telegram_notification "success" "$user" "$duration"
 
 # Display account information

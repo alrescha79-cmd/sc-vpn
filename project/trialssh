@@ -64,16 +64,27 @@ send_telegram_notification() {
 <b>👤 Username:</b> <code>$user</code>
 <b>🔐 Password:</b> <code>$user</code>
 <b>🌐 Host:</b> <code>$domain</code>
+<b>🌐 Slowdns Host:</b> <code>$ns_domain</code>
 <b>📍 Location:</b> <code>$city</code>
 <b>🔒 OpenSSH Port:</b> <code>443, 80, 22</code>
 <b>🔌 UdpSSH Port:</b> <code>1-65535</code>
+<b>🌐 DNS Port:</b> <code>443, 53, 22</code>
 <b>🔍 Dropbear Port:</b> <code>443, 109</code>
 <b>🔎 SSH WS Port:</b> <code>80, 8080</code>
+<b>🔐 SSH SSL WS Port:</b> <code>443</code>
 <b>🔒 SSL/TLS Port:</b> <code>443</code>
-<b>📡 BadVPN UDP:</b> <code>7100, 7300</code>
+<b>� OVPN SSL Port:</b> <code>443</code>
+<b>🔒 OVPN TCP Port:</b> <code>1194</code>
+<b>🔓 OVPN UDP Port:</b> <code>2200</code>
+<b>�📡 BadVPN UDP:</b> <code>7100, 7300, 7300</code>
+<b>🔑 SlowDns Public Key:</b> <code>$public_key</code>
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
-<b>⏰ Expires:</b> <code>$expiration</code>
+<b>⏰ Expiration:</b> <code>$expiration</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>🔗 WSS Payload:</b> <code>GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]</code>
+<b>📱 OpenVPN Link:</b> <code>https://$domain:81/allovpn.zip</code>
+<b>📁 Save Account Link:</b> <code>https://$domain:81/ssh-$user.txt</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "

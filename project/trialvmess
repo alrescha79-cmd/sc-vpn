@@ -61,15 +61,28 @@ send_telegram_notification() {
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>✨ VMESS TRIAL ACCOUNT CREATED</b>
 <b>══════════════════════════════════════════════════════════════════════</b>
-<b>👤 Username:</b> <code>$user</code>
-<b>🔐 User ID:</b> <code>$uuid</code>
-<b>🌐 Host:</b> <code>$domain</code>
+<b>👤 Description:</b> <code>$user</code>
+<b>🌐 Host Server:</b> <code>$domain</code>
+<b>🌐 Host XrayDNS:</b> <code>$ns_domain</code>
 <b>📍 Location:</b> <code>$city</code>
-<b>🔎 VMess WS Port:</b> <code>443, 80</code>
-<b>🔍 VMess gRPC Port:</b> <code>443</code>
+<b>� TLS Port:</b> <code>443</code>
+<b>🔓 Non-TLS Port:</b> <code>80, 8080</code>
+<b>🌐 DNS Port:</b> <code>443, 53</code>
+<b>⚡ GRPC Port:</b> <code>443</code>
+<b>🔐 User ID:</b> <code>$uuid</code>
+<b>🔑 Public Key:</b> <code>$pubkey</code>
+<b>🔢 AlterId:</b> <code>0</code>
+<b>🛡️ Security:</b> <code>auto</code>
+<b>🌐 Network:</b> <code>WS or gRPC</code>
+<b>📁 Path:</b> <code>/whatever/vmess</code>
+<b>⚙️ ServiceName:</b> <code>vmess-grpc</code>
 <b>⏱️ Duration:</b> <code>$duration minutes</code>
-<b>⏰ Expires:</b> <code>$expiration</code>
+<b>⏰ Expires On:</b> <code>$expiration</code>
 <b>✨ Type:</b> <code>TRIAL ACCOUNT</code>
+<b>══════════════════════════════════════════════════════════════════════</b>
+<b>📱 TLS Link:</b> <code>$vmess_tls</code>
+<b>📱 NTLS Link:</b> <code>$vmess_non</code>
+<b>📱 GRPC Link:</b> <code>$vmess_grpc</code>
 <b>══════════════════════════════════════════════════════════════════════</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
@@ -220,7 +233,7 @@ if ! systemctl restart vmess@config; then
     exit 1
 fi
 
-# Send success notification
+# Send success notification with complete information
 send_telegram_notification "success" "$user" "$duration"
 
 clear -x

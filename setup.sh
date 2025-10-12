@@ -1112,6 +1112,15 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 2 0 * * * root /usr/bin/exp
 EOF
 
+cat >/etc/cron.d/exp_warning <<EOF
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# Jalankan pengecekan peringatan expired setiap hari jam 9 pagi
+0 9 * * * root /usr/bin/exp-warning
+# Jalankan pengecekan peringatan expired setiap hari jam 18 sore (double check)
+0 18 * * * root /usr/bin/exp-warning
+EOF
+
 cat >/root/.profile <<EOF
 if [ "\$BASH" ]; then
     if [ -f ~/.bashrc ]; then

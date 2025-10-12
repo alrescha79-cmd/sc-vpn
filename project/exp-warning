@@ -1,0 +1,174 @@
+#!/bin/bash
+
+# Script untuk mengirim peringatan akun yang akan expired
+# Mengirim notifikasi 7, 3, dan 1 hari sebelum expired
+source /root/.vars
+
+TODAY=$(date +%Y-%m-%d)
+TODAY_EPOCH=$(date -d "$TODAY" +%s)
+
+# Array untuk menyimpan peringatan berdasarkan hari
+WARNING_7_DAYS=""
+WARNING_3_DAYS=""
+WARNING_1_DAY=""
+TOTAL_WARNING_7=0
+TOTAL_WARNING_3=0
+TOTAL_WARNING_1=0
+
+# === Fungsi kirim notifikasi peringatan ===
+send_warning_notification() {
+  local days="$1"
+  local users="$2"
+  local total="$3"
+  
+  if [[ -n "$users" ]]; then
+    local warning_emoji="⚠️"
+    local urgency_level="PERINGATAN"
+    
+    case $days in
+      7)
+        warning_emoji="⚠️"
+        urgency_level="PERINGATAN AWAL"
+        ;;
+      3)
+        warning_emoji="🔔"
+        urgency_level="PERINGATAN MENENGAH"
+        ;;
+      1)
+        warning_emoji="🚨"
+        urgency_level="PERINGATAN URGENT"
+        ;;
+    esac
+
+    TEXT="$warning_emoji $urgency_level AKUN AKAN EXPIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Tanggal Pengecekan: $TODAY
+⏰ Akun akan expired dalam: $days hari
+🔄 Status: Masih Aktif (Butuh Perpanjangan)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$users
+📊 Total akun yang akan expired: $total
+💡 Segera perpanjang sebelum dihapus otomatis!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 Sistem Monitoring Otomatis - Alrescha79 Panel"
+
+    curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
+      -d "chat_id=${telegram_id}" \
+      --data-urlencode "text=$TEXT"
+  fi
+}
+
+# === Fungsi cek peringatan akun ===
+check_expiry_warning() {
+  local FILE="$1"
+  local SERVICE="$2"
+  shift 2
+
+  [[ ! -f "$FILE" ]] && return
+  
+  while read -r line; do
+    if [[ $line =~ ^###\ ([a-zA-Z0-9_]+)\ ([0-9-]+) ]]; then
+      user="${BASH_REMATCH[1]}"
+      exp="${BASH_REMATCH[2]}"
+      exp_epoch=$(date -d "$exp" +%s)
+      
+      # Hitung selisih hari
+      days_left=$(( (exp_epoch - TODAY_EPOCH) / 86400 ))
+      
+      # Cek peringatan berdasarkan hari tersisa
+      if [[ $days_left -eq 7 ]]; then
+        WARNING_7_DAYS+="👤 User     : $user
+🔑 Service  : $SERVICE
+📆 Expired  : $exp
+⏳ Sisa     : 7 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_7++))
+        
+      elif [[ $days_left -eq 3 ]]; then
+        WARNING_3_DAYS+="👤 User     : $user
+🔑 Service  : $SERVICE
+📆 Expired  : $exp
+⏳ Sisa     : 3 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_3++))
+        
+      elif [[ $days_left -eq 1 ]]; then
+        WARNING_1_DAY+="👤 User     : $user
+🔑 Service  : $SERVICE
+📆 Expired  : $exp
+⏳ Sisa     : 1 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_1++))
+      fi
+    fi
+  done < <(grep '^### ' "$FILE")
+}
+
+# === Jalankan pengecekan untuk tiap service ===
+check_expiry_warning "/etc/xray/vmess/.vmess.db" "VMESS"
+check_expiry_warning "/etc/xray/vless/.vless.db" "VLESS"
+check_expiry_warning "/etc/xray/trojan/.trojan.db" "TROJAN"
+check_expiry_warning "/etc/xray/shadowsocks/.shadowsocks.db" "SHADOWSOCKS"
+
+# === SSH ===
+if [[ -f /etc/ssh/.ssh.db ]]; then
+  while read -r line; do
+    if [[ $line =~ ^###\ ([a-zA-Z0-9_]+)\ ([0-9-]+) ]]; then
+      user="${BASH_REMATCH[1]}"
+      exp="${BASH_REMATCH[2]}"
+      exp_epoch=$(date -d "$exp" +%s)
+      
+      # Hitung selisih hari
+      days_left=$(( (exp_epoch - TODAY_EPOCH) / 86400 ))
+      
+      # Cek peringatan berdasarkan hari tersisa
+      if [[ $days_left -eq 7 ]]; then
+        WARNING_7_DAYS+="👤 User     : $user
+🔑 Service  : SSH
+📆 Expired  : $exp
+⏳ Sisa     : 7 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_7++))
+        
+      elif [[ $days_left -eq 3 ]]; then
+        WARNING_3_DAYS+="👤 User     : $user
+🔑 Service  : SSH
+📆 Expired  : $exp
+⏳ Sisa     : 3 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_3++))
+        
+      elif [[ $days_left -eq 1 ]]; then
+        WARNING_1_DAY+="👤 User     : $user
+🔑 Service  : SSH
+📆 Expired  : $exp
+⏳ Sisa     : 1 hari
+━━━━━━━━━━━━━━━━━━━━━━
+"
+        ((TOTAL_WARNING_1++))
+      fi
+    fi
+  done < <(grep '^### ' /etc/ssh/.ssh.db)
+fi
+
+# Kirim notifikasi berdasarkan prioritas (1 hari paling urgent)
+if [[ $TOTAL_WARNING_1 -gt 0 ]]; then
+  send_warning_notification "1" "$WARNING_1_DAY" "$TOTAL_WARNING_1"
+fi
+
+if [[ $TOTAL_WARNING_3 -gt 0 ]]; then
+  send_warning_notification "3" "$WARNING_3_DAYS" "$TOTAL_WARNING_3"
+fi
+
+if [[ $TOTAL_WARNING_7 -gt 0 ]]; then
+  send_warning_notification "7" "$WARNING_7_DAYS" "$TOTAL_WARNING_7"
+fi
+
+# Log aktivitas ke file
+LOG_FILE="/var/log/exp-warning.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Expiry Warning Check - 7 days: $TOTAL_WARNING_7, 3 days: $TOTAL_WARNING_3, 1 day: $TOTAL_WARNING_1" >> "$LOG_FILE"

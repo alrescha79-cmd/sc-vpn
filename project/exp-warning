@@ -41,15 +41,15 @@ send_warning_notification() {
     esac
 
     TEXT="$warning_emoji $urgency_level AKUN AKAN EXPIRED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+══════════════════════════
 📅 Tanggal Pengecekan: $TODAY
 ⏰ Akun akan expired dalam: $days hari
 🔄 Status: Masih Aktif (Butuh Perpanjangan)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+══════════════════════════
 $users
 📊 Total akun yang akan expired: $total
 💡 Segera perpanjang sebelum dihapus otomatis!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+══════════════════════════
 🤖 Sistem Monitoring Otomatis - Alrescha79 Panel"
 
     curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \

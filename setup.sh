@@ -277,6 +277,8 @@ if [ -z "$user_id" ]; then
 ⚠️ <b>Detail Percobaan Akses:</b>
 🆔 IP Address: <code>${server_ip}</code>
 ⏰ Waktu Percobaan: <code>${attempt_time}</code>
+📂 Repository : <code>https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh</code>
+
 
 🌍 <b>Lokasi Server:</b>
 🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>

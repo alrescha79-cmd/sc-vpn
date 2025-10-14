@@ -75,9 +75,14 @@ grep -E "^### " "/etc/xray/trojan/.trojan.db" | awk '{
 echo " └────┴────────────────────┴────────────────┘"
 
 while true; do
-    read -rp "Pilih nomor akun [1-${account_count}]: " account_number
+    read -rp "Pilih nomor akun [ 1-${account_count} ] atau [ x ] untuk batal: " account_number
     if [[ ${account_number} =~ ^[0-9]+$ ]] && ((account_number >= 1 && account_number <= account_count)); then
         break
+    elif [[ $account_number == "x" || $account_number == "X" ]]; then
+        echo -e "${yellow}Batal memperbarui akun. Kembali ke menu...${reset}"
+        echo -e ""
+        menutrojan
+        exit 0
     else
         echo "Input tidak valid. Masukkan angka antara 1 dan ${account_count}."
     fi

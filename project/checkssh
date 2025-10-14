@@ -83,7 +83,7 @@ tampilkan_info_ssh_dropbear() {
             local file=$1
             user_list=($(grep '^###' /etc/ssh/.ssh.db | cut -d ' ' -f 2 | sort | uniq))
 
-            echo -e "Nama Pengguna    | Login IP | Batas IP  | Status"
+            echo -e "Nama Pengguna    | Pemakaian | Kuota     | Login | Batas  | Status"
             echo -e "══════════════════════════════════════════════════════════════════════"
 
             total_online=0
@@ -112,7 +112,7 @@ tampilkan_info_ssh_dropbear() {
                         fi
                     fi
 
-                    printf "%-15s | %-8s | %-9s | %b\n" "$user" "$login_ip" "$limit_display" "$status"
+                    printf "%-16s | %-9s | %-9s | %-5s | %-6s | %b\n" "$user" "$login_ip" "$limit_display" "$status"
                     ((total_online++))
                 fi
             done

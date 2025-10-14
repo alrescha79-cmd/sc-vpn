@@ -108,10 +108,14 @@ while true; do
     echo -e "${yellow}Pilihan:${reset}"
     echo -e "${green}1) Berdasarkan nomer${reset}"
     echo -e "${green}2) Ketik username secara manual${reset}"
-    read -p "Pilih [1-2]: " delete_choice
+    read -p "Pilih [ 1-2 ] atau [ x ] untuk batal: " delete_choice
     
     if [[ $delete_choice == "1" || $delete_choice == "2" ]]; then
         break
+    elif [[ $delete_choice =~ ^[xX]$ ]]; then
+        echo -e "${yellow}Batal menghapus akun. Kembali ke menu...${reset}"
+        menutrojan
+        exit 0
     else
         echo -e "${red}Pilihan tidak valid! Silakan pilih 1 atau 2.${reset}"
         echo -e "${yellow}Tekan Enter untuk mencoba lagi...${reset}"

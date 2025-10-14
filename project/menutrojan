@@ -151,8 +151,7 @@ trojan_members() {
         return
     fi
 
-    echo -e " Daftar Akun Trojan:"
-    echo -e "Username           | Sisa   | Kuota     | IP    | Penggunaan | Status"
+    echo -e "Username         | Sisa      | Kuota     | IP    | Penggunaan | Status"
     echo -e "══════════════════════════════════════════════════════════════════════"
 
     grep -E "^### " "/etc/xray/trojan/.trojan.db" | while read -r line; do
@@ -204,7 +203,7 @@ trojan_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-9s | %-4s | %-10s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
+        printf "%-16s | %-9s | %-9s | %-5s | %-10s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
         echo -e "${status_color}${status_text}${neutral}"
     done
 
@@ -256,7 +255,15 @@ change_trojan_limit() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+        if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah limit. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_trojan_menu
+        return
+    fi
 
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
         echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
@@ -367,10 +374,10 @@ trojan_details() {
             exp_display="$exp (${days_left} hari)"
         elif [ $days_left -le 3 ]; then
             status="${yellow}SEGERA HABIS${neutral}"
-            exp_display="$exp (${days_left} hari)"
+            exp_display="$exp (${days_left} hari lagi)"
         else
             status="${green}AKTIF${neutral}"
-            exp_display="$exp (${days_left} hari)"
+            exp_display="$exp (${days_left} hari lagi)"
         fi
 
         echo -e "${yellow}═══ AKUN #${account_counter} ═══${neutral}"
@@ -418,7 +425,7 @@ trojan_details() {
             echo -e "   Penggunaan    : ${green}0B${neutral}"
         fi
 
-        echo -e "${orange}──────────────────────────────────────────────────────────────────────${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
         ((account_counter++))
     done <"/etc/xray/trojan/.trojan.db"
 
@@ -466,7 +473,15 @@ custom_uuid_trojan() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [1-$account_count] atau [ x ] untuk batal: " account_number
+
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah UUID. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_trojan_menu
+        return
+    fi
 
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
         echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
@@ -603,7 +618,6 @@ display_trojan_menu() {
     echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                              ${blue}MANAJEMEN TROJAN${magenta}                        ║${neutral}"
     echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                             ${blue}PILIHAN MENU${cyan}                             ║${neutral}"
     echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"

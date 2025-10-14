@@ -151,8 +151,7 @@ vless_members() {
         return
     fi
 
-    echo -e " Daftar Akun VLESS:"
-    echo -e "Username         | Sisa   | Kuota     | IP    | Penggunaan | Status"
+    echo -e "Username         | Sisa      | Kuota     | IP    | Penggunaan | Status"
     echo -e "══════════════════════════════════════════════════════════════════════"
 
     grep -E "^### " "/etc/xray/vless/.vless.db" | while read -r line; do
@@ -204,7 +203,7 @@ vless_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-9s | %-4s | %-11s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
+        printf "%-16s | %-9s | %-9s | %-5s | %-10s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
         echo -e "${status_color}${status_text}${neutral}"
     done
 
@@ -256,7 +255,15 @@ change_vless_limit() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah limit. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_vless_menu
+        return
+    fi
 
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
         echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
@@ -369,11 +376,11 @@ vless_details() {
         elif [ $days_left -le 3 ]; then
             status_text="SEGERA HABIS"
             status_color="${yellow}"
-            exp_display="$exp (${days_left} hari)"
+            exp_display="$exp (${days_left} hari lagi)"
         else
             status_text="AKTIF"
             status_color="${green}"
-            exp_display="$exp (${days_left} hari)"
+            exp_display="$exp (${days_left} hari lagi)"
         fi
 
         echo -e "${yellow}═══ AKUN #${account_counter} ═══${neutral}"
@@ -421,7 +428,8 @@ vless_details() {
             echo -e "   Penggunaan    : ${green}0B${neutral}"
         fi
 
-        echo -e "${orange}──────────────────────────────────────────────────────────────────────${neutral}"
+        echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+
         ((account_counter++))
     done <"/etc/xray/vless/.vless.db"
 
@@ -469,7 +477,15 @@ custom_vless_uuid() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [1-$account_count] atau [ x ] untuk batal: " account_number
+
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah UUID. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_vless_menu
+        return
+    fi
 
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
         echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
@@ -609,7 +625,6 @@ display_vless_menu() {
     echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                            ${blue}MANAJEMEN VLESS${magenta}                           ║${neutral}"
     echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                             ${blue}PILIHAN MENU${cyan}                             ║${neutral}"
     echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"

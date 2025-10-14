@@ -229,49 +229,40 @@ convert_size() {
 vmess_members() {
     clear
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
-    echo -e "${green}${bold_white}                      DAFTAR MEMBER VMESS${neutral}"
+    echo -e "${green}${bold_white}                      DAFTAR MEMBER vmess${neutral}"
     echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     if [ ! -e "/etc/xray/vmess/.vmess.db" ]; then
-        echo -e "   ${red}Tidak ada akun VMESS yang terdaftar.${neutral}"
+        echo -e "   ${red}Tidak ada akun vmess yang terdaftar.${neutral}"
         echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
-        echo -e " Tekan Enter untuk kembali ke menu..."
-        read
+        read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+        echo -e ""
         display_vmess_menu
         return
     fi
 
-    # Format kolom
-    local FMT="%-15s | %-6s | %-10s | %-9s | %-10s | %-12s"  # Username, Exp, Quota, IP Limit, Usage, Status
-    local HEADER=$(printf "$FMT" "Username" "Exp" "Quota" "IP Limit" "Usage" "Status")
-    # Hitung panjang header tanpa escape warna
-    local LINE_LEN=${#HEADER}
-    local LINE=$(printf '%*s' "$LINE_LEN" '' | tr ' ' '══')
+    echo -e "Username         | Sisa      | Kuota     | IP    | Penggunaan | Status"
+    echo -e "══════════════════════════════════════════════════════════════════════"
 
-    echo -e "${bold_white}$HEADER${neutral}"
-    echo -e "${orange}$LINE${neutral}"
-
-    total_accounts=0
     grep -E "^### " "/etc/xray/vmess/.vmess.db" | while read -r line; do
-        ((total_accounts++))
         user=$(echo "$line" | awk '{print $2}')
         exp=$(echo "$line" | awk '{print $3}')
         current_timestamp=$(date +%s)
         exp_timestamp=$(date -d "$exp" +%s)
-        days_left=$(( (exp_timestamp - current_timestamp) / 86400 ))
-        
+        days_left=$(((exp_timestamp - current_timestamp) / 86400))
+
         if [ $days_left -lt 0 ]; then
             status_text="KADALUARSA"
             status_color="${red}"
-            exp_display="${days_left}d"
+            exp_display="${days_left} hari"
         elif [ $days_left -le 3 ]; then
             status_text="SEGERA HABIS"
             status_color="${yellow}"
-            exp_display="${days_left}d"
+            exp_display="${days_left} hari"
         else
             status_text="AKTIF"
             status_color="${green}"
-            exp_display="${days_left}d"
+            exp_display="${days_left} hari"
         fi
 
         quota_file="/etc/xray/vmess/${user}"
@@ -281,48 +272,35 @@ vmess_members() {
         quota="Unlimited"
         if [ -f "$quota_file" ]; then
             quota_raw=$(cat "$quota_file")
-            if [ "$quota_raw" != "" ] && [ "$quota_raw" != "0" ]; then
+            if [ -n "$quota_raw" ] && [ "$quota_raw" != "0" ]; then
                 quota=$(convert_size "$quota_raw")
-            else
-                quota="Unlimited"
             fi
         fi
 
         ip_limit="Unlimited"
         if [ -f "$ip_limit_file" ]; then
             ip_limit_raw=$(cat "$ip_limit_file")
-            if [ "$ip_limit_raw" != "" ] && [ "$ip_limit_raw" != "0" ]; then
+            if [ -n "$ip_limit_raw" ] && [ "$ip_limit_raw" != "0" ]; then
                 ip_limit="$ip_limit_raw"
-            else
-                ip_limit="Unlimited"
             fi
         fi
 
         usage="0B"
         if [ -f "$usage_file" ]; then
             usage_raw=$(cat "$usage_file")
-            if [ "$usage_raw" != "" ] && [ "$usage_raw" != "0" ]; then
+            if [ -n "$usage_raw" ] && [ "$usage_raw" != "0" ]; then
                 usage=$(convert_size "$usage_raw")
-            else
-                usage="0B"
             fi
         fi
 
-        # Normalisasi panjang teks agar tidak melebihi kolom (khusus quota/usage/ip_limit jika sangat panjang)
-        quota_display="$quota"
-        ip_limit_display="$ip_limit"
-        usage_display="$usage"
-        [[ ${#quota_display} -gt 10 ]] && quota_display="${quota_display:0:9}+"
-        [[ ${#ip_limit_display} -gt 9 ]] && ip_limit_display="${ip_limit_display:0:8}+"
-        [[ ${#usage_display} -gt 10 ]] && usage_display="${usage_display:0:9}+"
-
-        printf "%-15s | %-6s | %-10s | %-9s | %-10s | " "$user" "$exp_display" "$quota_display" "$ip_limit_display" "$usage_display"
+        printf "%-16s | %-9s | %-9s | %-5s | %-10s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
         echo -e "${status_color}${status_text}${neutral}"
     done
-    echo -e "${orange}$LINE${neutral}"
+
     total_count=$(grep -cE "^### " "/etc/xray/vmess/.vmess.db")
-    echo -e "Total Akun VMESS : ${green}${total_count}${neutral}"
-    echo -e "${orange}$LINE${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+    echo -e "${yellow}Total Akun vmess : ${green}${total_count}${neutral}"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     echo -e ""
     read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
     echo -e ""
@@ -368,7 +346,15 @@ change_vmess_limit() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah limit. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_vmess_menu
+        return
+    fi
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
@@ -461,8 +447,6 @@ vmess_details() {
         return
     fi
 
-    echo -e " Detail Akun VMESS:"
-
     account_counter=1
     while IFS= read -r line; do
     if [[ $line == \#\#\#* ]]; then
@@ -529,7 +513,8 @@ vmess_details() {
                 echo -e "   Penggunaan    : ${green}0B${neutral}"
             fi
 
-            echo -e "${orange}──────────────────────────────────────────────────────────────────────${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
+
             ((account_counter++))
         fi
     done <"/etc/xray/vmess/.vmess.db"
@@ -565,7 +550,6 @@ custom_vmess_uuid() {
         return
     fi
     
-    echo -e " Daftar Akun VMESS:"
     echo -e "No  | Username           | Exp (hari)"
     echo -e "─────────────────────────────────────────────"
     grep -E "^### " "/etc/xray/vmess/.vmess.db" | awk '{
@@ -579,7 +563,15 @@ custom_vmess_uuid() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah UUID. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_vmess_menu
+        return
+    fi
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
@@ -670,7 +662,6 @@ display_vmess_menu() {
     echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                              ${cyan}VMESS MANAGEMENT${magenta}                        ║${neutral}"
     echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                             ${blue}PILIHAN MENU${cyan}                             ║${neutral}"
     echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"

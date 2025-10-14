@@ -158,8 +158,7 @@ shadowsocks_members() {
         return
     fi
 
-    echo -e " Daftar Akun Shadowsocks:"
-    echo -e "Username         | Exp      | Quota    | IP    | Usage    | Status"
+    echo -e "Username         | Sisa      | Kuota     | IP    | Penggunaan | Status"
     echo -e "══════════════════════════════════════════════════════════════════════"
 
     total_accounts=0
@@ -219,7 +218,7 @@ shadowsocks_members() {
             fi
         fi
 
-        printf "%-15s | %-6s | %-6s | %-3s | %-6s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
+        printf "%-16s | %-9s | %-9s | %-5s | %-10s | " "$user" "$exp_display" "$quota" "$ip_limit" "$usage"
         echo -e "${status_color}${status_text}${neutral}"
     done
     
@@ -272,7 +271,16 @@ change_shadowsocks_limit() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+    # Check if input is 'x'
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah limit. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_shadowsocks_menu
+        return
+    fi
     
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
@@ -365,8 +373,6 @@ shadowsocks_details() {
         return
     fi
 
-    echo -e " Detail Akun Shadowsocks:"
-
     account_counter=1
     while IFS= read -r line; do
         if [[ $line == \#\#\#* ]]; then
@@ -433,7 +439,7 @@ shadowsocks_details() {
                 echo -e "   Penggunaan    : ${green}0B${neutral}"
             fi
 
-            echo -e "${orange}────────────────────────────────────────────────────────────────────${neutral}"
+            echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
             ((account_counter++))
         fi
     done <"/etc/xray/shadowsocks/.shadowsocks.db"
@@ -484,8 +490,17 @@ custom_shadowsocks_password() {
     }'
     echo -e "─────────────────────────────────────────────"
     echo -e ""
-    read -p " Pilih nomor akun : " account_number
-    
+    read -p " Pilih nomor akun [ 1-$account_count ] atau [ x ] untuk batal: " account_number
+
+    # Check if input is 'x'
+    if [[ "$account_number" =~ ^[xX]$ ]]; then
+        echo -e ""
+        echo -e "${yellow}Batal mengubah limit. Kembali ke menu...${neutral}"
+        echo -e ""
+        display_shadowsocks_menu
+        return
+    fi
+
     # Check if input is a number
     if ! [[ "$account_number" =~ ^[0-9]+$ ]]; then
         echo -e "   ${red}Error: Input harus berupa angka.${neutral}"
@@ -576,7 +591,6 @@ display_shadowsocks_menu() {
     echo -e "${magenta}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${magenta}║                           ${cyan}SHADOWSOCKS MANAGEMENT${magenta}                    ║${neutral}"
     echo -e "${magenta}╚══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     echo -e "${cyan}╔══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${cyan}║                               ${blue}PILIHAN MENU${cyan}                           ║${neutral}"
     echo -e "${cyan}╠══════════════════════════════════════════════════════════════════════╣${neutral}"

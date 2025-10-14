@@ -452,8 +452,8 @@ member_ssh() {
         return
     fi
 
-    printf "%-3s %-18s %-15s %-10s %-10s\n" "No" "Username" "Kadaluarsa" "Status" "Limit IP"
-    echo -e "────────────────────────────────────────────────────────────────────"
+    printf "%-3s %-18s %-15s %-15s %-7s\n" "No" "Username" "Kadaluarsa" "Status" "Limit IP"
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
 
     local idx=1
     local now_ts=$(date +%s)
@@ -492,7 +492,7 @@ member_ssh() {
         ((idx++))
     done
 
-    echo -e ""
+    echo -e "${orange}══════════════════════════════════════════════════════════════════════${neutral}"
     echo -e "Total akun : ${green}${total}${neutral}"
 
     prompt_back_to_menu

@@ -57,7 +57,7 @@ check_vmess() {
 
   # Table header
   echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
-  echo -e "${green}${bold}       DAFTAR PENGGUNA VMESS ONLINE${reset}"
+  echo -e "${green}                   ${bold}DAFTAR PENGGUNA VMESS ONLINE${reset}"
   echo -e "${orange}══════════════════════════════════════════════════════════════════════${reset}"
   echo -e "Nama Pengguna    | Pemakaian | Kuota     | Login | Batas  | Status"
   echo -e "══════════════════════════════════════════════════════════════════════"
@@ -89,7 +89,7 @@ check_vmess() {
       fi
     fi
 
-    printf "%-15s | %-9s | %-9s | %-5s | %-6s | %b\n" \
+    printf "%-16s | %-9s | %-9s | %-5s | %-6s | %b\n" \
       "$user" "$readable_usage" "$readable_quota" "$ip_count" "$display_limit" "$status"
   done
 

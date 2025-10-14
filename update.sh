@@ -13,7 +13,7 @@ bold="\e[1m"
 GITHUB_BASE="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev"
 
 echo -e "${blue}${bold}═══════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${blue}${bold}            MENERAPKAN UPDATE SISTEM PERINGATAN EXPIRED AKUN            ${neutral}"
+echo -e "${blue}${bold}             MENERAPKAN UPDATE TERBARU DARI GITHUB           ${neutral}"
 echo -e "${blue}${bold}═══════════════════════════════════════════════════════════════════════${neutral}"
 echo ""
 
@@ -47,173 +47,195 @@ log_action "✓ Koneksi internet tersedia"
 echo -e "${yellow}Memulai download dan update file dari GitHub...${neutral}"
 echo ""
 
-# 1. Update script exp-warning (file baru)
-log_action "Mengunduh dan menginstall script exp-warning..."
-if curl -fsSL -o /usr/bin/exp-warning "${GITHUB_BASE}/project/exp-warning"; then
-    chmod +x /usr/bin/exp-warning
-    log_action "✓ Script exp-warning berhasil diupdate dan installed"
+
+# Update check akun
+log_action "Mengunduh dan memperbarui file checkvmess..."
+if curl -fsSL -o /usr/bin/checkvmess "${GITHUB_BASE}/project/checkvmess"; then
+    chmod +x /usr/bin/checkvmess
+    log_action "✓ checkvmess berhasil diperbarui"
 else
-    log_error "Gagal mengunduh script exp-warning!"
-    exit 1
+    log_error "Gagal memperbarui checkvmess"
 fi
 
-# 2. Update script add dengan notifikasi telegram lengkap
-log_action "Mengupdate script addssh dengan notifikasi telegram lengkap..."
-
-# Update addssh
-if curl -fsSL -o /usr/bin/addssh "${GITHUB_BASE}/project/addssh"; then
-    chmod +x /usr/bin/addssh
-    log_action "✓ addssh berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file checkvless..."
+if curl -fsSL -o /usr/bin/checkvless "${GITHUB_BASE}/project/checkvless"; then
+    chmod +x /usr/bin/checkvless
+    log_action "✓ checkvless berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh addssh yang diupdate"
+    log_error "Gagal memperbarui checkvless"
 fi
 
-# Update addvless
-if curl -fsSL -o /usr/bin/addvless "${GITHUB_BASE}/project/addvless"; then
-    chmod +x /usr/bin/addvless
-    log_action "✓ addvless berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file checktrojan..."
+if curl -fsSL -o /usr/bin/checktrojan "${GITHUB_BASE}/project/checktrojan"; then
+    chmod +x /usr/bin/checktrojan
+    log_action "✓ checktrojan berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh addvless yang diupdate"
+    log_error "Gagal memperbarui checktrojan"
 fi
 
-# Update addtrojan
-if curl -fsSL -o /usr/bin/addtrojan "${GITHUB_BASE}/project/addtrojan"; then
-    chmod +x /usr/bin/addtrojan
-    log_action "✓ addtrojan berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file checkshadowsocks..."
+if curl -fsSL -o /usr/bin/checkshadowsocks "${GITHUB_BASE}/project/checkshadowsocks"; then
+    chmod +x /usr/bin/checkshadowsocks
+    log_action "✓ checkshadowsocks berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh addtrojan yang diupdate"
+    log_error "Gagal memperbarui checkshadowsocks"
 fi
 
-# Update addvmess
-if curl -fsSL -o /usr/bin/addvmess "${GITHUB_BASE}/project/addvmess"; then
-    chmod +x /usr/bin/addvmess
-    log_action "✓ addvmess berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file checkssh..."
+if curl -fsSL -o /usr/bin/checkssh "${GITHUB_BASE}/project/checkssh"; then
+    chmod +x /usr/bin/checkssh
+    log_action "✓ checkssh berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh addvmess yang diupdate"
+    log_error "Gagal memperbarui checkssh"
 fi
 
-
-# Update autokill
-if curl -fsSL -o /usr/bin/autokill "${GITHUB_BASE}/project/autokill"; then
-    chmod +x /usr/bin/autokill
-    log_action "✓ autokill berhasil diupdate dengan notifikasi lengkap"
+# Update Dellete akun
+log_action "Mengunduh dan memperbarui file delvmess..."
+if curl -fsSL -o /usr/bin/delvmess "${GITHUB_BASE}/project/delvmess"; then
+    chmod +x /usr/bin/delvmess
+    log_action "✓ delvmess berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh autokill yang diupdate"
+    log_error "Gagal memperbarui delvmess"
 fi
 
-# 3. Update script trial dengan notifikasi telegram lengkap
-log_action "Mengupdate script trial dengan notifikasi telegram lengkap..."
-
-# Update trialvless
-if curl -fsSL -o /usr/bin/trialvless "${GITHUB_BASE}/project/trialvless"; then
-    chmod +x /usr/bin/trialvless
-    log_action "✓ trialvless berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file delvless..."
+if curl -fsSL -o /usr/bin/delvless "${GITHUB_BASE}/project/delvless"; then
+    chmod +x /usr/bin/delvless
+    log_action "✓ delvless berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh trialvless yang diupdate"
+    log_error "Gagal memperbarui delvless"
 fi
 
-# Update trialvmess
-if curl -fsSL -o /usr/bin/trialvmess "${GITHUB_BASE}/project/trialvmess"; then
-    chmod +x /usr/bin/trialvmess
-    log_action "✓ trialvmess berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file deltrojan..."
+if curl -fsSL -o /usr/bin/deltrojan "${GITHUB_BASE}/project/deltrojan"; then
+    chmod +x /usr/bin/deltrojan
+    log_action "✓ deltrojan berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh trialvmess yang diupdate"
+    log_error "Gagal memperbarui deltrojan"
 fi
 
-# Update trialtrojan
-if curl -fsSL -o /usr/bin/trialtrojan "${GITHUB_BASE}/project/trialtrojan"; then
-    chmod +x /usr/bin/trialtrojan
-    log_action "✓ trialtrojan berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file delshadowsocks..."
+if curl -fsSL -o /usr/bin/delshadowsocks "${GITHUB_BASE}/project/delshadowsocks"; then
+    chmod +x /usr/bin/delshadowsocks
+    log_action "✓ delshadowsocks berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh trialtrojan yang diupdate"
+    log_error "Gagal memperbarui delshadowsocks"
 fi
 
-# Update trialshadowsocks
-if curl -fsSL -o /usr/bin/trialshadowsocks "${GITHUB_BASE}/project/trialshadowsocks"; then
-    chmod +x /usr/bin/trialshadowsocks
-    log_action "✓ trialshadowsocks berhasil diupdate dengan notifikasi lengkap"
+log_action "Mengunduh dan memperbarui file delssh..."
+if curl -fsSL -o /usr/bin/delssh "${GITHUB_BASE}/project/delssh"; then
+    chmod +x /usr/bin/delssh
+    log_action "✓ delssh berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh trialshadowsocks yang diupdate"
+    log_error "Gagal memperbarui delssh"
 fi
 
-# Update trialssh
-if curl -fsSL -o /usr/bin/trialssh "${GITHUB_BASE}/project/trialssh"; then
-    chmod +x /usr/bin/trialssh
-    log_action "✓ trialssh berhasil diupdate dengan notifikasi lengkap"
+# Update renew akun
+log_action "Mengunduh dan memperbarui file renewvmess..."
+if curl -fsSL -o /usr/bin/renewvmess "${GITHUB_BASE}/project/renewvmess"; then
+    chmod +x /usr/bin/renewvmess
+    log_action "✓ renewvmess berhasil diperbarui"
 else
-    log_warning "Gagal mengunduh trialssh yang diupdate"
+    log_error "Gagal memperbarui renewvmess"
 fi
 
-# 4. Setup cron job untuk exp-warning
-log_action "Mengatur cron job untuk sistem peringatan expired..."
-cat > "/etc/cron.d/exp_warning" << 'EOF'
-# Cron job untuk sistem peringatan akun expired - Alrescha79 Panel
-# Berjalan 2 kali sehari: pagi (09:00) dan sore (18:00)
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-
-# Sistem peringatan expired akun (7, 3, 1 hari sebelumnya)
-0 9 * * * root /usr/bin/exp-warning >/dev/null 2>&1
-0 18 * * * root /usr/bin/exp-warning >/dev/null 2>&1
-EOF
-
-chmod 644 "/etc/cron.d/exp_warning"
-log_action "✓ Cron job exp-warning berhasil dikonfigurasi (2x sehari: 09:00 & 18:00)"
-
-# 5. Buat direktori dan file log
-log_action "Menyiapkan sistem logging..."
-mkdir -p "/var/log"
-touch "/var/log/exp-warning.log"
-chmod 644 "/var/log/exp-warning.log"
-log_action "✓ File log exp-warning berhasil dibuat: /var/log/exp-warning.log"
-
-# 6. Restart cron service
-log_action "Restart cron service..."
-if systemctl restart cron 2>/dev/null || systemctl restart crond 2>/dev/null; then
-    log_action "✓ Cron service berhasil direstart"
+log_action "Mengunduh dan memperbarui file renewvless..."
+if curl -fsSL -o /usr/bin/renewvless "${GITHUB_BASE}/project/renewvless"; then
+    chmod +x /usr/bin/renewvless
+    log_action "✓ renewvless berhasil diperbarui"
 else
-    log_warning "Gagal restart cron service, silakan restart manual: systemctl restart cron"
+    log_error "Gagal memperbarui renewvless"
 fi
 
-# 7. Verifikasi konfigurasi Telegram
-log_action "Memeriksa konfigurasi Telegram..."
-if [[ -f "/root/.vars" ]]; then
-    source /root/.vars 2>/dev/null
-    if [[ -n "$bot_token" && -n "$telegram_id" ]]; then
-        log_action "✓ Konfigurasi Telegram sudah tersedia dan siap digunakan"
-    else
-        log_warning "Konfigurasi Telegram belum lengkap. Gunakan addssh [6] untuk setup bot notifikasi."
-    fi
+log_action "Mengunduh dan memperbarui file renewtrojan..."
+if curl -fsSL -o /usr/bin/renewtrojan "${GITHUB_BASE}/project/renewtrojan"; then
+    chmod +x /usr/bin/renewtrojan
+    log_action "✓ renewtrojan berhasil diperbarui"
 else
-    log_warning "File /root/.vars belum ada. Gunakan addssh [6] untuk setup bot notifikasi Telegram."
+    log_error "Gagal memperbarui renewtrojan"
 fi
 
-# 8. Test script exp-warning
-echo ""
-log_action "Melakukan test script exp-warning..."
-if /usr/bin/exp-warning 2>/dev/null; then
-    log_action "✓ Script exp-warning berhasil dijalankan tanpa error"
+log_action "Mengunduh dan memperbarui file renewssh..."
+if curl -fsSL -o /usr/bin/renewssh "${GITHUB_BASE}/project/renewssh"; then
+    chmod +x /usr/bin/renewssh
+    log_action "✓ renewssh berhasil diperbarui"
 else
-    log_warning "Script exp-warning mungkin butuh konfigurasi Telegram untuk berfungsi penuh"
+    log_error "Gagal memperbarui renewssh"
 fi
 
-# 9. Verifikasi semua update
-echo ""
-log_action "Verifikasi semua file yang diupdate..."
+# Update menu akun
+log_action "Mengunduh dan memperbarui file menu..."
+if curl -fsSL -o /usr/bin/menu "${GITHUB_BASE}/project/menu"; then
+    chmod +x /usr/bin/menu
+    log_action "✓ menu berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menu"
+fi
+
+log_action "Mengunduh dan memperbarui file menuvmess..."
+if curl -fsSL -o /usr/bin/menuvmess "${GITHUB_BASE}/project/menuvmess"; then
+    chmod +x /usr/bin/menuvmess
+    log_action "✓ menuvmess berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menuvmess"
+fi
+
+log_action "Mengunduh dan memperbarui file menuvless..."
+if curl -fsSL -o /usr/bin/menuvless "${GITHUB_BASE}/project/menuvless"; then
+    chmod +x /usr/bin/menuvless
+    log_action "✓ menuvless berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menuvless"
+fi
+
+log_action "Mengunduh dan memperbarui file menutrojan..."
+if curl -fsSL -o /usr/bin/menutrojan "${GITHUB_BASE}/project/menutrojan"; then
+    chmod +x /usr/bin/menutrojan
+    log_action "✓ menutrojan berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menutrojan"
+fi
+
+log_action "Mengunduh dan memperbarui file menushadowsocks..."
+if curl -fsSL -o /usr/bin/menushadowsocks "${GITHUB_BASE}/project/menushadowsocks"; then
+    chmod +x /usr/bin/menushadowsocks
+    log_action "✓ menushadowsocks berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menushadowsocks"
+fi
+
+log_action "Mengunduh dan memperbarui file menussh..."
+if curl -fsSL -o /usr/bin/menussh "${GITHUB_BASE}/project/menussh"; then
+    chmod +x /usr/bin/menussh
+    log_action "✓ menussh berhasil diperbarui"
+else
+    log_error "Gagal memperbarui menussh"
+fi
+
 
 # Array file yang diupdate
+
 declare -A updated_files=(
-    ["/usr/bin/exp-warning"]="Script sistem peringatan expired"
-    ["/usr/bin/addssh"]="addssh dengan notifikasi telegram"
-    ["/usr/bin/addvless"]="addvless dengan notifikasi lengkap"
-    ["/usr/bin/addtrojan"]="addtrojan dengan notifikasi lengkap"
-    ["/usr/bin/addvmess"]="addvmess dengan notifikasi lengkap"
-    ["/usr/bin/trialvless"]="Trial VLess dengan notifikasi lengkap"
-    ["/usr/bin/trialvmess"]="Trial VMess dengan notifikasi lengkap"
-    ["/usr/bin/trialtrojan"]="Trial Trojan dengan notifikasi lengkap"
-    ["/usr/bin/trialshadowsocks"]="Trial Shadowsocks dengan notifikasi lengkap"
-    ["/usr/bin/trialssh"]="Trial SSH dengan notifikasi lengkap"
-    ["/etc/cron.d/exp_warning"]="Cron job sistem peringatan"
+    ["/usr/bin/checkvmess"]="checkvmess"
+    ["/usr/bin/checkvless"]="checkvless"
+    ["/usr/bin/checktrojan"]="checktrojan"
+    ["/usr/bin/checkshadowsocks"]="checkshadowsocks"
+    ["/usr/bin/checkssh"]="checkssh"
+    ["/usr/bin/delvmess"]="delvmess"
+    ["/usr/bin/delvless"]="delvless"
+    ["/usr/bin/deltrojan"]="deltrojan"
+    ["/usr/bin/delshadowsocks"]="delshadowsocks"
+    ["/usr/bin/delssh"]="delssh"
+    ["/usr/bin/renewvmess"]="renewvmess"
+    ["/usr/bin/renewvless"]="renewvless"
+    ["/usr/bin/renewtrojan"]="renewtrojan"
+    ["/usr/bin/renewssh"]="renewssh"
+    ["/usr/bin/menu"]="menu"
+    ["/usr/bin/menuvmess"]="menuvmess"
+    ["/usr/bin/menuvless"]="menuvless"
+    ["/usr/bin/menutrojan"]="menutrojan"
+    ["/usr/bin/menushadowsocks"]="menushadowsocks"
+    ["/usr/bin/menussh"]="menussh"
 )
 
 for file in "${!updated_files[@]}"; do
@@ -224,58 +246,13 @@ for file in "${!updated_files[@]}"; do
     fi
 done
 
-# 10. Tampilkan informasi cron job
-echo ""
-log_action "Cron jobs sistem yang aktif:"
-if [[ -f "/etc/cron.d/exp_warning" ]]; then
-    echo -e "${green}Cron job exp-warning:${neutral}"
-    grep -v '^#\|^$' "/etc/cron.d/exp_warning" | sed 's/^/  /'
-fi
 
 echo ""
 echo -e "${green}${bold}═══════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${green}${bold}                    UPDATE LENGKAP BERHASIL DITERAPKAN!                ${neutral}"
 echo -e "${green}${bold}═══════════════════════════════════════════════════════════════════════${neutral}"
 echo ""
-
-echo -e "${blue}📋 RINGKASAN UPDATE DARI GITHUB:${neutral}"
-echo -e "   ✅ Repository: https://github.com/alrescha79-cmd/sc-vpn/tree/dev"
-echo -e "   ✅ Script exp-warning: Sistem peringatan expired akun"
-echo -e "   ✅ addssh: Tampilan notifikasi telegram diperbaiki"
-echo -e "   ✅ All Trial Scripts: Notifikasi telegram lengkap dan konsisten"
-echo -e "   ✅ Cron Job: Auto-warning 2x sehari (09:00 & 18:00)"
-echo -e "   ✅ Logging: /var/log/exp-warning.log"
+echo -e "${yellow}Silakan jalankan perintah ${bold}menu${neutral}${yellow} untuk mengakses menu utama.${neutral}"
 echo ""
-
-echo -e "${yellow}🔔 FITUR BARU - SISTEM PERINGATAN EXPIRED AKUN:${neutral}"
-echo -e "   • ⚠️  Peringatan 7 hari sebelum expired"
-echo -e "   • 🔔 Peringatan 3 hari sebelum expired"  
-echo -e "   • 🚨 Peringatan 1 hari sebelum expired"
-echo -e "   • 📱 Notifikasi otomatis via Telegram"
-echo -e "   • 🔄 Auto-running 2x sehari"
-echo -e "   • 📊 Mendukung semua service: VMess, VLess, Trojan, Shadowsocks, SSH"
+echo -e "${yellow}Terima kasih telah menggunakan layanan kami!${neutral}"
 echo ""
-
-echo -e "${yellow}🔧 PERBAIKAN NOTIFIKASI TELEGRAM:${neutral}"
-echo -e "   • addssh: Status bot telegram yang lebih akurat"
-echo -e "   • Trial Scripts: Informasi lengkap sesuai tampilan layar"
-echo -e "   • Format konsisten: Emoji, struktur, dan konten seragam"
-echo -e "   • Link lengkap: TLS, Non-TLS, gRPC untuk setiap akun"
-echo ""
-
-echo -e "${blue}📖 CARA PENGGUNAAN & MONITORING:${neutral}"
-echo -e "   • Test exp-warning: ${green}/usr/bin/exp-warning${neutral}"
-echo -e "   • Lihat log: ${green}tail -f /var/log/exp-warning.log${neutral}"
-echo -e "   • Setup Telegram: ${green}Gunakan addssh [6] di panel utama${neutral}"
-echo -e "   • Akses addssh: ${green}addssh${neutral}"
-echo -e "   • Cek cron: ${green}systemctl status cron${neutral}"
-echo ""
-
-echo -e "${blue}🔄 UPDATE SELANJUTNYA:${neutral}"
-echo -e "   • Jalankan script ini lagi untuk mendapat update terbaru"
-echo -e "   • Atau gunakan command individual seperti:"
-echo -e "     ${green}curl -o /usr/bin/addssh ${GITHUB_BASE}/project/addssh${neutral}"
-echo ""
-
-echo -e "${green}Semua update sistem berhasil diterapkan! 🚀${neutral}"
-echo -e "${green}Selamat menggunakan fitur sistem peringatan expired akun! 🎉${neutral}"

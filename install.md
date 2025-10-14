@@ -63,7 +63,7 @@ sudo su
 ```bash
 apt-get update && \
 apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd build-essential && \
-wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh && \
+wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
 chmod +x setup.sh && \
 screen -S setup ./setup.sh
 ```
@@ -94,7 +94,7 @@ Jika saat proses instalasi (Langkah 1) sesi terminal terputus, jangan jalankan u
 - Jika tidak bisa masuk ke `opsi (8) Menu Features`, keluar dari `menu` dengan `CTRL  C`. Kemudian jalankan perintah:
 
   ```bash
-  curl -o /usr/bin/features https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/features
+  curl -o /usr/bin/features https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/features
   ```
 
 - Jika ada masalah, silakan hubungi saya di Telegram: [@Alrescha79](https://t.me/Alrescha79)
@@ -130,7 +130,7 @@ Jika ingin mengelola akun melalui bot Telegram, ikuti langkah berikut:
     && sysctl -w net.ipv6.conf.default.disable_ipv6=1 \
     && apt update -y \
     && apt install -y git curl dos2unix \
-    && curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bot/start2 -o start2 \
+    && curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/bot/start2 -o start2 \
     && dos2unix start2 \
     && bash start2 sellvpn \
     && [ $? -eq 0 ] && rm -f start2
@@ -169,7 +169,7 @@ Skrip menyediakan instalasi REST API (Go) untuk automasi manajemen akun.
 ### Instalasi API
 
 ```bash
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/golang/rest-go.sh
+wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/golang/rest-go.sh
 chmod +x rest-go.sh
 bash rest-go.sh
 ```

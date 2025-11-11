@@ -129,27 +129,75 @@ install_warp() {
 configure_warp() {
     echo -e "${blue}Mengkonfigurasi Cloudflare WARP...${neutral}"
     
+    # Start warp-svc service first
+    echo -e "${yellow}Memulai WARP service...${neutral}"
+    systemctl start warp-svc
+    systemctl enable warp-svc
+    sleep 2
+    
+    # Delete any existing registration to start fresh
+    echo -e "${yellow}Membersihkan registrasi lama (jika ada)...${neutral}"
+    warp-cli delete &> /dev/null || true
+    sleep 1
+    
     # Register WARP
     echo -e "${yellow}Mendaftarkan WARP...${neutral}"
-    warp-cli register &> /dev/null
+    local max_attempts=3
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        echo -e "${yellow}Percobaan registrasi ke-${attempt}...${neutral}"
+        if warp-cli register 2>&1 | tee /tmp/warp-register.log | grep -q "Success"; then
+            echo -e "${green}✓ Registrasi berhasil${neutral}"
+            break
+        else
+            if [ $attempt -eq $max_attempts ]; then
+                echo -e "${red}✗ Registrasi gagal setelah $max_attempts percobaan${neutral}"
+                echo -e "${yellow}Log error:${neutral}"
+                cat /tmp/warp-register.log
+                return 1
+            fi
+            echo -e "${yellow}Registrasi gagal, mencoba lagi dalam 3 detik...${neutral}"
+            sleep 3
+            attempt=$((attempt + 1))
+        fi
+    done
+    
     sleep 2
     
     # Set mode to warp (full VPN mode)
     echo -e "${yellow}Mengatur mode WARP...${neutral}"
-    warp-cli set-mode warp &> /dev/null
+    warp-cli set-mode warp
+    sleep 2
+    
+    # Enable DNS fallback
+    echo -e "${yellow}Mengatur DNS fallback...${neutral}"
+    warp-cli set-families-mode off &> /dev/null || true
     sleep 1
     
     # Connect to WARP
     echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
-    warp-cli connect &> /dev/null
-    sleep 3
+    warp-cli connect
+    sleep 5
     
-    # Check connection status
-    local status=$(warp-cli status | grep -o "Status update: Connected" || echo "")
-    if [[ -n "$status" ]]; then
-        echo -e "${green}✓ WARP berhasil terhubung${neutral}"
-    else
-        echo -e "${yellow}⚠ WARP sedang menghubungkan... (ini normal pada koneksi pertama)${neutral}"
+    # Check connection status with retry
+    local connected=false
+    for i in {1..10}; do
+        local status=$(warp-cli status 2>/dev/null)
+        if echo "$status" | grep -q "Status update: Connected"; then
+            echo -e "${green}✓ WARP berhasil terhubung${neutral}"
+            connected=true
+            break
+        fi
+        echo -e "${yellow}Menunggu koneksi... ($i/10)${neutral}"
+        sleep 2
+    done
+    
+    if [ "$connected" = false ]; then
+        echo -e "${red}⚠ WARP gagal terhubung setelah 10 percobaan${neutral}"
+        echo -e "${yellow}Status saat ini:${neutral}"
+        warp-cli status
+        return 1
     fi
 }
 
@@ -157,12 +205,13 @@ configure_warp() {
 setup_routing() {
     echo -e "${blue}Mengkonfigurasi routing untuk mengalihkan semua traffic ke WARP...${neutral}"
     
-    # Enable WARP as default gateway
-    warp-cli set-custom-endpoint "" &> /dev/null
-    
     # Enable always-on mode
     echo -e "${yellow}Mengaktifkan mode always-on...${neutral}"
-    warp-cli enable-always-on &> /dev/null
+    warp-cli enable-always-on
+    
+    # Set custom DNS (optional, using Cloudflare DNS)
+    echo -e "${yellow}Mengatur DNS...${neutral}"
+    warp-cli set-custom-endpoint "" &> /dev/null || true
     
     echo -e "${green}✓ Routing berhasil dikonfigurasi${neutral}"
 }
@@ -171,16 +220,24 @@ setup_routing() {
 create_autostart_service() {
     echo -e "${blue}Membuat service untuk auto-start WARP...${neutral}"
     
+    # Ensure warp-svc is enabled
+    systemctl enable warp-svc &> /dev/null
+    
     cat > /etc/systemd/system/warp-autoconnect.service <<EOF
 [Unit]
 Description=Cloudflare WARP Auto-Connect
-After=network-online.target
+After=network-online.target warp-svc.service
 Wants=network-online.target
+Requires=warp-svc.service
 
 [Service]
 Type=oneshot
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/warp-cli connect
+ExecStartPost=/bin/sleep 2
 RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10
 User=root
 
 [Install]
@@ -229,7 +286,8 @@ show_management_menu() {
         echo -e "${neutral}${green} [5]${neutral} Enable Always-On"
         echo -e "${neutral}${green} [6]${neutral} Disable Always-On"
         echo -e "${neutral}${green} [7]${neutral} Check IP Address"
-        echo -e "${neutral}${green} [8]${neutral} Uninstall WARP"
+        echo -e "${neutral}${green} [8]${neutral} Fix Registration (Reset & Register)"
+        echo -e "${neutral}${green} [9]${neutral} Uninstall WARP"
         echo -e "${neutral}${red} [x]${neutral} Kembali ke Menu Utama"
         echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         echo -e ""
@@ -244,7 +302,14 @@ show_management_menu() {
                 ;;
             2)
                 echo -e "${blue}Menghubungkan ke WARP...${neutral}"
+                # Check if registered first
+                if warp-cli status 2>&1 | grep -q "Registration Missing"; then
+                    echo -e "${yellow}WARP belum terdaftar, melakukan registrasi...${neutral}"
+                    warp-cli register
+                    sleep 2
+                fi
                 warp-cli connect
+                sleep 2
                 echo -e "${green}✓ WARP terhubung${neutral}"
                 sleep 2
                 ;;
@@ -292,12 +357,48 @@ show_management_menu() {
                 ;;
             8)
                 echo -e ""
+                echo -e "${blue}Memperbaiki registrasi WARP...${neutral}"
+                echo -e "${yellow}Membersihkan registrasi lama...${neutral}"
+                warp-cli disconnect &> /dev/null
+                warp-cli delete &> /dev/null
+                sleep 2
+                
+                echo -e "${yellow}Memulai ulang WARP service...${neutral}"
+                systemctl restart warp-svc
+                sleep 3
+                
+                echo -e "${yellow}Mendaftarkan ulang WARP...${neutral}"
+                if warp-cli register; then
+                    echo -e "${green}✓ Registrasi berhasil${neutral}"
+                    sleep 2
+                    
+                    echo -e "${yellow}Mengatur mode WARP...${neutral}"
+                    warp-cli set-mode warp
+                    sleep 1
+                    
+                    echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
+                    warp-cli connect
+                    sleep 3
+                    
+                    echo -e "${green}✓ WARP berhasil diperbaiki dan terhubung${neutral}"
+                else
+                    echo -e "${red}✗ Gagal mendaftarkan ulang WARP${neutral}"
+                    echo -e "${yellow}Coba restart VPS atau hubungi support${neutral}"
+                fi
+                echo -e ""
+                read -n 1 -s -r -p "Tekan tombol untuk kembali"
+                ;;
+            9)
+                echo -e ""
                 read -p " Apakah Anda yakin ingin uninstall WARP? (y/n): " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
                     echo -e "${blue}Menguninstall WARP...${neutral}"
                     warp-cli disconnect &> /dev/null
+                    systemctl stop warp-svc &> /dev/null
+                    systemctl disable warp-svc &> /dev/null
                     systemctl disable warp-autoconnect.service &> /dev/null
                     rm -f /etc/systemd/system/warp-autoconnect.service
+                    systemctl daemon-reload
                     apt-get remove --purge -y cloudflare-warp &> /dev/null
                     rm -f /etc/apt/sources.list.d/cloudflare-client.list
                     rm -f /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg

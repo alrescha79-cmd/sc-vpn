@@ -1448,6 +1448,7 @@ else
     echo -e "${red}✗ Failed to start license monitor timer${neutral}"
 fi
 
+
 # Save current license info for monitoring
 echo "VALID|$user_id|$exp_date|$days_left" > /var/log/setup/license_status
 echo "SERVICES_RUNNING" > /var/log/setup/services_status

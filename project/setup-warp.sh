@@ -128,77 +128,123 @@ install_warp() {
 # Function to configure WARP
 configure_warp() {
     echo -e "${blue}Mengkonfigurasi Cloudflare WARP...${neutral}"
+    echo -e ""
     
-    # Start warp-svc service first
-    echo -e "${yellow}Memulai WARP service...${neutral}"
-    systemctl start warp-svc
-    systemctl enable warp-svc
-    sleep 2
+    # Check if already registered
+    local current_status=$(warp-cli status 2>&1)
+    if echo "$current_status" | grep -q "Registration Missing"; then
+        echo -e "${yellow}WARP belum terdaftar. Memulai proses registrasi...${neutral}"
+    fi
     
-    # Delete any existing registration to start fresh
-    echo -e "${yellow}Membersihkan registrasi lama (jika ada)...${neutral}"
-    warp-cli delete &> /dev/null || true
-    sleep 1
-    
-    # Register WARP
-    echo -e "${yellow}Mendaftarkan WARP...${neutral}"
+    # Register WARP with retries
+    echo -e "${yellow}Mendaftarkan WARP ke Cloudflare...${neutral}"
     local max_attempts=3
     local attempt=1
+    local registered=false
     
-    while [ $attempt -le $max_attempts ]; do
-        echo -e "${yellow}Percobaan registrasi ke-${attempt}...${neutral}"
-        if warp-cli register 2>&1 | tee /tmp/warp-register.log | grep -q "Success"; then
-            echo -e "${green}✓ Registrasi berhasil${neutral}"
-            break
-        else
-            if [ $attempt -eq $max_attempts ]; then
-                echo -e "${red}✗ Registrasi gagal setelah $max_attempts percobaan${neutral}"
-                echo -e "${yellow}Log error:${neutral}"
-                cat /tmp/warp-register.log
-                return 1
+    while [ $attempt -le $max_attempts ] && [ "$registered" = false ]; do
+        echo -e "  Percobaan registrasi ke-$attempt dari $max_attempts..."
+        
+        # Delete old registration if exists
+        warp-cli delete &> /dev/null
+        sleep 1
+        
+        # Try to register
+        if warp-cli register &> /dev/null; then
+            sleep 2
+            if ! warp-cli status 2>&1 | grep -q "Registration Missing"; then
+                registered=true
+                echo -e "${green}  ✓ Registrasi berhasil!${neutral}"
             fi
-            echo -e "${yellow}Registrasi gagal, mencoba lagi dalam 3 detik...${neutral}"
-            sleep 3
+        fi
+        
+        if [ "$registered" = false ]; then
+            if [ $attempt -lt $max_attempts ]; then
+                echo -e "${yellow}  Registrasi gagal, mencoba lagi...${neutral}"
+                sleep 2
+            fi
             attempt=$((attempt + 1))
         fi
     done
     
-    sleep 2
+    if [ "$registered" = false ]; then
+        echo -e "${red}✗ Registrasi WARP gagal setelah $max_attempts percobaan${neutral}"
+        echo -e "${yellow}Silakan coba langkah manual berikut:${neutral}"
+        echo -e "  1. warp-cli delete"
+        echo -e "  2. warp-cli register"
+        echo -e "  3. warp-cli connect"
+        echo -e ""
+        read -p "Apakah ingin mencoba registrasi manual sekarang? (y/n): " manual_register
+        
+        if [[ $manual_register =~ ^[Yy]$ ]]; then
+            echo -e ""
+            echo -e "${blue}=== REGISTRASI MANUAL ===${neutral}"
+            echo -e "Jalankan perintah berikut satu per satu:"
+            echo -e ""
+            
+            read -p "Tekan ENTER untuk menjalankan: warp-cli delete"
+            warp-cli delete
+            sleep 2
+            
+            read -p "Tekan ENTER untuk menjalankan: warp-cli register"
+            warp-cli register
+            sleep 3
+            
+            echo -e ""
+            echo -e "Cek status registrasi:"
+            warp-cli status
+            echo -e ""
+            
+            if warp-cli status 2>&1 | grep -q "Registration Missing"; then
+                echo -e "${red}Registrasi masih gagal. Keluar dari setup.${neutral}"
+                return 1
+            else
+                echo -e "${green}✓ Registrasi manual berhasil!${neutral}"
+            fi
+        else
+            return 1
+        fi
+    fi
     
     # Set mode to warp (full VPN mode)
+    echo -e ""
     echo -e "${yellow}Mengatur mode WARP...${neutral}"
-    warp-cli set-mode warp
-    sleep 2
-    
-    # Enable DNS fallback
-    echo -e "${yellow}Mengatur DNS fallback...${neutral}"
-    warp-cli set-families-mode off &> /dev/null || true
+    if warp-cli set-mode warp &> /dev/null; then
+        echo -e "${green}✓ Mode WARP diatur${neutral}"
+    else
+        echo -e "${red}✗ Gagal mengatur mode WARP${neutral}"
+        return 1
+    fi
     sleep 1
     
     # Connect to WARP
+    echo -e ""
     echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
-    warp-cli connect
-    sleep 5
+    warp-cli connect &> /dev/null
+    sleep 3
     
-    # Check connection status with retry
-    local connected=false
-    for i in {1..10}; do
-        local status=$(warp-cli status 2>/dev/null)
+    # Check connection status
+    local retry_count=0
+    local max_retries=5
+    while [ $retry_count -lt $max_retries ]; do
+        local status=$(warp-cli status 2>&1)
         if echo "$status" | grep -q "Status update: Connected"; then
             echo -e "${green}✓ WARP berhasil terhubung${neutral}"
-            connected=true
-            break
+            return 0
+        elif echo "$status" | grep -q "Status update: Connecting"; then
+            echo -e "${yellow}⚠ WARP sedang menghubungkan... ($((retry_count+1))/$max_retries)${neutral}"
+            sleep 2
+            retry_count=$((retry_count + 1))
+        else
+            echo -e "${yellow}Status: $status${neutral}"
+            sleep 2
+            retry_count=$((retry_count + 1))
         fi
-        echo -e "${yellow}Menunggu koneksi... ($i/10)${neutral}"
-        sleep 2
     done
     
-    if [ "$connected" = false ]; then
-        echo -e "${red}⚠ WARP gagal terhubung setelah 10 percobaan${neutral}"
-        echo -e "${yellow}Status saat ini:${neutral}"
-        warp-cli status
-        return 1
-    fi
+    echo -e "${yellow}⚠ WARP mungkin masih dalam proses koneksi${neutral}"
+    echo -e "Gunakan 'warp-cli status' untuk cek status"
+    return 0
 }
 
 # Function to setup routing
@@ -357,36 +403,117 @@ show_management_menu() {
                 ;;
             8)
                 echo -e ""
-                echo -e "${blue}Memperbaiki registrasi WARP...${neutral}"
-                echo -e "${yellow}Membersihkan registrasi lama...${neutral}"
+                echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
+                echo -e "${orange}║              ${green}FIX REGISTRATION WARP (INTERACTIVE)${orange}                   ║${neutral}"
+                echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
+                echo -e "${neutral} Proses ini akan memperbaiki masalah 'Registration Missing'"
+                echo -e "${neutral} dengan cara menghapus registrasi lama dan mendaftar ulang."
+                echo -e "${neutral}"
+                echo -e "${neutral} Langkah-langkah:"
+                echo -e "${neutral}   1. Disconnect WARP"
+                echo -e "${neutral}   2. Delete registrasi lama"
+                echo -e "${neutral}   3. Restart warp-svc service"
+                echo -e "${neutral}   4. Register ulang (dengan konfirmasi manual)"
+                echo -e "${neutral}   5. Set mode dan connect"
+                echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
+                echo -e ""
+                
+                # Check current status
+                echo -e "${yellow}Status saat ini:${neutral}"
+                warp-cli status 2>&1 | head -5
+                echo -e ""
+                
+                read -p "Lanjutkan perbaikan registrasi? (y/n): " confirm_fix
+                
+                if [[ ! $confirm_fix =~ ^[Yy]$ ]]; then
+                    echo -e "${yellow}Dibatalkan${neutral}"
+                    sleep 1
+                    continue
+                fi
+                
+                echo -e ""
+                echo -e "${blue}═══ Step 1: Disconnect WARP ═══${neutral}"
                 warp-cli disconnect &> /dev/null
-                warp-cli delete &> /dev/null
+                echo -e "${green}✓ Disconnected${neutral}"
+                sleep 1
+                
+                echo -e ""
+                echo -e "${blue}═══ Step 2: Delete Old Registration ═══${neutral}"
+                read -p "Tekan ENTER untuk menjalankan 'warp-cli delete'..."
+                warp-cli delete
+                echo -e "${green}✓ Registrasi lama dihapus${neutral}"
                 sleep 2
                 
-                echo -e "${yellow}Memulai ulang WARP service...${neutral}"
+                echo -e ""
+                echo -e "${blue}═══ Step 3: Restart WARP Service ═══${neutral}"
+                echo -e "${yellow}Menjalankan: systemctl restart warp-svc${neutral}"
                 systemctl restart warp-svc
+                echo -e "${green}✓ Service direstart${neutral}"
                 sleep 3
                 
-                echo -e "${yellow}Mendaftarkan ulang WARP...${neutral}"
+                echo -e ""
+                echo -e "${blue}═══ Step 4: Register Ulang ═══${neutral}"
+                echo -e "${yellow}Siap untuk mendaftar ulang ke Cloudflare...${neutral}"
+                read -p "Tekan ENTER untuk menjalankan 'warp-cli register'..."
+                
                 if warp-cli register; then
-                    echo -e "${green}✓ Registrasi berhasil${neutral}"
+                    echo -e "${green}✓ Registrasi berhasil!${neutral}"
                     sleep 2
                     
+                    echo -e ""
+                    echo -e "${blue}═══ Step 5: Set Mode & Connect ═══${neutral}"
                     echo -e "${yellow}Mengatur mode WARP...${neutral}"
-                    warp-cli set-mode warp
+                    warp-cli set-mode warp &> /dev/null
                     sleep 1
                     
                     echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
+                    read -p "Tekan ENTER untuk connect..."
                     warp-cli connect
                     sleep 3
                     
-                    echo -e "${green}✓ WARP berhasil diperbaiki dan terhubung${neutral}"
+                    echo -e ""
+                    echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+                    echo -e "${green}✓ WARP berhasil diperbaiki dan terhubung!${neutral}"
+                    echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+                    echo -e ""
+                    echo -e "${yellow}Status akhir:${neutral}"
+                    warp-cli status | head -10
                 else
-                    echo -e "${red}✗ Gagal mendaftarkan ulang WARP${neutral}"
-                    echo -e "${yellow}Coba restart VPS atau hubungi support${neutral}"
+                    echo -e ""
+                    echo -e "${red}✗ Registrasi gagal!${neutral}"
+                    echo -e ""
+                    echo -e "${yellow}Mencoba sekali lagi dengan delay lebih lama...${neutral}"
+                    sleep 3
+                    
+                    warp-cli delete &> /dev/null
+                    sleep 2
+                    systemctl restart warp-svc
+                    sleep 5
+                    
+                    echo -e "${yellow}Attempt 2 - Registrasi...${neutral}"
+                    if warp-cli register; then
+                        echo -e "${green}✓ Registrasi berhasil (attempt 2)!${neutral}"
+                        warp-cli set-mode warp &> /dev/null
+                        sleep 1
+                        warp-cli connect
+                        sleep 3
+                        warp-cli status | head -10
+                    else
+                        echo -e "${red}✗ Registrasi masih gagal setelah 2 percobaan${neutral}"
+                        echo -e ""
+                        echo -e "${yellow}Solusi alternatif:${neutral}"
+                        echo -e "  1. Restart VPS: ${blue}reboot${neutral}"
+                        echo -e "  2. Atau coba manual:"
+                        echo -e "     ${blue}warp-cli delete${neutral}"
+                        echo -e "     ${blue}sleep 5${neutral}"
+                        echo -e "     ${blue}warp-cli register${neutral}"
+                        echo -e "     ${blue}warp-cli set-mode warp${neutral}"
+                        echo -e "     ${blue}warp-cli connect${neutral}"
+                    fi
                 fi
+                
                 echo -e ""
-                read -n 1 -s -r -p "Tekan tombol untuk kembali"
+                read -n 1 -s -r -p "Tekan tombol untuk kembali ke menu"
                 ;;
             9)
                 echo -e ""

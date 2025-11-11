@@ -125,125 +125,104 @@ install_warp() {
     fi
 }
 
-# Function to configure WARP
+# Function to configure WARP (Following Cloudflare official documentation)
 configure_warp() {
     echo -e "${blue}Mengkonfigurasi Cloudflare WARP...${neutral}"
+    echo -e "${yellow}Mengikuti prosedur Initial Connection dari dokumentasi Cloudflare${neutral}"
     echo -e ""
     
-    # Check if already registered
-    local current_status=$(warp-cli status 2>&1)
-    if echo "$current_status" | grep -q "Registration Missing"; then
-        echo -e "${yellow}WARP belum terdaftar. Memulai proses registrasi...${neutral}"
-    fi
+    # Step 1: Register the client with 'warp-cli registration new'
+    echo -e "${blue}[Step 1/3] Register the client...${neutral}"
+    echo -e "${yellow}Running: warp-cli registration new${neutral}"
     
-    # Register WARP with retries
-    echo -e "${yellow}Mendaftarkan WARP ke Cloudflare...${neutral}"
-    local max_attempts=3
-    local attempt=1
-    local registered=false
+    # Clean up any existing registration first
+    warp-cli registration delete &> /dev/null 2>&1 || true
+    sleep 1
     
-    while [ $attempt -le $max_attempts ] && [ "$registered" = false ]; do
-        echo -e "  Percobaan registrasi ke-$attempt dari $max_attempts..."
-        
-        # Delete old registration if exists
-        warp-cli delete &> /dev/null
-        sleep 1
-        
-        # Try to register
-        if warp-cli register &> /dev/null; then
-            sleep 2
-            if ! warp-cli status 2>&1 | grep -q "Registration Missing"; then
-                registered=true
-                echo -e "${green}  ✓ Registrasi berhasil!${neutral}"
-            fi
-        fi
-        
-        if [ "$registered" = false ]; then
-            if [ $attempt -lt $max_attempts ]; then
-                echo -e "${yellow}  Registrasi gagal, mencoba lagi...${neutral}"
-                sleep 2
-            fi
-            attempt=$((attempt + 1))
-        fi
-    done
-    
-    if [ "$registered" = false ]; then
-        echo -e "${red}✗ Registrasi WARP gagal setelah $max_attempts percobaan${neutral}"
-        echo -e "${yellow}Silakan coba langkah manual berikut:${neutral}"
-        echo -e "  1. warp-cli delete"
-        echo -e "  2. warp-cli register"
-        echo -e "  3. warp-cli connect"
+    if warp-cli registration new; then
+        echo -e "${green}✓ Client berhasil didaftarkan${neutral}"
+        sleep 2
+    else
+        echo -e "${red}✗ Gagal mendaftarkan client${neutral}"
         echo -e ""
-        read -p "Apakah ingin mencoba registrasi manual sekarang? (y/n): " manual_register
-        
-        if [[ $manual_register =~ ^[Yy]$ ]]; then
-            echo -e ""
-            echo -e "${blue}=== REGISTRASI MANUAL ===${neutral}"
-            echo -e "Jalankan perintah berikut satu per satu:"
-            echo -e ""
-            
-            read -p "Tekan ENTER untuk menjalankan: warp-cli delete"
-            warp-cli delete
+        read -p "Coba lagi? (y/n): " retry
+        if [[ $retry =~ ^[Yy]$ ]]; then
+            echo -e "${yellow}Membersihkan registrasi lama...${neutral}"
+            warp-cli registration delete &> /dev/null 2>&1 || true
             sleep 2
-            
-            read -p "Tekan ENTER untuk menjalankan: warp-cli register"
-            warp-cli register
-            sleep 3
-            
-            echo -e ""
-            echo -e "Cek status registrasi:"
-            warp-cli status
-            echo -e ""
-            
-            if warp-cli status 2>&1 | grep -q "Registration Missing"; then
-                echo -e "${red}Registrasi masih gagal. Keluar dari setup.${neutral}"
-                return 1
+            echo -e "${yellow}Mencoba registrasi ulang...${neutral}"
+            if warp-cli registration new; then
+                echo -e "${green}✓ Registrasi berhasil (attempt 2)${neutral}"
+                sleep 2
             else
-                echo -e "${green}✓ Registrasi manual berhasil!${neutral}"
+                echo -e "${red}✗ Registrasi masih gagal${neutral}"
+                echo -e "${yellow}Silakan coba manual: warp-cli registration new${neutral}"
+                return 1
             fi
         else
             return 1
         fi
     fi
     
-    # Set mode to warp (full VPN mode)
+    # Step 2: Connect to WARP
     echo -e ""
-    echo -e "${yellow}Mengatur mode WARP...${neutral}"
-    if warp-cli set-mode warp &> /dev/null; then
-        echo -e "${green}✓ Mode WARP diatur${neutral}"
+    echo -e "${blue}[Step 2/3] Connect to WARP...${neutral}"
+    echo -e "${yellow}Running: warp-cli connect${neutral}"
+    
+    if warp-cli connect; then
+        echo -e "${green}✓ Koneksi dimulai${neutral}"
+        sleep 3
     else
-        echo -e "${red}✗ Gagal mengatur mode WARP${neutral}"
+        echo -e "${red}✗ Gagal memulai koneksi${neutral}"
         return 1
     fi
-    sleep 1
     
-    # Connect to WARP
+    # Step 3: Verify connection
     echo -e ""
-    echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
-    warp-cli connect &> /dev/null
-    sleep 3
+    echo -e "${blue}[Step 3/3] Verify connection...${neutral}"
+    echo -e "${yellow}Running: curl https://www.cloudflare.com/cdn-cgi/trace/${neutral}"
+    echo -e ""
     
-    # Check connection status
-    local retry_count=0
-    local max_retries=5
-    while [ $retry_count -lt $max_retries ]; do
-        local status=$(warp-cli status 2>&1)
-        if echo "$status" | grep -q "Status update: Connected"; then
-            echo -e "${green}✓ WARP berhasil terhubung${neutral}"
+    local max_verify_attempts=5
+    local verify_attempt=1
+    local verified=false
+    
+    while [ $verify_attempt -le $max_verify_attempts ] && [ "$verified" = false ]; do
+        echo -e "${yellow}Verifikasi attempt $verify_attempt/$max_verify_attempts...${neutral}"
+        sleep 2
+        
+        local trace_output=$(curl -s https://www.cloudflare.com/cdn-cgi/trace/ 2>/dev/null)
+        
+        if echo "$trace_output" | grep -q "warp=on"; then
+            verified=true
+            echo -e ""
+            echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+            echo -e "${green}✓ WARP BERHASIL TERHUBUNG DAN TERVERIFIKASI!${neutral}"
+            echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+            echo -e ""
+            echo -e "${yellow}Cloudflare Trace Output:${neutral}"
+            echo "$trace_output" | grep -E "(warp|ip)" | head -5
+            echo -e ""
             return 0
-        elif echo "$status" | grep -q "Status update: Connecting"; then
-            echo -e "${yellow}⚠ WARP sedang menghubungkan... ($((retry_count+1))/$max_retries)${neutral}"
-            sleep 2
-            retry_count=$((retry_count + 1))
         else
-            echo -e "${yellow}Status: $status${neutral}"
-            sleep 2
-            retry_count=$((retry_count + 1))
+            echo -e "${yellow}warp=off atau belum aktif, menunggu...${neutral}"
+            verify_attempt=$((verify_attempt + 1))
         fi
     done
     
-    echo -e "${yellow}⚠ WARP mungkin masih dalam proses koneksi${neutral}"
-    echo -e "Gunakan 'warp-cli status' untuk cek status"
+    if [ "$verified" = false ]; then
+        echo -e ""
+        echo -e "${yellow}⚠ WARP terhubung tapi verifikasi belum menunjukkan warp=on${neutral}"
+        echo -e "${yellow}Ini normal pada koneksi pertama, WARP mungkin perlu waktu untuk aktif penuh${neutral}"
+        echo -e ""
+        echo -e "${yellow}Anda bisa verifikasi manual dengan:${neutral}"
+        echo -e "  ${blue}curl https://www.cloudflare.com/cdn-cgi/trace/${neutral}"
+        echo -e ""
+        echo -e "${yellow}Atau cek status dengan:${neutral}"
+        echo -e "  ${blue}warp-cli status${neutral}"
+        echo -e ""
+    fi
+    
     return 0
 }
 
@@ -306,15 +285,23 @@ verify_installation() {
     warp-cli status
     echo ""
     
-    # Check IP address
-    echo -e "${yellow}IP Address sebelum WARP:${neutral}"
-    echo -e "$(curl -s https://api.ipify.org)"
+    # Verify with Cloudflare trace
+    echo -e "${yellow}Verifikasi dengan Cloudflare Trace:${neutral}"
+    echo -e "${blue}curl https://www.cloudflare.com/cdn-cgi/trace/${neutral}"
     echo ""
+    local trace=$(curl -s https://www.cloudflare.com/cdn-cgi/trace/ 2>/dev/null)
     
-    echo -e "${yellow}IP Address dengan WARP:${neutral}"
-    sleep 2
-    local warp_ip=$(curl -s --interface CloudflareWARP https://api.ipify.org 2>/dev/null || curl -s https://api.ipify.org)
-    echo -e "$warp_ip"
+    if echo "$trace" | grep -q "warp=on"; then
+        echo -e "${green}✓ WARP Status: ACTIVE (warp=on)${neutral}"
+    elif echo "$trace" | grep -q "warp=off"; then
+        echo -e "${yellow}⚠ WARP Status: INACTIVE (warp=off)${neutral}"
+    else
+        echo -e "${yellow}⚠ Tidak dapat mendeteksi status WARP${neutral}"
+    fi
+    
+    echo ""
+    echo -e "${yellow}Detail Trace:${neutral}"
+    echo "$trace" | grep -E "(warp|ip|loc)" | head -8
     echo ""
 }
 
@@ -406,15 +393,14 @@ show_management_menu() {
                 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
                 echo -e "${orange}║              ${green}FIX REGISTRATION WARP (INTERACTIVE)${orange}                   ║${neutral}"
                 echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-                echo -e "${neutral} Proses ini akan memperbaiki masalah 'Registration Missing'"
-                echo -e "${neutral} dengan cara menghapus registrasi lama dan mendaftar ulang."
+                echo -e "${neutral} Mengikuti prosedur Initial Connection dari dokumentasi Cloudflare:"
                 echo -e "${neutral}"
                 echo -e "${neutral} Langkah-langkah:"
                 echo -e "${neutral}   1. Disconnect WARP"
-                echo -e "${neutral}   2. Delete registrasi lama"
-                echo -e "${neutral}   3. Restart warp-svc service"
-                echo -e "${neutral}   4. Register ulang (dengan konfirmasi manual)"
-                echo -e "${neutral}   5. Set mode dan connect"
+                echo -e "${neutral}   2. Delete registrasi lama (warp-cli registration delete)"
+                echo -e "${neutral}   3. Register client baru (warp-cli registration new)"
+                echo -e "${neutral}   4. Connect (warp-cli connect)"
+                echo -e "${neutral}   5. Verify (curl https://www.cloudflare.com/cdn-cgi/trace/)"
                 echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
                 echo -e ""
                 
@@ -439,45 +425,52 @@ show_management_menu() {
                 
                 echo -e ""
                 echo -e "${blue}═══ Step 2: Delete Old Registration ═══${neutral}"
-                read -p "Tekan ENTER untuk menjalankan 'warp-cli delete'..."
-                warp-cli delete
+                echo -e "${yellow}Menjalankan: warp-cli registration delete${neutral}"
+                read -p "Tekan ENTER untuk melanjutkan..."
+                warp-cli registration delete
                 echo -e "${green}✓ Registrasi lama dihapus${neutral}"
                 sleep 2
                 
                 echo -e ""
-                echo -e "${blue}═══ Step 3: Restart WARP Service ═══${neutral}"
-                echo -e "${yellow}Menjalankan: systemctl restart warp-svc${neutral}"
-                systemctl restart warp-svc
-                echo -e "${green}✓ Service direstart${neutral}"
-                sleep 3
+                echo -e "${blue}═══ Step 3: Register Client Baru ═══${neutral}"
+                echo -e "${yellow}Menjalankan: warp-cli registration new${neutral}"
+                read -p "Tekan ENTER untuk melanjutkan..."
                 
-                echo -e ""
-                echo -e "${blue}═══ Step 4: Register Ulang ═══${neutral}"
-                echo -e "${yellow}Siap untuk mendaftar ulang ke Cloudflare...${neutral}"
-                read -p "Tekan ENTER untuk menjalankan 'warp-cli register'..."
-                
-                if warp-cli register; then
-                    echo -e "${green}✓ Registrasi berhasil!${neutral}"
+                if warp-cli registration new; then
+                    echo -e "${green}✓ Client berhasil didaftarkan!${neutral}"
                     sleep 2
                     
                     echo -e ""
-                    echo -e "${blue}═══ Step 5: Set Mode & Connect ═══${neutral}"
-                    echo -e "${yellow}Mengatur mode WARP...${neutral}"
-                    warp-cli set-mode warp &> /dev/null
-                    sleep 1
-                    
-                    echo -e "${yellow}Menghubungkan ke WARP...${neutral}"
+                    echo -e "${blue}═══ Step 4: Connect to WARP ═══${neutral}"
+                    echo -e "${yellow}Menjalankan: warp-cli connect${neutral}"
                     read -p "Tekan ENTER untuk connect..."
                     warp-cli connect
                     sleep 3
                     
                     echo -e ""
-                    echo -e "${green}═══════════════════════════════════════════════════${neutral}"
-                    echo -e "${green}✓ WARP berhasil diperbaiki dan terhubung!${neutral}"
-                    echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+                    echo -e "${blue}═══ Step 5: Verify Connection ═══${neutral}"
+                    echo -e "${yellow}Menjalankan: curl https://www.cloudflare.com/cdn-cgi/trace/${neutral}"
+                    sleep 2
+                    
+                    local trace=$(curl -s https://www.cloudflare.com/cdn-cgi/trace/ 2>/dev/null)
+                    echo ""
+                    
+                    if echo "$trace" | grep -q "warp=on"; then
+                        echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+                        echo -e "${green}✓ WARP BERHASIL TERHUBUNG DAN TERVERIFIKASI!${neutral}"
+                        echo -e "${green}   warp=on detected${neutral}"
+                        echo -e "${green}═══════════════════════════════════════════════════${neutral}"
+                    elif echo "$trace" | grep -q "warp=off"; then
+                        echo -e "${yellow}⚠ WARP terhubung tapi warp=off${neutral}"
+                        echo -e "${yellow}Mungkin perlu waktu untuk aktivasi penuh${neutral}"
+                    else
+                        echo -e "${yellow}⚠ Tidak dapat mendeteksi status WARP${neutral}"
+                    fi
+                    
                     echo -e ""
-                    echo -e "${yellow}Status akhir:${neutral}"
-                    warp-cli status | head -10
+                    echo -e "${yellow}Trace Details:${neutral}"
+                    echo "$trace" | grep -E "(warp|ip|loc)" | head -8
+                    
                 else
                     echo -e ""
                     echo -e "${red}✗ Registrasi gagal!${neutral}"
@@ -485,30 +478,28 @@ show_management_menu() {
                     echo -e "${yellow}Mencoba sekali lagi dengan delay lebih lama...${neutral}"
                     sleep 3
                     
-                    warp-cli delete &> /dev/null
-                    sleep 2
-                    systemctl restart warp-svc
-                    sleep 5
+                    warp-cli registration delete &> /dev/null
+                    sleep 3
                     
                     echo -e "${yellow}Attempt 2 - Registrasi...${neutral}"
-                    if warp-cli register; then
+                    if warp-cli registration new; then
                         echo -e "${green}✓ Registrasi berhasil (attempt 2)!${neutral}"
-                        warp-cli set-mode warp &> /dev/null
-                        sleep 1
+                        sleep 2
                         warp-cli connect
                         sleep 3
-                        warp-cli status | head -10
+                        echo -e ""
+                        curl -s https://www.cloudflare.com/cdn-cgi/trace/ | grep -E "(warp|ip)"
                     else
                         echo -e "${red}✗ Registrasi masih gagal setelah 2 percobaan${neutral}"
                         echo -e ""
                         echo -e "${yellow}Solusi alternatif:${neutral}"
                         echo -e "  1. Restart VPS: ${blue}reboot${neutral}"
                         echo -e "  2. Atau coba manual:"
-                        echo -e "     ${blue}warp-cli delete${neutral}"
+                        echo -e "     ${blue}warp-cli registration delete${neutral}"
                         echo -e "     ${blue}sleep 5${neutral}"
-                        echo -e "     ${blue}warp-cli register${neutral}"
-                        echo -e "     ${blue}warp-cli set-mode warp${neutral}"
+                        echo -e "     ${blue}warp-cli registration new${neutral}"
                         echo -e "     ${blue}warp-cli connect${neutral}"
+                        echo -e "     ${blue}curl https://www.cloudflare.com/cdn-cgi/trace/${neutral}"
                     fi
                 fi
                 

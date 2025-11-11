@@ -751,7 +751,7 @@ display_features() {
                 else
                     echo -e "${red}Error: Script setup-warp.sh tidak ditemukan!${neutral}"
                     echo -e "${yellow}Mencoba mendownload script...${neutral}"
-                    wget -O /tmp/setup-warp.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup-warp.sh 2>/dev/null
+                    wget -O /tmp/setup-warp.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/setup-warp.sh 2>/dev/null
                     if [ -f /tmp/setup-warp.sh ]; then
                         chmod +x /tmp/setup-warp.sh
                         bash /tmp/setup-warp.sh

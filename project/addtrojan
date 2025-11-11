@@ -281,11 +281,11 @@ cat >/var/www/html/trojan-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
 # Trojan Account Links
 ══════════════════════════════════════════════════════════════════════
-TLS Link : trojan://$(base64 -w 0 /etc/xray/trojan/$user-tls.json)
+TLS Link : trojan://${uuid}@${domain}:443?path=%2Fwhatever%2Ftrojan&security=tls&host=${domain}&type=ws&sni=${domain}#${user}
 ══════════════════════════════════════════════════════════════════════
-Non-TLS Link : trojan://$(base64 -w 0 /etc/xray/trojan/$user-non.json)
+Non-TLS Link : trojan://${uuid}@${domain}:80?path=%2Fwhatever%2Ftrojan&security=none&host=${domain}&type=ws#${user}
 ══════════════════════════════════════════════════════════════════════
-GRPC Link : trojan://$(base64 -w 0 /etc/xray/trojan/$user-grpc.json)
+GRPC Link : trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}
 ══════════════════════════════════════════════════════════════════════
 
 END
@@ -298,9 +298,9 @@ if [ ! -f "/var/www/html/trojan-$user.txt" ]; then
 fi
 
 # Generate trojan links
-trojan_tls="trojan://$(base64 -w 0 /etc/xray/trojan/$user-tls.json)"
-trojan_non="trojan://$(base64 -w 0 /etc/xray/trojan/$user-non.json)"
-trojan_grpc="trojan://$(base64 -w 0 /etc/xray/trojan/$user-grpc.json)"
+trojan_tls="trojan://${uuid}@${domain}:443?path=%2Fwhatever%2Ftrojan&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
+trojan_non="trojan://${uuid}@${domain}:80?path=%2Fwhatever%2Ftrojan&security=none&host=${domain}&type=ws#${user}"
+trojan_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
 
 # Restart service
 if ! systemctl restart trojan@config; then

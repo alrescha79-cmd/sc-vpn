@@ -146,11 +146,6 @@ if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
     exit 1
 fi
 
-# Generate Shadowsocks links
-ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
-ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/ss-ws;host=${domain};tls;network=ws;host=$domain#${user}-WS"
-ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
-
 # Create JSON config file
 cat >/var/www/html/shadowsocks-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
@@ -387,6 +382,11 @@ if [ ! -f "/var/www/html/shadowsocks-$user.txt" ]; then
     send_telegram_notification "error" "$user" "Failed to create OpenClash configuration file"
     exit 1
 fi
+
+# Generate Shadowsocks links
+ss_base64=$(echo -n "${method}:${password}" | base64 -w 0)
+ss_link_ws="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;path=/ss-ws;host=${domain};tls;network=ws;host=$domain#${user}-WS"
+ss_link_grpc="ss://${ss_base64}@${domain}:443?plugin=xray-plugin;mux=0;serviceName=ss-grpc;host=${domain};tls#${user}-gRPC"
 
 # Restart service
 if ! systemctl restart shadowsocks@config >/dev/null 2>&1; then

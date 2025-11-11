@@ -281,11 +281,7 @@ cat >/var/www/html/vmess-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
 # Vmess Account Links
 ══════════════════════════════════════════════════════════════════════
-TLS Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-tls.json)
-══════════════════════════════════════════════════════════════════════
-Non-TLS Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-non.json)
-══════════════════════════════════════════════════════════════════════
-GRPC Link : vmess://$(base64 -w 0 /etc/xray/vmess/$user-grpc.json)
+Link akan di-generate otomatis setelah pembuatan akun
 ══════════════════════════════════════════════════════════════════════
 
 END
@@ -298,9 +294,67 @@ if [ ! -f "/var/www/html/vmess-$user.txt" ]; then
 fi
 
 # Generate Vmess links
-vmess_tls="vmess://$(base64 -w 0 /etc/xray/vmess/$user-tls.json)"
-vmess_non="vmess://$(base64 -w 0 /etc/xray/vmess/$user-non.json)"
-vmess_grpc="vmess://$(base64 -w 0 /etc/xray/vmess/$user-grpc.json)"
+vmess_tls_json=$(cat <<VMESSEOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "443",
+  "id": "${uuid}",
+  "aid": "0",
+  "scy": "auto",
+  "net": "ws",
+  "type": "none",
+  "host": "${domain}",
+  "path": "/whatever/vmess",
+  "tls": "tls",
+  "sni": "${domain}",
+  "alpn": ""
+}
+VMESSEOF
+)
+vmess_non_json=$(cat <<VMESSEOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "80",
+  "id": "${uuid}",
+  "aid": "0",
+  "scy": "auto",
+  "net": "ws",
+  "type": "none",
+  "host": "${domain}",
+  "path": "/whatever/vmess",
+  "tls": "",
+  "sni": "",
+  "alpn": ""
+}
+VMESSEOF
+)
+vmess_grpc_json=$(cat <<VMESSEOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "443",
+  "id": "${uuid}",
+  "aid": "0",
+  "scy": "auto",
+  "net": "grpc",
+  "type": "none",
+  "host": "${domain}",
+  "path": "vmess-grpc",
+  "tls": "tls",
+  "sni": "${domain}",
+  "alpn": ""
+}
+VMESSEOF
+)
+
+vmess_tls="vmess://$(echo -n "$vmess_tls_json" | base64 -w 0)"
+vmess_non="vmess://$(echo -n "$vmess_non_json" | base64 -w 0)"
+vmess_grpc="vmess://$(echo -n "$vmess_grpc_json" | base64 -w 0)"
 
 # Restart service
 if ! systemctl restart vmess@config; then

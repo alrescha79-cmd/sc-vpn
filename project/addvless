@@ -281,11 +281,11 @@ cat >/var/www/html/vless-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
 # vless Account Links
 ══════════════════════════════════════════════════════════════════════
-TLS Link : vless://$(base64 -w 0 /etc/xray/vless/$user-tls.json)
+TLS Link : vless://${uuid}@${domain}:443?path=%2Fwhatever%2Fvless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}
 ══════════════════════════════════════════════════════════════════════
-Non-TLS Link : vless://$(base64 -w 0 /etc/xray/vless/$user-non.json)
+Non-TLS Link : vless://${uuid}@${domain}:80?path=%2Fwhatever%2Fvless&security=none&encryption=none&host=${domain}&type=ws#${user}
 ══════════════════════════════════════════════════════════════════════
-GRPC Link : vless://$(base64 -w 0 /etc/xray/vless/$user-grpc.json)
+GRPC Link : vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}
 ══════════════════════════════════════════════════════════════════════
 
 END
@@ -298,9 +298,9 @@ if [ ! -f "/var/www/html/vless-$user.txt" ]; then
 fi
 
 # Generate vless links
-vless_tls="vless://$(base64 -w 0 /etc/xray/vless/$user-tls.json)"
-vless_non="vless://$(base64 -w 0 /etc/xray/vless/$user-non.json)"
-vless_grpc="vless://$(base64 -w 0 /etc/xray/vless/$user-grpc.json)"
+vless_tls="vless://${uuid}@${domain}:443?path=%2Fwhatever%2Fvless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
+vless_non="vless://${uuid}@${domain}:80?path=%2Fwhatever%2Fvless&security=none&encryption=none&host=${domain}&type=ws#${user}"
+vless_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
 
 # Restart service
 if ! systemctl restart vless@config; then

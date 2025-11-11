@@ -339,7 +339,6 @@ display_menu() {
     echo -e "           ${white}NGINX   : $(cek_status nginx)   ║  SSH/OVPN	: $(cek_status ssh)     ║  DROPBEAR : $(cek_status dropbear)"
     echo -e "           ${white}HAPROXY : $(cek_status haproxy)   ║  XRAY	: $(cek_status vmess@config)"
     echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
 
     echo -e "${blue}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"

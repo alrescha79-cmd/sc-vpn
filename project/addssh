@@ -128,12 +128,13 @@ send_telegram_notification() {
 }
 
 # Account creation process
+exp=$(date -d "$expired days" +"%Y-%m-%d %H:%M:%S")
 if ! useradd -e $(date -d "$expired days" +"%Y-%m-%d") -s /bin/false -M $user; then
     echo -e "${red}Failed to create user account${reset}"
     send_telegram_notification "error" "$user" "Failed to create user account"
     exit 1
 fi
-exp="$(chage -l $user | grep "Account expires" | awk -F": " '{print $2}')"
+exp_system="$(chage -l $user | grep "Account expires" | awk -F": " '{print $2}')"
 if ! echo -e "$passwd\n$passwd\n" | passwd $user &>/dev/null; then
     echo -e "${red}Failed to set user password${reset}"
     send_telegram_notification "error" "$user" "Failed to set user password"
@@ -143,7 +144,7 @@ fi
 if [[ $iplim != "0" ]]; then
     echo "${iplim}" >/etc/ssh/${user}
 fi
-echo "### ${user} $(date -d "$expired days" +"%Y-%m-%d")" >>/etc/ssh/.ssh.db
+echo "### ${user} ${exp}" >>/etc/ssh/.ssh.db
 
 # Send success notification to Telegram
 send_telegram_notification "success" "$user"

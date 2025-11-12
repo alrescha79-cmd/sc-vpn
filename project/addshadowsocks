@@ -128,18 +128,19 @@ send_telegram_notification() {
     fi
 }
 
-exp=$(date -d "$duration days" +"%Y-%m-%d")
+exp=$(date -d "$duration days" +"%Y-%m-%d %H:%M:%S")
+exp_date=$(date -d "$duration days" +"%Y-%m-%d")
 method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
 # Add user to config file
-if ! sed -i '/#ssws$/a\### '"$user $exp"'\
+if ! sed -i '/#ssws$/a\### '"$user $exp_date"'\
 },{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
     echo -e "${red}Failed to add user to config.json (WS)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (WS)"
     exit 1
 fi
-if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp_date"'\
 },{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
     echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (gRPC)"

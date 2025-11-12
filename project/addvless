@@ -129,19 +129,20 @@ send_telegram_notification() {
 }
 
 # Account creation process
-exp=$(date -d "$duration days" +"%Y-%m-%d")
+exp=$(date -d "$duration days" +"%Y-%m-%d %H:%M:%S")
+exp_date=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vless/config.json" ]; then
     echo "Configuration file not found. Creating new file..."
     echo '{"inbounds": []}' >/etc/xray/vless/config.json
 fi
 
-if ! sed -i '/#vless$/a\### '"$user $exp"'\
+if ! sed -i '/#vless$/a\### '"$user $exp_date"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
     echo -e "${red}Failed to add user to config.json${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json"
     exit 1
 fi
-if ! sed -i '/#vlessgrpc$/a\### '"$user $exp"'\
+if ! sed -i '/#vlessgrpc$/a\### '"$user $exp_date"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless/config.json; then
     echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
@@ -309,6 +310,9 @@ if ! systemctl restart vless@config; then
     exit 1
 fi
 
+# Send success notification to Telegram
+send_telegram_notification "success" "$user"
+
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vless/config.json" ]; then
     echo "Warning: vless configuration file not found. Creating new file..."
@@ -368,9 +372,6 @@ mv "$temp_file" "$db_file"
 
 # Add new entry
 echo "### ${user} ${exp} ${uuid}" >>"$db_file"
-
-# Send success notification to Telegram
-send_telegram_notification "success" "$user"
 
 # Save original log
 {

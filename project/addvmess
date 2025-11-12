@@ -129,19 +129,20 @@ send_telegram_notification() {
 }
 
 # Account creation process
-exp=$(date -d "$duration days" +"%Y-%m-%d")
+exp=$(date -d "$duration days" +"%Y-%m-%d %H:%M:%S")
+exp_date=$(date -d "$duration days" +"%Y-%m-%d")
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
     echo "Configuration file not found. Creating new file..."
     echo '{"inbounds": []}' >/etc/xray/vmess/config.json
 fi
 
-if ! sed -i '/#vmess$/a\### '"$user $exp"'\
+if ! sed -i '/#vmess$/a\### '"$user $exp_date"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
     echo -e "${red}Failed to add user to config.json${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json"
     exit 1
 fi
-if ! sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
+if ! sed -i '/#vmessgrpc$/a\### '"$user $exp_date"'\
 },{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vmess/config.json; then
     echo -e "${red}Failed to add user to config.json (GRPC)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (GRPC)"
@@ -281,7 +282,11 @@ cat >/var/www/html/vmess-$user.txt <<-END
 ══════════════════════════════════════════════════════════════════════
 # Vmess Account Links
 ══════════════════════════════════════════════════════════════════════
-Link akan di-generate otomatis setelah pembuatan akun
+TLS Link : vmess://${uuid}@${domain}:443?encryption=auto&security=tls&sni=${domain}&type=ws&host=${domain}&path=%2Fwhatever%2Fvmess#${user}
+══════════════════════════════════════════════════════════════════════
+Non-TLS Link : vmess://${uuid}@${domain}:80?encryption=auto&security=none&type=ws&host=${domain}&path=%2Fwhatever%2Fvmess#${user}
+══════════════════════════════════════════════════════════════════════
+GRPC Link : vmess://${uuid}@${domain}:443?encryption=auto&security=tls&type=grpc&serviceName=vmess-grpc&sni=${domain}#${user}
 ══════════════════════════════════════════════════════════════════════
 
 END
@@ -294,67 +299,9 @@ if [ ! -f "/var/www/html/vmess-$user.txt" ]; then
 fi
 
 # Generate Vmess links
-vmess_tls_json=$(cat <<VMESSEOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "443",
-  "id": "${uuid}",
-  "aid": "0",
-  "scy": "auto",
-  "net": "ws",
-  "type": "none",
-  "host": "${domain}",
-  "path": "/whatever/vmess",
-  "tls": "tls",
-  "sni": "${domain}",
-  "alpn": ""
-}
-VMESSEOF
-)
-vmess_non_json=$(cat <<VMESSEOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "80",
-  "id": "${uuid}",
-  "aid": "0",
-  "scy": "auto",
-  "net": "ws",
-  "type": "none",
-  "host": "${domain}",
-  "path": "/whatever/vmess",
-  "tls": "",
-  "sni": "",
-  "alpn": ""
-}
-VMESSEOF
-)
-vmess_grpc_json=$(cat <<VMESSEOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "443",
-  "id": "${uuid}",
-  "aid": "0",
-  "scy": "auto",
-  "net": "grpc",
-  "type": "none",
-  "host": "${domain}",
-  "path": "vmess-grpc",
-  "tls": "tls",
-  "sni": "${domain}",
-  "alpn": ""
-}
-VMESSEOF
-)
-
-vmess_tls="vmess://$(echo -n "$vmess_tls_json" | base64 -w 0)"
-vmess_non="vmess://$(echo -n "$vmess_non_json" | base64 -w 0)"
-vmess_grpc="vmess://$(echo -n "$vmess_grpc_json" | base64 -w 0)"
+vmess_tls="vmess://${uuid}@${domain}:443?encryption=auto&security=tls&sni=${domain}&type=ws&host=${domain}&path=%2Fwhatever%2Fvmess#${user}"
+vmess_non="vmess://${uuid}@${domain}:80?encryption=auto&security=none&type=ws&host=${domain}&path=%2Fwhatever%2Fvmess#${user}"
+vmess_grpc="vmess://${uuid}@${domain}:443?encryption=auto&security=tls&type=grpc&serviceName=vmess-grpc&sni=${domain}#${user}"
 
 # Restart service
 if ! systemctl restart vmess@config; then
@@ -362,6 +309,9 @@ if ! systemctl restart vmess@config; then
     send_telegram_notification "error" "$user" "Failed to restart vmess service"
     exit 1
 fi
+
+# Send success notification to Telegram
+send_telegram_notification "success" "$user"
 
 # Exception if configuration file doesn't exist
 if [ ! -f "/etc/xray/vmess/config.json" ]; then
@@ -422,9 +372,6 @@ mv "$temp_file" "$db_file"
 
 # Add new entry
 echo "### ${user} ${exp} ${uuid}" >>"$db_file"
-
-# Send success notification to Telegram
-send_telegram_notification "success" "$user"
 
 # Save original log
 {

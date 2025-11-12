@@ -53,7 +53,7 @@ wget -q -O renewtrojan  "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn
 wget -q -O renewvmess  "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/renewvmess"
 wget -q -O renewvless  "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/renewvless"
 
-wget -q -O trial "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trial"
+wget -q -O trial trojan"https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialtrojan"
 wget -q -O trialvmess "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialvmess"
 wget -q -O trialvless "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialvless"
 wget -q -O trialssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialssh"
@@ -103,11 +103,11 @@ chmod +x renewvless
 chmod +x renewtrojan
 chmod +x renewvmess
 
-chmod +x trial
+chmod +x trialtrojan
 chmod +x trialvmess
 chmod +x trialvless
 chmod +x trialssh
-chmod +x trialshadowsoks
+chmod +x trialshadowsocks
 chmod +x check-license
 chmod +x exp-warning
 

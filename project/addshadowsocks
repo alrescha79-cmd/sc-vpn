@@ -77,10 +77,19 @@ send_telegram_notification() {
     local user="$2"
     local error_msg="$3"
     
-    if [ -f '/root/.vars' ]; then
-        source '/root/.vars'
-        
-        if [ "$status" == "success" ]; then
+    if [ ! -f '/root/.vars' ]; then
+        echo -e "${yellow}Warning: /root/.vars not found. Telegram notification skipped.${reset}"
+        return 0
+    fi
+    
+    source '/root/.vars'
+    
+    if [ -z "$bot_token" ] || [ -z "$telegram_id" ]; then
+        echo -e "${yellow}Warning: Telegram credentials not configured. Notification skipped.${reset}"
+        return 0
+    fi
+    
+    if [ "$status" == "success" ]; then
             message="
 <b>🚀 Alrescha79 Panel VPN 🚀</b>
 <b>━━━━━━━━━━━━━━━━━━</b>
@@ -119,27 +128,33 @@ send_telegram_notification() {
 <b>━━━━━━━━━━━━━━━━━━</b>
 <b>🌟 Alrescha79 Panel VPN 🌟</b>
 "
-        fi
-        
-        curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
-            -d "chat_id=$telegram_id" \
-            -d "parse_mode=HTML" \
-            -d "text=$message" > /dev/null 2>&1
+    fi
+    
+    response=$(curl -s -X POST "https://api.telegram.org/bot$bot_token/sendMessage" \
+        -d "chat_id=$telegram_id" \
+        -d "parse_mode=HTML" \
+        -d "text=$message")
+    
+    if echo "$response" | grep -q '"ok":true'; then
+        echo -e "${green}✓ Telegram notification sent successfully${reset}"
+    else
+        echo -e "${yellow}⚠ Telegram notification may have failed${reset}"
     fi
 }
 
-exp=$(date -d "$duration days" +"%Y-%m-%d")
+exp=$(date -d "$duration days" +"%Y-%m-%d %H:%M:%S")
+exp_date=$(date -d "$duration days" +"%Y-%m-%d")
 method="aes-256-gcm"
 password=$(cat /proc/sys/kernel/random/uuid)
 
 # Add user to config file
-if ! sed -i '/#ssws$/a\### '"$user $exp"'\
+if ! sed -i '/#ssws$/a\### '"$user $exp_date"'\
 },{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
     echo -e "${red}Failed to add user to config.json (WS)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (WS)"
     exit 1
 fi
-if ! sed -i '/#ssgrpc$/a\### '"$user $exp"'\
+if ! sed -i '/#ssgrpc$/a\### '"$user $exp_date"'\
 },{"password": "'""$password""'","method": "'""$method""'","email": "'""$user""'"' /etc/xray/shadowsocks/config.json; then
     echo -e "${red}Failed to add user to config.json (gRPC)${reset}"
     send_telegram_notification "error" "$user" "Failed to add user to config.json (gRPC)"

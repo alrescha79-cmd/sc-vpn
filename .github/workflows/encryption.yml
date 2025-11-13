@@ -1,0 +1,56 @@
+import zipfile, os
+
+# Create workflow content
+workflow = r"""
+name: Run Encryption Script
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install required packages
+        run: |
+          sudo apt update
+          sudo apt install -y shc lsb-release
+
+      - name: Make script executable
+        run: chmod +x script.sh
+
+      - name: Run script
+        run: yes | ./script.sh
+
+      - name: Archive output
+        run: |
+          mkdir output
+          cp -r . output/
+          zip -r output.zip output
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: script-output
+          path: output.zip
+"""
+
+# Create files
+os.makedirs(".github/workflows", exist_ok=True)
+with open(".github/workflows/run-script.yml", "w") as f:
+    f.write(workflow)
+
+# Zip everything
+zip_path = "/mnt/data/github-actions-ubuntu20.zip"
+with zipfile.ZipFile(zip_path, "w") as z:
+    for root, dirs, files in os.walk(".github"):
+        for file in files:
+            fp = os.path.join(root, file)
+            z.write(fp, fp)
+
+zip_path

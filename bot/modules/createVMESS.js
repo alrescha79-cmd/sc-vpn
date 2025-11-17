@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { Client } = require('ssh2');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./sellvpn.db');
 
@@ -17,64 +17,79 @@ async function createvmess(username, exp, quota, limitip, serverId) {
         return resolve('❌ Server tidak ditemukan.');
       }
 
-      const url = `http://${server.domain}:5888/createvmess?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}`;
+      const conn = new Client();
+      let sshOutput = '';
+      let hasError = false;
 
-      try {
-        const { data } = await axios.get(url);
+      conn.on('ready', () => {
+        console.log('✅ SSH Connection established for VMESS');
+        
+        const cmd = `addvmess ${username} ${exp} ${quota} ${limitip}`;
+        
+        conn.exec(cmd, (err, stream) => {
+          if (err) {
+            hasError = true;
+            conn.end();
+            return resolve('❌ Gagal eksekusi command VMESS.');
+          }
 
-        if (data.status !== 'success') {
-          console.error('❌ Gagal dari API:', data.message);
-          return resolve(`❌ Gagal membuat akun: ${data.message}`);
-        }
+          stream.on('close', (code, signal) => {
+            conn.end();
+            
+            if (hasError || code !== 0) {
+              return resolve('❌ Gagal membuat akun VMESS di server.');
+            }
 
-        const d = data.data;
-
-        const msg = `
-         🔥 *VMESS PREMIUM ACCOUNT*
+            try {
+              const expDate = new Date();
+              expDate.setDate(expDate.getDate() + parseInt(exp));
+              
+              const msg = `
+🔥 *VMESS PREMIUM ACCOUNT*
          
 🔹 *Informasi Akun*
 ┌─────────────────────
-│👤 *Username:* \`${d.username}\`
-│🌐 *Domain:* \`${d.domain}\`
+│👤 *Username:* \`${username}\`
+│🌐 *Domain:* \`${server.domain}\`
 └─────────────────────
 ┌─────────────────────
 │🔐 *Port TLS:* \`443\`
 │📡 *Port HTTP:* \`80\`
 │🔁 *Network:* WebSocket
-│📦 *Quota:* ${d.quota === '0 GB' ? 'Unlimited' : d.quota}
-│🌍 *IP Limit:* ${d.ip_limit === '0' ? 'Unlimited' : d.ip_limit}
+│📦 *Quota:* ${quota === 0 ? 'Unlimited' : quota + ' GB'}
+│🌍 *IP Limit:* ${limitip === 0 ? 'Unlimited' : limitip}
 └─────────────────────
 
-🔗 *VMESS TLS:*
-\`\`\`
-${d.vmess_tls_link}
-\`\`\`
-🔗 *VMESS NON-TLS:*
-\`\`\`
-${d.vmess_nontls_link}
-\`\`\`
-🔗 *VMESS GRPC:*
-\`\`\`
-${d.vmess_grpc_link}
-\`\`\`
-
-🧾 *UUID:* \`${d.uuid}\`
-🔏 *PUBKEY:* \`${d.pubkey}\`
-┌─────────────────────
-│🕒 *Expired:* \`${d.expired}\`
-│
-│📥 [Save Account](https://${d.domain}:81/vmess-${d.username}.txt)
-└─────────────────────
+📅 *Expired:* \`${expDate.toLocaleDateString('id-ID')}\`
 ✨ By : *EXTRIMER TUNNEL*! ✨
-`.trim();
+              `.trim();
 
-        console.log('✅ VMESS created for', username);
-        resolve(msg);
-
-      } catch (e) {
-        console.error('❌ Error saat request ke API:', e.message);
-        resolve('❌ Tidak bisa menghubungi server. Coba lagi nanti.');
-      }
+              resolve(msg);
+            } catch (e) {
+              console.error('Parse error:', e.message);
+              resolve('❌ Gagal parsing response dari server.');
+            }
+          })
+          .on('data', (data) => {
+            sshOutput += data.toString();
+          })
+          .stderr.on('data', (data) => {
+            console.error('SSH STDERR:', data.toString());
+            hasError = true;
+          });
+        });
+      })
+      .on('error', (err) => {
+        console.error('SSH Error:', err.message);
+        resolve('❌ Gagal koneksi SSH ke server. Cek password root VPS.');
+      })
+      .connect({
+        host: server.domain,
+        port: 22,
+        username: 'root',
+        password: server.auth,
+        readyTimeout: 30000
+      });
     });
   });
 }

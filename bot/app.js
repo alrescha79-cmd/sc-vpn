@@ -2992,31 +2992,55 @@ bot.action(/^trial_server_ssh_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro.\nKamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    // Jalankan script trial
-    exec(`bash ./scripts/trialssh.sh ${serverId}`, async (error, stdout, stderr) => {
-      if (error) {
-        logger.error('Gagal eksekusi script trialssh:', error.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
+    // Ambil data server
+    db.get('SELECT * FROM Server WHERE id = ?', [serverId], async (err, server) => {
+      if (err || !server) {
+        logger.error('❌ Server tidak ditemukan untuk trial:', err?.message);
+        return bot.telegram.sendMessage(chatId, '❌ Server tidak ditemukan.');
       }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        fs.appendFileSync('./debug_trial.log', `\n=== ${userId} - ${rawName} ===\n${raw}\n`);
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak mengandung JSON');
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        logger.error('❌ Gagal parsing hasil trial SSH:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal membaca data trial.');
-      }
+      // Generate random username untuk trial
+      const trialUsername = `trial${Date.now()}`;
+      const trialPassword = Math.random().toString(36).substring(2, 10);
+      const trialExp = 1; // 1 hari
+      const trialIpLimit = 1;
+
+      // Gunakan API untuk create trial
+      const url = `http://${server.domain}:5888/createssh?user=${trialUsername}&password=${trialPassword}&exp=${trialExp}&iplimit=${trialIpLimit}`;
 
       try {
+        const { data: apiData } = await axios.get(url, { timeout: 30000 });
+
+        if (apiData.status !== 'success') {
+          logger.error('❌ API trial gagal:', apiData.message);
+          return bot.telegram.sendMessage(chatId, '❌ Gagal membuat akun trial.');
+        }
+
+        const json = apiData.data;
+
+        // Map data dari API response
         const {
-          username, password, ip, domain, city, public_key, expiration,
-          ports, openvpn_link, save_link, wss_payload
+          username, password, ip, domain, city, pubkey: public_key, expired: expiration
         } = json;
+
+        // Default ports jika tidak ada dari API
+        const ports = {
+          openssh: '22',
+          dropbear: '109, 143',
+          udp_ssh: '1-65535',
+          dns: '443, 53, 22',
+          ssh_ws: '80',
+          ssh_ssl_ws: '443',
+          ssl_tls: '443',
+          ovpn_tcp: '1194',
+          ovpn_udp: '2200',
+          ovpn_ssl: '443',
+          badvpn: '7100-7300'
+        };
+
+        const openvpn_link = `https://${domain}:81/allovpn.zip`;
+        const save_link = `https://${domain}:81/ssh-${username}.txt`;
+        const wss_payload = `GET wss://bug.com/ HTTP/1.1[crlf]Host: ${domain}[crlf]Upgrade: websocket[crlf][crlf]`;
 
         // Update jumlah trial dan simpan log
         await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
@@ -3033,10 +3057,10 @@ bot.action(/^trial_server_ssh_(\d+)$/, async (ctx) => {
 
 👤 \`User:\` ${username}
 🔑 \`Pass:\` ${password}
-🌍 \`IP:\` ${ip}
-🏙️ \`Lokasi:\` ${city}
+🌍 \`IP:\` ${ip || server.domain}
+🏙️ \`Lokasi:\` ${city || 'Unknown'}
 📡 \`Domain:\` ${domain}
-🔐 \`PubKey:\` ${public_key}
+🔐 \`PubKey:\` ${public_key || 'N/A'}
 
 🔌 *PORT*
 OpenSSH   : ${ports.openssh}
@@ -3082,7 +3106,7 @@ ${wss_payload}
 📩 𝗧𝗿𝗶𝗮𝗹 𝗯𝘆: ${roleLabel} | ${trialKe} dari ${maxTrial}
 🌐 𝗦𝗲𝗿𝘃𝗲𝗿: ${namaServer}
 🏪 𝗣𝗿𝗼𝘁𝗼𝗰𝗼𝗹: SSH
-⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 60 Menit
+⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 1 Hari
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━
           `.trim();

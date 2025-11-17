@@ -39,8 +39,9 @@ sysctl -w net.ipv6.conf.all.disable_ipv6=1 \
 && sysctl -w net.ipv6.conf.default.disable_ipv6=1 \
 && apt update -y \
 && apt install -y git curl dos2unix \
-&& curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bot/start2 \
+&& curl -L -k -sS -o start2 https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bot/start2 \
 && dos2unix start2 \
+&& chmod +x start2 \
 && bash start2 sellvpn \
 && [ $? -eq 0 ] && rm -f start2
 ```

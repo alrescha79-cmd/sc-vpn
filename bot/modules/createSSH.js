@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const axios = require('axios');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./sellvpn.db');
 
@@ -9,25 +9,19 @@ async function createssh(username, password, exp, iplimit, serverId) {
     return '❌ Username tidak valid.';
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     db.get('SELECT * FROM Server WHERE id = ?', [serverId], async (err, server) => {
       if (err || !server) return resolve('❌ Server tidak ditemukan.');
 
-      // Gunakan script lokal tanpa auth
-      const command = `ssh root@${server.domain} "bash <(curl -sL https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/project/addssh) ${username} ${password} ${exp} ${iplimit}"`;
+      // Gunakan API tanpa auth parameter
+      const url = `http://${server.domain}:5888/createssh?user=${username}&password=${password}&exp=${exp}&iplimit=${iplimit}`;
 
-      exec(command, { timeout: 60000 }, async (error, stdout, stderr) => {
-        if (error) {
-          console.error('❌ Error exec SSH:', error.message);
-          return resolve('❌ Gagal membuat akun SSH. Pastikan server dapat diakses.');
-        }
+      try {
+        const { data } = await axios.get(url, { timeout: 30000 });
 
-        try {
-          const data = JSON.parse(stdout.trim());
+        if (data.status !== 'success') return resolve(`❌ Gagal: ${data.message || 'Unknown error'}`);
 
-          if (data.status !== 'success') return resolve(`❌ Gagal: ${data.message}`);
-
-          const d = data.data;
+        const d = data.data;
 
           const msg = `
         🔥 *AKUN SSH PREMIUM* 
@@ -67,12 +61,11 @@ https://${d.domain}:81/ssh-${d.username}.txt
 ✨ By : *EXTRIMER TUNNEL*! ✨
 `.trim();
 
-          resolve(msg);
-        } catch (e) {
-          console.error('❌ Error parsing response:', e.message);
-          resolve('❌ Gagal parsing response dari server.');
-        }
-      });
+        resolve(msg);
+      } catch (e) {
+        console.error('❌ Error parsing response:', e.message);
+        resolve('❌ Gagal parsing response dari server.');
+      }
     });
   });
 }

@@ -17,7 +17,7 @@ async function createvless(username, exp, quota, limitip, serverId) {
         return resolve('❌ Server tidak ditemukan.');
       }
 
-      const url = `http://${server.domain}:5888/createvless?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}&auth=${server.auth}`;
+      const url = `http://${server.domain}:5888/createvless?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}`;
 
       try {
         const { data } = await axios.get(url);

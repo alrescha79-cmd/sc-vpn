@@ -11,7 +11,7 @@ async function renewssh(username, exp, limitip, serverId) {
     db.get('SELECT * FROM Server WHERE id = ?', [serverId], (err, server) => {
       if (err || !server) return resolve('❌ Server tidak ditemukan.');
 
-      const url = `http://${server.domain}:5888/renewssh?user=${username}&exp=${exp}&iplimit=${limitip}&auth=${server.auth}`;
+      const url = `http://${server.domain}:5888/renewssh?user=${username}&exp=${exp}&iplimit=${limitip}`;
       axios.get(url)
         .then(res => {
           if (res.data.status === "success") {

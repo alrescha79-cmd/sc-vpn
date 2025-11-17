@@ -13,7 +13,7 @@ async function createtrojan(username, exp, quota, limitip, serverId) {
     db.get('SELECT * FROM Server WHERE id = ?', [serverId], async (err, server) => {
       if (err || !server) return resolve('❌ Server tidak ditemukan.');
 
-      const url = `http://${server.domain}:5888/createtrojan?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}&auth=${server.auth}`;
+      const url = `http://${server.domain}:5888/createtrojan?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}`;
 
       try {
         const { data } = await axios.get(url);

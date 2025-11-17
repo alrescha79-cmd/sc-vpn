@@ -11,7 +11,7 @@ async function renewshadowsocks(username, exp, quota, limitip, serverId) {
     db.get('SELECT * FROM Server WHERE id = ?', [serverId], (err, server) => {
       if (err || !server) return resolve('❌ Server tidak ditemukan.');
 
-      const url = `http://${server.domain}:5888/renewshadowsocks?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}&auth=${server.auth}`;
+      const url = `http://${server.domain}:5888/renewshadowsocks?user=${username}&exp=${exp}&quota=${quota}&iplimit=${limitip}`;
       axios.get(url)
         .then(res => {
           if (res.data.status === "success") {

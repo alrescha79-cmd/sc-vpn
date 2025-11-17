@@ -29,7 +29,7 @@ const {
   NAMA_STORE = 'Alrescha79 Store',
   DATA_QRIS,
   MERCHANT_ID,
-  API_KEY
+  API_KEY,
 } = vars;
 
 // 💬 Telegram
@@ -1661,7 +1661,7 @@ LIMIT 3
 📜 *Akun Dibuat* : ${escapeMarkdownV2(totalAkunDibuat)}
 🏷 *Status*    : ${escapeMarkdownV2(roleLabel)}
 🆔 *ID Anda*   : \`${userId}\`
-🔒 *Admin Bot* : @kapalduruk
+🔒 *Admin Bot* : @${escapeMarkdownV2(ADMIN_USERNAME)}
 🕒 *Update Cache* : ${escapeMarkdownV2(new Date(cacheStatus.lastUpdated).toLocaleTimeString('id-ID'))}
 ━━━━━━━━━━━━━━━━━━━━━━
 ${topResellerText.trim()}
@@ -4033,15 +4033,8 @@ if (state.step === 'await_reseller_id') {
     const domain = text;
     if (!domain) return ctx.reply('⚠️ *Domain tidak boleh kosong.* Silakan masukkan domain server yang valid.', { parse_mode: 'Markdown' });
     state.domain = domain;
-    state.step = 'addserver_auth';
-    return ctx.reply('🔑 *Silakan masukkan auth server:*', { parse_mode: 'Markdown' });
-  }
-
-  if (state.step === 'addserver_auth') {
-    const auth = text;
-    if (!auth) return ctx.reply('⚠️ *Auth tidak boleh kosong.* Silakan masukkan auth server yang valid.', { parse_mode: 'Markdown' });
-    state.auth = auth;
-    state.step = 'addserver_nama_server';
+    state.auth = 'no-auth-required'; // ⬅️ Set auth dummy otomatis
+    state.step = 'addserver_nama_server'; // ⬅️ Skip ke nama server
     return ctx.reply('🏷️ *Silakan masukkan nama server:*', { parse_mode: 'Markdown' });
   }
 

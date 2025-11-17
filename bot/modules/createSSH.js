@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { exec } = require('child_process');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./sellvpn.db');
 
@@ -9,20 +9,27 @@ async function createssh(username, password, exp, iplimit, serverId) {
     return '❌ Username tidak valid.';
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.get('SELECT * FROM Server WHERE id = ?', [serverId], async (err, server) => {
       if (err || !server) return resolve('❌ Server tidak ditemukan.');
 
-      const url = `http://${server.domain}:5888/createssh?user=${username}&password=${password}&exp=${exp}&iplimit=${iplimit}&auth=${server.auth}`;
+      // Gunakan script lokal tanpa auth
+      const command = `ssh root@${server.domain} "bash <(curl -sL https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/project/addssh) ${username} ${password} ${exp} ${iplimit}"`;
 
-      try {
-        const { data } = await axios.get(url);
+      exec(command, { timeout: 60000 }, async (error, stdout, stderr) => {
+        if (error) {
+          console.error('❌ Error exec SSH:', error.message);
+          return resolve('❌ Gagal membuat akun SSH. Pastikan server dapat diakses.');
+        }
 
-        if (data.status !== 'success') return resolve(`❌ Gagal: ${data.message}`);
+        try {
+          const data = JSON.parse(stdout.trim());
 
-        const d = data.data;
+          if (data.status !== 'success') return resolve(`❌ Gagal: ${data.message}`);
 
-        const msg = `
+          const d = data.data;
+
+          const msg = `
         🔥 *AKUN SSH PREMIUM* 
 
 🔹 *Informasi Akun*
@@ -60,10 +67,12 @@ https://${d.domain}:81/ssh-${d.username}.txt
 ✨ By : *EXTRIMER TUNNEL*! ✨
 `.trim();
 
-        resolve(msg);
-      } catch (e) {
-        resolve('❌ Gagal request ke API SSH.');
-      }
+          resolve(msg);
+        } catch (e) {
+          console.error('❌ Error parsing response:', e.message);
+          resolve('❌ Gagal parsing response dari server.');
+        }
+      });
     });
   });
 }

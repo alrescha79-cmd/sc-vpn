@@ -1,0 +1,122 @@
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🤖 BOT VPN - QUICK REFERENCE (NO AUTH REQUIRED)     ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📝 SETUP AWAL:
+═══════════════════════════════════════════════════════════
+1. Edit .vars.json → Isi BOT_TOKEN, USER_ID, GROUP_ID
+2. Jalankan: ./start.sh atau node app.js
+3. Di Telegram: /start
+
+🎯 PERINTAH BOT:
+═══════════════════════════════════════════════════════════
+/start          → Memulai bot
+/menu           → Menu utama
+/addserver      → Tambah server (AUTH OTOMATIS DUMMY!)
+/listserver     → Lihat daftar server
+/balance        → Cek saldo
+
+👑 ADMIN COMMANDS:
+═══════════════════════════════════════════════════════════
+/admin          → Panel admin
+/broadcast      → Kirim pesan ke semua user
+/addreseller    → Tambah reseller
+/topup          → Topup saldo user
+
+💰 RESELLER COMMANDS:
+═══════════════════════════════════════════════════════════
+/reseller       → Panel reseller
+/create         → Buat akun VPN
+/renew          → Perpanjang akun
+/check          → Cek akun
+
+📊 DATABASE:
+═══════════════════════════════════════════════════════════
+# Lihat semua user
+sqlite3 sellvpn.db "SELECT * FROM users;"
+
+# Lihat semua server
+sqlite3 sellvpn.db "SELECT * FROM Server;"
+
+# Set user jadi admin
+sqlite3 sellvpn.db "UPDATE users SET role='admin' WHERE user_id=YOUR_ID;"
+
+# Update auth jadi dummy (untuk server lama)
+./setup-auth-dummy.sh
+
+🔧 TROUBLESHOOTING:
+═══════════════════════════════════════════════════════════
+Error: 404 Not Found
+  → BOT_TOKEN salah atau belum diisi di .vars.json
+  → Cek token di @BotFather
+
+Error: Timeout saat create akun
+  → Server VPN tidak bisa diakses
+  → Cek koneksi SSH ke server
+  → Pastikan setup.sh sudah dijalankan di server
+
+Error: Promise timed out
+  → Script di server terlalu lama
+  → Cek log server: journalctl -xe
+
+Database locked
+  → Bot sudah running di background
+  → Kill process: pkill -f "node app.js"
+
+🚀 MANAGEMENT:
+═══════════════════════════════════════════════════════════
+# Jalankan dengan PM2 (recommended)
+pm2 start app.js --name sellvpn
+pm2 logs sellvpn
+pm2 restart sellvpn
+pm2 stop sellvpn
+
+# Atau manual
+node app.js
+# Ctrl+C untuk stop
+
+# Background process
+nohup node app.js > bot.log 2>&1 &
+
+# Lihat log
+tail -f bot.log
+
+📦 STRUKTUR FILE:
+═══════════════════════════════════════════════════════════
+bot/
+├── app.js                  → Main bot file
+├── .vars.json              → Configuration (EDIT THIS!)
+├── sellvpn.db              → Database
+├── start.sh                → Quick start script
+├── setup-auth-dummy.sh     → Update auth to dummy
+├── SETUP-NO-AUTH.md        → Full documentation
+└── modules/
+    ├── createSSH.js        → Create SSH account
+    ├── createVMESS.js      → Create VMESS account
+    ├── createVLESS.js      → Create VLESS account
+    ├── createTROJAN.js     → Create Trojan account
+    └── renew*.js           → Renew accounts
+
+🔐 SECURITY:
+═══════════════════════════════════════════════════════════
+• Jangan share BOT_TOKEN
+• Backup database secara berkala
+• Set firewall di VPS
+• Gunakan SSH key untuk akses server
+• Rotate API keys secara periodik
+
+📚 DOKUMENTASI LENGKAP:
+═══════════════════════════════════════════════════════════
+Baca: SETUP-NO-AUTH.md
+
+💡 TIPS:
+═══════════════════════════════════════════════════════════
+• Auth sekarang opsional (otomatis dummy)
+• Bot langsung SSH ke server
+• Tidak perlu install X-UI/3X-UI
+• Setup lebih simple dan cepat
+• Server harus bisa SSH dari bot server
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Support: https://github.com/alrescha79-cmd/sc-vpn   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛

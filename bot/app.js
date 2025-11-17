@@ -10,10 +10,10 @@ const axios = require('axios');
 const cron = require('node-cron');
 
 const fetch = require('node-fetch');
-const TELEGRAM_UPLOAD_DIR = '/root/BotVPN2/uploaded_restore';
-const BACKUP_DIR = '/root/BotVPN2/backups';
+const TELEGRAM_UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
+const BACKUP_DIR = '/root/Alrescha79/backups';
 const DB_PATH = path.resolve('./sellvpn.db');
-const UPLOAD_DIR = '/root/BotVPN2/uploaded_restore';
+const UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
 
 // Buat folder kalau belum ada
 if (!fs.existsSync(TELEGRAM_UPLOAD_DIR)) fs.mkdirSync(TELEGRAM_UPLOAD_DIR, { recursive: true });
@@ -26,7 +26,7 @@ const {
   USER_ID,
   GROUP_ID,
   PORT = 50123,
-  NAMA_STORE = 'GabutStore',
+  NAMA_STORE = 'Alrescha79 Store',
   DATA_QRIS,
   MERCHANT_ID,
   API_KEY
@@ -1441,7 +1441,7 @@ bot.command('restore', async (ctx) => {
 
 bot.command('restoreupload', async (ctx) => {
   const userId = String(ctx.from.id);
-  const UPLOAD_DIR = '/root/BotVPN2/uploaded_restore';
+  const UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
 
   if (!adminIds.includes(userId)) return;
 
@@ -5103,7 +5103,7 @@ bot.on('callback_query', async (ctx) => {
   
  if (data.startsWith('restore_uploaded_file::')) {
   const fileName = data.split('::')[1];
-  const filePath = path.join('/root/BotVPN2/uploaded_restore', fileName);
+  const filePath = path.join('/root/Alrescha79/uploaded_restore', fileName);
 
   if (!fs.existsSync(filePath)) {
     return ctx.reply(`❌ File tidak ditemukan: ${fileName}`);
@@ -5124,7 +5124,7 @@ bot.on('callback_query', async (ctx) => {
 
   if (data.startsWith('delete_uploaded_file::')) {
   const fileName = data.split('::')[1];
-  const filePath = path.join('/root/BotVPN2/uploaded_restore', fileName);
+  const filePath = path.join('/root/Alrescha79/uploaded_restore', fileName);
 
   if (!fs.existsSync(filePath)) {
     return ctx.reply(`❌ *File tidak ditemukan:* \`${fileName}\``, { parse_mode: 'Markdown' });

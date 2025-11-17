@@ -18,6 +18,8 @@ hapus_bot_lama() {
   rm -f /etc/systemd/system/sellvpn.service
   rm -f /usr/bin/sellvpn /usr/bin/server_sellvpn /etc/cron.d/server_sellvpn
   rm -rf /root/BotVPN2
+  rm -rf /root/Alrescha79
+
 
   if command -v pm2 &> /dev/null; then
     pm2 delete sellvpn &> /dev/null
@@ -44,21 +46,21 @@ pasang_package() {
 setup_bot() {
   timedatectl set-timezone Asia/Jakarta
 
-  if [ -d /root/BotVPN2/.git ]; then
+  if [ -d /root/Alrescha79/.git ]; then
     echo -e "${yellow}Update dari Git...${reset}"
-    cd /root/BotVPN2 && git pull
+    cd /root/Alrescha79 && git pull
   else
     echo -e "${green}Clone repo bot...${reset}"
-    git clone https://github.com/joytun21/BhotVpn.git /root/BotVPN2
+    git clone https://github.com/joytun21/BhotVpn.git /root/Alrescha79
   fi
 
   echo -e "${yellow}Convert semua script ke format Unix (LF)...${reset}"
-  find /root/BotVPN2/scripts -type f -name "*.sh" -exec dos2unix {} \;
+  find /root/Alrescha79/scripts -type f -name "*.sh" -exec dos2unix {} \;
 
   echo -e "${yellow}Install NPM packages...${reset}"
-  npm install --prefix /root/BotVPN2 sqlite3 express crypto telegraf axios dotenv node-cron
+  npm install --prefix /root/Alrescha79 sqlite3 express crypto telegraf axios dotenv node-cron
 
-  chmod +x /root/BotVPN2/*
+  chmod +x /root/Alrescha79/*
 }
 
 # ========== Konfigurasi Firewalld/UFW ==========
@@ -86,7 +88,7 @@ server_app() {
   read -p "Masukkan MERCHANT ID    : " merchantid
   read -p "Masukkan API KEY        : " apikey
 
-  cat <<EOF > /root/BotVPN2/.vars.json
+  cat <<EOF > /root/Alrescha79/.vars.json
 {
   "BOT_TOKEN": "$token",
   "USER_ID": "$adminid",
@@ -99,7 +101,7 @@ server_app() {
 }
 EOF
 
-  if ! jq empty /root/BotVPN2/.vars.json 2>/dev/null; then
+  if ! jq empty /root/Alrescha79/.vars.json 2>/dev/null; then
     echo -e "${red}❌ Gagal membuat file .vars.json. Cek input atau format.${neutral}"
     exit 1
   fi
@@ -107,14 +109,14 @@ EOF
   cat >/etc/cron.d/server_sellvpn <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-*/30 * * * * root curl -s -F chat_id="$adminid" -F document=@"/root/BotVPN2/sellvpn.db" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+*/30 * * * * root curl -s -F chat_id="$adminid" -F document=@"/root/Alrescha79/sellvpn.db" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
 EOF
 
 
   # 🚀 Start PM2 bot
     
   sleep 2
-  pm2 start app.js --name sellvpn --cwd /root/BotVPN2 --log /var/log/sellvpn.log
+  pm2 start app.js --name sellvpn --cwd /root/Alrescha79 --log /var/log/sellvpn.log
   pm2 save
   pm2 startup
 

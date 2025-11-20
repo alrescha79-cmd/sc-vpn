@@ -8,7 +8,9 @@
     "node-cron": "^4.2.1",
     "qris-payment": "^1.0.5",
     "sqlite3": "^5.1.7",
+    "ssh2": "^1.17.0",
     "telegraf": "^4.16.3",
+    "uuid": "^13.0.0",
     "winston": "^3.18.3"
   }
 }

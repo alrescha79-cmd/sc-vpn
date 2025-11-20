@@ -10,10 +10,10 @@ const axios = require('axios');
 const cron = require('node-cron');
 
 const fetch = require('node-fetch');
-const TELEGRAM_UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
-const BACKUP_DIR = '/root/Alrescha79/backups';
+const TELEGRAM_UPLOAD_DIR = '/backup/bot/uploaded_restore';
+const BACKUP_DIR = '/backup/bot/backups';
 const DB_PATH = path.resolve('./sellvpn.db');
-const UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
+const UPLOAD_DIR = '/backup/bot/uploaded_restore';
 
 // Buat folder kalau belum ada
 if (!fs.existsSync(TELEGRAM_UPLOAD_DIR)) fs.mkdirSync(TELEGRAM_UPLOAD_DIR, { recursive: true });
@@ -30,6 +30,9 @@ const {
   DATA_QRIS,
   MERCHANT_ID,
   API_KEY,
+  ADMIN_USERNAME = 'Alrescha79',
+  SSH_USER = 'root',
+  SSH_PASS = '',
 } = vars;
 
 // 💬 Telegram
@@ -145,6 +148,12 @@ const { renewvmess } = require('./modules/renewVMESS');
 const { renewvless } = require('./modules/renewVLESS');
 const { renewtrojan } = require('./modules/renewTROJAN');
 const { renewshadowsocks } = require('./modules/renewSHADOWSOCKS');
+
+const { trialssh } = require('./modules/trialSSH');
+const { trialtrojan } = require('./modules/trialTROJAN');
+const { trialvmess } = require('./modules/trialVMESS');
+const { trialvless } = require('./modules/trialVLESS');
+const { trialshadowsocks } = require('./modules/trialSHADOWSOCKS');
 
 // 🗄️ SQLite Init
 const db = new sqlite3.Database('./sellvpn.db', (err) => {
@@ -1441,7 +1450,7 @@ bot.command('restore', async (ctx) => {
 
 bot.command('restoreupload', async (ctx) => {
   const userId = String(ctx.from.id);
-  const UPLOAD_DIR = '/root/Alrescha79/uploaded_restore';
+  const UPLOAD_DIR = '/backup/bot/uploaded_restore';
 
   if (!adminIds.includes(userId)) return;
 
@@ -2992,43 +3001,30 @@ bot.action(/^trial_server_ssh_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro.\nKamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    // Jalankan script trial
-    exec(`bash ./scripts/trialssh.sh ${serverId}`, async (error, stdout, stderr) => {
-      if (error) {
-        logger.error('Gagal eksekusi script trialssh:', error.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
-      }
+    // Jalankan module trial SSH
+    const result = await trialssh(serverId);
+    
+    if (result.status === 'error') {
+      logger.error('❌ Gagal trial SSH:', result.message);
+      return bot.telegram.sendMessage(chatId, `❌ ${result.message}`);
+    }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        fs.appendFileSync('./debug_trial.log', `\n=== ${userId} - ${rawName} ===\n${raw}\n`);
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak mengandung JSON');
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        logger.error('❌ Gagal parsing hasil trial SSH:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal membaca data trial.');
-      }
+    const {
+      username, password, ip, domain, city, public_key, expiration,
+      ports, openvpn_link, save_link, wss_payload
+    } = result;
 
-      try {
-        const {
-          username, password, ip, domain, city, public_key, expiration,
-          ports, openvpn_link, save_link, wss_payload
-        } = json;
+    // Update jumlah trial dan simpan log
+    await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
+    await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))',
+      [userId, username, 'ssh']);
 
-        // Update jumlah trial dan simpan log
-        await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
-        await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))',
-          [userId, username, 'ssh']);
+    const trialKe = trialCount + 1;
+    const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
+    const serverRow = await dbGetAsync('SELECT nama_server FROM Server WHERE id = ?', [serverId]);
+    const namaServer = serverRow?.nama_server || 'Unknown';
 
-        const trialKe = trialCount + 1;
-        const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
-        const serverRow = await dbGetAsync('SELECT nama_server FROM Server WHERE id = ?', [serverId]);
-        const namaServer = serverRow?.nama_server || 'Unknown';
-
-        const replyText = `
+    const replyText = `
 🔰 *AKUN SSH TRIAL*
 
 👤 \`User:\` ${username}
@@ -3068,13 +3064,13 @@ ${wss_payload}
 📆 *Expired:* ${expiration}
 `.trim();
 
-        await bot.telegram.sendMessage(chatId, replyText, {
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true
-        });
+    await bot.telegram.sendMessage(chatId, replyText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
 
-        if (GROUP_ID) {
-          const notif = `
+    if (GROUP_ID) {
+      const notif = `
 ━━━━━━━━━━━━━━━━━━━━━━━        
 🎁 𝗧𝗥𝗜𝗔𝗟 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗦𝗦𝗛 𝗡𝗘𝗪
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -3085,16 +3081,10 @@ ${wss_payload}
 ⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 60 Menit
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━
-          `.trim();
+      `.trim();
 
-          await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
-        }
-
-      } catch (e) {
-        logger.error('❌ Gagal kirim akun trial SSH:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat kirim akun.');
-      }
-    });
+      await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
+    }
   } catch (err) {
     logger.error('❌ Gagal proses trial:', err.message);
     return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat cek data trial.');
@@ -3128,34 +3118,26 @@ bot.action(/^trial_server_vmess_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro. Kamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    exec(`bash ./scripts/trialvmess.sh ${serverId}`, async (error, stdout) => {
-      if (error) return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
+    const result = await trialvmess(serverId);
+    
+    if (result.status === 'error') {
+      return bot.telegram.sendMessage(chatId, `❌ ${result.message}`);
+    }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak mengandung JSON');
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        return bot.telegram.sendMessage(chatId, '❌ Gagal parsing data trial.');
-      }
+    const {
+      username, uuid, ip, domain, ns_domain, city, public_key,
+      expiration, link_tls, link_ntls, link_grpc
+    } = result;
 
-      const {
-        username, uuid, ip, domain, ns_domain, city, public_key,
-        expiration, link_tls, link_ntls, link_grpc
-      } = json;
+    await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
+    await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'vmess']);
 
-      await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
-      await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'vmess']);
+    const trialKe = trialCount + 1;
+    const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
+    const serverRow = await dbGetAsync('SELECT nama_server FROM Server WHERE id = ?', [serverId]);
+    const namaServer = serverRow?.nama_server || 'Unknown';
 
-      const trialKe = trialCount + 1;
-      const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
-      const serverRow = await dbGetAsync('SELECT nama_server FROM Server WHERE id = ?', [serverId]);
-      const namaServer = serverRow?.nama_server || 'Unknown';
-
-      const replyText = `
+    const replyText = `
 ⚡ *AKUN VMESS TRIAL*
 
 👤 \`User:\` ${username}
@@ -3176,13 +3158,13 @@ gRPC    : \`\`\`${link_grpc}\`\`\`
 📆 *Expired:* ${expiration}
 `.trim();
 
-      await bot.telegram.sendMessage(chatId, replyText, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      });
+    await bot.telegram.sendMessage(chatId, replyText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
 
-      if (GROUP_ID) {
-        const notif = `
+    if (GROUP_ID) {
+      const notif = `
 ━━━━━━━━━━━━━━━━━━━━━━━        
 🎁 𝗧𝗥𝗜𝗔𝗟 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗩𝗠𝗘𝗦𝗦 𝗡𝗘𝗪
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -3194,9 +3176,8 @@ gRPC    : \`\`\`${link_grpc}\`\`\`
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━`.trim();
 
-        await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
-      }
-    });
+      await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
+    }
   } catch (err) {
     logger.error('❌ Gagal proses trial:', err.message);
     return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat cek data trial.');
@@ -3240,33 +3221,21 @@ bot.action(/^trial_server_vless_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro.\nKamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    exec(`bash ./scripts/trialvless.sh ${serverId}`, async (error, stdout) => {
-      if (error) {
-        logger.error('❌ Gagal eksekusi script trialvless:', error.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
-      }
+    const result = await trialvless(serverId);
+    
+    if (result.status === 'error') {
+      return bot.telegram.sendMessage(chatId, `❌ ${result.message}`);
+    }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak valid');
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        logger.error('❌ Gagal parsing JSON VLESS:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal parsing JSON.');
-      }
+    const {
+      username, uuid, domain, city, ns_domain, public_key,
+      expiration, link_tls, link_ntls, link_grpc
+    } = result;
 
-      const {
-        username, uuid, domain, city, ns_domain, public_key,
-        expiration, link_tls, link_ntls, link_grpc
-      } = json;
+    await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
+    await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'vless']);
 
-      await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
-      await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'vless']);
-
-      const replyText = `
+    const replyText = `
 🚀 *AKUN VLESS TRIAL*
 
 👤 \`User:\` ${username}
@@ -3288,16 +3257,16 @@ gRPC    :
 \`\`\`${link_grpc}\`\`\`
 
 📆 *Expired:* ${expiration}
-      `.trim();
+    `.trim();
 
-      await bot.telegram.sendMessage(chatId, replyText, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      });
+    await bot.telegram.sendMessage(chatId, replyText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
 
-      if (GROUP_ID) {
-        const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
-        const notif = `
+    if (GROUP_ID) {
+      const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
+      const notif = `
 ━━━━━━━━━━━━━━━━━━━━━━━        
 🎁 𝗧𝗥𝗜𝗔𝗟 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗩𝗟𝗘𝗦𝗦 𝗡𝗘𝗪
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -3308,11 +3277,10 @@ gRPC    :
 ⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 60 Menit
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━
-        `.trim();
+      `.trim();
 
-        await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
-      }
-    });
+      await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
+    }
   } catch (err) {
     logger.error('❌ Gagal proses trial VLESS:', err.message);
     return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat cek data trial.');
@@ -3356,33 +3324,23 @@ bot.action(/^trial_server_trojan_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro.\nKamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    exec(`bash ./scripts/trialtrojan.sh ${serverId}`, async (error, stdout) => {
-      if (error) {
-        logger.error('Gagal eksekusi script trialtrojan:', error.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
-      }
+    // Jalankan module trial Trojan
+    const result = await trialtrojan(serverId);
+    
+    if (result.status === 'error') {
+      logger.error('❌ Gagal trial Trojan:', result.message);
+      return bot.telegram.sendMessage(chatId, `❌ ${result.message}`);
+    }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak valid');
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        logger.error('❌ Gagal parsing JSON TROJAN:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal parsing JSON.');
-      }
+    const {
+      username, uuid, domain, city, ns_domain, public_key,
+      expiration, link_tls, link_grpc
+    } = result;
 
-      const {
-        username, uuid, domain, city, ns_domain, public_key,
-        expiration, link_tls, link_grpc
-      } = json;
+    await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
+    await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'trojan']);
 
-      await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
-      await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'trojan']);
-
-      const replyText = `
+    const replyText = `
 🌀 *AKUN TROJAN TRIAL*
 
 👤 \`User:\` ${username}
@@ -3402,16 +3360,16 @@ gRPC   :
 \`\`\`${link_grpc}\`\`\`
 
 📆 *Expired:* ${expiration}
-      `.trim();
+    `.trim();
 
-      await bot.telegram.sendMessage(chatId, replyText, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      });
+    await bot.telegram.sendMessage(chatId, replyText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
 
-      if (GROUP_ID) {
-        const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
-        const notif = `
+    if (GROUP_ID) {
+      const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
+      const notif = `
 ━━━━━━━━━━━━━━━━━━━━━━━        
 🚀 𝗧𝗥𝗜𝗔𝗟 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗧𝗥𝗢𝗝𝗔𝗡 𝗡𝗘𝗪
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -3422,11 +3380,10 @@ gRPC   :
 ⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 60 Menit
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━
-        `.trim();
+      `.trim();
 
-        await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
-      }
-    });
+      await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
+    }
   } catch (err) {
     logger.error('❌ Gagal proses trial TROJAN:', err.message);
     return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat cek data trial.');
@@ -3470,34 +3427,21 @@ bot.action(/^trial_server_shadowsocks_(\d+)$/, async (ctx) => {
       return await bot.telegram.sendMessage(chatId, `😅 Batas trial harian sudah tercapai bro.\nKamu hanya bisa ambil *${maxTrial}x* per hari.`, { parse_mode: 'Markdown' });
     }
 
-    exec(`bash ./scripts/trialshadowsocks.sh ${serverId}`, async (error, stdout) => {
-      if (error) {
-        logger.error('Gagal eksekusi script trialshadowsocks:', error.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal jalankan script trial.');
-      }
+    const result = await trialshadowsocks(serverId);
+    
+    if (result.status === 'error') {
+      return bot.telegram.sendMessage(chatId, `❌ ${result.message}`);
+    }
 
-      let json;
-      try {
-        const raw = stdout.trim();
-        const start = raw.indexOf('{');
-        const end = raw.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('Output tidak valid');
+    const {
+      username, password, method, domain, city, ns_domain,
+      public_key, expiration, link_tls, link_grpc
+    } = result;
 
-        json = JSON.parse(raw.substring(start, end + 1));
-      } catch (e) {
-        logger.error('❌ Gagal parsing JSON SHADOWSOCKS:', e.message);
-        return bot.telegram.sendMessage(chatId, '❌ Gagal parsing JSON.');
-      }
+    await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
+    await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'shadowsocks']);
 
-      const {
-        username, password, method, domain, city, ns_domain,
-        public_key, expiration, link_ws, link_grpc
-      } = json;
-
-      await dbRunAsync('UPDATE users SET trial_count_today = trial_count_today + 1, last_trial_date = ? WHERE user_id = ?', [today, userId]);
-      await dbRunAsync('INSERT INTO trial_logs (user_id, username, jenis, created_at) VALUES (?, ?, ?, datetime("now"))', [userId, username, 'shadowsocks']);
-
-      const replyText = `
+    const replyText = `
 🔒 *SHADOWSOCKS TRIAL*
 
 👤 \`User:\` ${username}
@@ -3509,26 +3453,25 @@ bot.action(/^trial_server_shadowsocks_(\d+)$/, async (ctx) => {
 🔑 \`PubKey:\` ${public_key}
 
 🔌 *PORT*
-443 (WS/gRPC)
+443 (TLS/gRPC)
 
 🔗 *Link*
-WS     : 
-\`\`\`${link_ws}\`\`\`
+TLS    : 
+\`\`\`${link_tls}\`\`\`
 gRPC   : 
 \`\`\`${link_grpc}\`\`\`
 
-📄 *OpenClash:* https://${domain}:81/shadowsocks-${username}.txt
 📆 *Expired:* ${expiration}
-      `.trim();
+    `.trim();
 
-      await bot.telegram.sendMessage(chatId, replyText, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      });
+    await bot.telegram.sendMessage(chatId, replyText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
 
-      if (GROUP_ID) {
-        const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
-        const notif = `
+    if (GROUP_ID) {
+      const roleLabel = role === 'admin' ? 'Admin' : role === 'reseller' ? 'Reseller' : 'User';
+      const notif = `
 ━━━━━━━━━━━━━━━━━━━━━━━
 ♎ 𝗧𝗿𝗶𝗮𝗹 𝗔𝗸𝘂𝗻 𝗦𝗛𝗔𝗗𝗢𝗪𝗦𝗢𝗖𝗞𝗦 𝗡𝗲𝘄
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -3539,11 +3482,10 @@ gRPC   :
 ⏳ 𝗗𝘂𝗿𝗮𝘀𝗶: 60 Menit
 🕒 𝗪𝗮𝗸𝘁𝘂: ${new Date().toLocaleString('id-ID')}
 ━━━━━━━━━━━━━━━━━━━━━━━
-        `.trim();
+      `.trim();
 
-        await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
-      }
-    });
+      await bot.telegram.sendMessage(GROUP_ID, notif, { parse_mode: 'Markdown' });
+    }
   } catch (err) {
     logger.error('❌ Gagal proses trial SHADOWSOCKS:', err.message);
     return bot.telegram.sendMessage(chatId, '❌ Terjadi kesalahan saat cek data trial.');
@@ -3774,8 +3716,16 @@ bot.on('text', async (ctx) => {
       if (!handler) return ctx.reply('❌ *Tipe layanan tidak dikenali.*', { parse_mode: 'Markdown' });
 
       const msg = await handler();
+      
+      // Validate message
       if (!msg || typeof msg !== 'string') {
-        return ctx.reply('❌ *Terjadi kesalahan saat membuat akun.*', { parse_mode: 'Markdown' });
+        logger.error('❌ Invalid response from handler:', { msg, type: typeof msg });
+        return ctx.reply('❌ *Terjadi kesalahan saat membuat akun. Response invalid.*', { parse_mode: 'Markdown' });
+      }
+      
+      // Check if message is error message
+      if (msg.startsWith('❌')) {
+        return ctx.reply(msg, { parse_mode: 'Markdown' });
       }
 
       await dbRunAsync('UPDATE Server SET total_create_akun = total_create_akun + 1 WHERE id = ?', [serverId]);
@@ -3816,15 +3766,15 @@ bot.on('text', async (ctx) => {
       }
 
       const mention = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name;
-const isReseller = user?.role === 'reseller';
-const label = isReseller ? 'Reseller' : 'User';
-const actionLabel = action === 'renew' ? '♻️ 𝗥𝗲𝗻𝗲𝘄 𝗯𝘆' : '📩 𝗖𝗿𝗲𝗮𝘁𝗲 𝗯𝘆';
+      const isReseller = user?.role === 'reseller';
+      const label = isReseller ? 'Reseller' : 'User';
+      const actionLabel = action === 'renew' ? '♻️ 𝗥𝗲𝗻𝗲𝘄 𝗯𝘆' : '📩 𝗖𝗿𝗲𝗮𝘁𝗲 𝗯𝘆';
 
-const serverNama = server?.nama_server || server?.domain || 'Unknown Server';
-const ipLimit = server?.iplimit || iplimit || '-';
-const hargaFinal = totalHarga || 0;
-const durasiHari = days || 30;
-const waktuSekarang = new Date().toLocaleString('id-ID');
+      const serverNama = server?.nama_server || server?.domain || 'Unknown Server';
+      const ipLimit = server?.iplimit || '-';
+      const hargaFinal = totalHarga || 0;
+      const durasiHari = days || 30;
+      const waktuSekarang = new Date().toLocaleString('id-ID');
 
 // Template invoice
 const invoice = `
@@ -3842,15 +3792,41 @@ ${isReseller ? `📊 𝗞𝗼𝗺𝗶𝘀𝗶: Rp${komisi?.toLocaleString('id-ID
 ━━━━━━━━━━━━━━━━━━━━━━━
 `.trim();
 
-        await bot.telegram.sendMessage(GROUP_ID, invoice);
-      
+      // Send to group if GROUP_ID is valid
+      if (GROUP_ID && GROUP_ID !== 'ISIDISNI' && !isNaN(GROUP_ID)) {
+        try {
+          await bot.telegram.sendMessage(GROUP_ID, invoice);
+        } catch (groupErr) {
+          logger.warn('⚠️ Failed to send to group:', groupErr.message);
+        }
+      }
 
-      await ctx.reply(msg, { parse_mode: 'Markdown', disable_web_page_preview: true });
+      // Send message to user
+      try {
+        await ctx.reply(msg, { parse_mode: 'Markdown', disable_web_page_preview: true });
+        logger.info(`✅ Account ${type} created successfully for user ${userId}`);
+      } catch (replyErr) {
+        logger.error('❌ Failed to send account details:', replyErr.message);
+        // Try sending without markdown
+        try {
+          await ctx.reply('✅ *Akun berhasil dibuat!*\n\nDetail akun sudah dikirim ke admin.', { parse_mode: 'Markdown' });
+        } catch (err2) {
+          logger.error('❌ Failed to send any message:', err2.message);
+        }
+      }
+      
       delete userState[chatId];
     }
   } catch (err) {
     logger.error('❌ Error on text handler:', err.message);
-    await ctx.reply('❌ *Terjadi kesalahan saat memproses permintaan.*', { parse_mode: 'Markdown' });
+    logger.error('❌ Error stack:', err.stack);
+    
+    try {
+      await ctx.reply('❌ *Terjadi kesalahan saat memproses permintaan.*\n\nDetail: ' + err.message, { parse_mode: 'Markdown' });
+    } catch (replyErr) {
+      console.error('Failed to send error message:', replyErr);
+    }
+    
     delete userState[chatId];
   }
 
@@ -5103,7 +5079,7 @@ bot.on('callback_query', async (ctx) => {
   
  if (data.startsWith('restore_uploaded_file::')) {
   const fileName = data.split('::')[1];
-  const filePath = path.join('/root/Alrescha79/uploaded_restore', fileName);
+  const filePath = path.join('/backup/bot/uploaded_restore', fileName);
 
   if (!fs.existsSync(filePath)) {
     return ctx.reply(`❌ File tidak ditemukan: ${fileName}`);
@@ -5124,7 +5100,7 @@ bot.on('callback_query', async (ctx) => {
 
   if (data.startsWith('delete_uploaded_file::')) {
   const fileName = data.split('::')[1];
-  const filePath = path.join('/root/Alrescha79/uploaded_restore', fileName);
+  const filePath = path.join('/backup/bot/uploaded_restore', fileName);
 
   if (!fs.existsSync(filePath)) {
     return ctx.reply(`❌ *File tidak ditemukan:* \`${fileName}\``, { parse_mode: 'Markdown' });

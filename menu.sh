@@ -59,7 +59,6 @@ wget -q -O trialvless "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/r
 wget -q -O trialssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialssh"
 wget -q -O trialshadowsoks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialshadowsoks"
 
-wget -q -O check-license "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/check-license.sh"
 wget -q -O exp-warning "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/exp-warning"
 
 chmod +x addshadowsocks
@@ -108,7 +107,6 @@ chmod +x trialvmess
 chmod +x trialvless
 chmod +x trialssh
 chmod +x trialshadowsocks
-chmod +x check-license
 chmod +x exp-warning
 
 echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"

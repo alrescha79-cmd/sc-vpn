@@ -94,8 +94,6 @@ vpn_services=(
     "dropbear.service"  # Dropbear bukan SSH utama
     "openvpn.service"
     "xray.service"
-    "license-monitor.timer"      # License monitor
-    "license-monitor.service"    # License monitor
 )
 
 for service in "${vpn_services[@]}"; do
@@ -122,8 +120,6 @@ vpn_service_files=(
     "/etc/systemd/system/xray@.service.d/10-donot_touch_single_conf.conf"
     "/etc/systemd/system/xray@.service.d"
     "/lib/systemd/system/dropbear.service"
-    "/etc/systemd/system/license-monitor.service"
-    "/etc/systemd/system/license-monitor.timer"
 )
 
 for file in "${vpn_service_files[@]}"; do
@@ -269,9 +265,6 @@ vpn_menu_scripts=(
     "/usr/bin/trialvless"
     "/usr/bin/trialssh"
     "/usr/bin/trialshadowsoks"
-    "/usr/bin/check-license"           # License monitor
-    "/usr/bin/install-license-monitor" # License monitor installer
-    "/usr/bin/uninstall-license-monitor" # License monitor uninstaller
 )
 
 # Combine VPN binaries

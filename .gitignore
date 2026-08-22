@@ -44,14 +44,6 @@ Thumbs.db
 ehthumbs.db
 Thumbs.db
 
-# Node.js dependencies (for bot)
-bot/node_modules/
-bot/npm-debug.log*
-bot/npm-error.log*
-bot/npm-error.log
-bot/yarn-debug.log*
-bot/yarn-error.log*
-
 # Build artifacts
 backend/
 
@@ -67,7 +59,6 @@ backend/
 # Project specific files to ignore
 backend.zip
 gotop
-izin
 update
 
 # Ignore all shadowsocks config files (they contain sensitive data)

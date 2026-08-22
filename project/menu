@@ -1,100 +1,5 @@
 #!/bin/bash
 
-# DAPATKAN IP DAN TANGGAL
-ipsaya=$(curl -sS ipv4.icanhazip.com)
-data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
-date_list=$(date +"%Y-%m-%d" -d "$data_server")
-
-# AMBIL DATA CLIENT 
-MYIP=$ipsaya
-url_izin="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin"
-data_izin=$(curl -sS "$url_izin")
-user_line=$(echo "$data_izin" | grep "$MYIP")
-
-if [ -n "$user_line" ]; then
-    username=$(echo "$user_line" | awk '{print $2}')
-    valid=$(echo "$user_line" | awk '{print $3}')
-else
-    username=""
-    valid=""
-fi
-
-echo "$username" >/usr/bin/user
-echo "$valid" >/usr/bin/e
-
-# TANGGAL HARI INI DAN EXPIRY
-today=$(date +'%Y-%m-%d')
-Exp1="$valid"  # tanggal expiry
-
-# FUNGSI HITUNG SELISIH HARI & FORMAT TANGGAL
-datediff() {
-    local d1=$(date -d "$1" +%s)
-    local d2=$(date -d "$2" +%s)
-    local diff=$(( (d1 - d2) / 86400 ))
-    diff=${diff#-}  # selalu positif
-    local formatted=$(date -d "$1" +'%d-%m-%Y')
-    echo "$diff day | $formatted"
-}
-
-# FUNGSI VALIDASI MASA AKTIF
-validate_access() {
-    if [ -z "$username" ] || [ -z "$valid" ]; then
-        clear
-        echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-        echo -e "${red}║                           AKSES DITOLAK                        ║${neutral}"
-        echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${red}       IP Anda (${MYIP}) tidak terdaftar dalam sistem                    ${neutral}"
-        echo -e "${red}                                                                         ${neutral}"
-        echo -e "${red}       Silakan hubungi administrator untuk mendapatkan akses:            ${neutral}"
-        echo -e "${red}       📱 Telegram: https://t.me/Alrescha79                              ${neutral}"
-        echo -e "${red}       📧 Email: anggun@cakson.my.id                                     ${neutral}"
-        echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-        echo -e ""
-        echo -e "${yellow}Tekan Enter untuk keluar...${neutral}"
-        read
-        exit 1
-    fi
-    
-    # Cek masa aktif
-    current_date=$(date +%Y-%m-%d)
-    if [[ "$valid" < "$current_date" ]]; then
-        expired_days=$(( ( $(date -d "$current_date" +%s) - $(date -d "$valid" +%s) ) / 86400 ))
-        
-        clear
-        echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-        echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
-        echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${red}               Akses untuk IP Anda telah kadaluarsa! ${neutral}"
-        echo -e "${red}                                               ${neutral}"
-        echo -e "${red}       Detail Akses:                           ${neutral}"
-        echo -e "${red}         • User ID: ${username}                ${neutral}"
-        echo -e "${red}         • IP Address: ${MYIP}                 ${neutral}"
-        echo -e "${red}         • Tanggal Kadaluarsa: ${valid}        ${neutral}"
-        echo -e "${red}         • Sudah Expired: ${expired_days} hari ${neutral}"
-        echo -e "${red}                                               ${neutral}"
-        echo -e "${red}       Untuk memperpanjang masa aktif, hubungi:${neutral}"
-        echo -e "${red}       📱 Telegram: https://t.me/Alrescha79    ${neutral}"
-        echo -e "${red}       📧 Email: anggun@cakson.my.id           ${neutral}"
-        echo -e "${red}                                               ${neutral}"
-        echo -e "${red}               💰 Informasi Harga & Paket Tersedia  ${neutral}"
-        echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-        echo -e ""
-        echo -e "${yellow}Tekan Enter untuk keluar...${neutral}"
-        read
-        exit 1
-    fi
-}
-
-# CEK STATUS ACTIVE / EXPIRED
-validate_access
-
-Info="(${green}Active${neutral})"
-Error="(${red}Expired${neutral})"
-if [[ "$today" < "$Exp1" ]]; then
-    sts="${Info}"
-else
-    sts="${Error}"
-fi
 
 # Colors
 green="\e[38;5;87m"
@@ -261,27 +166,6 @@ display_menu
 display_menu() {
     clear
     
-    # Hitung sisa hari
-    days_left=$(( ( $(date -d "$valid" +%s) - $(date -d "$today" +%s) ) / 86400 ))
-    
-    echo -e ""
-    echo -e "${cyan}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${cyan}║                           ${yellow}ALRESCHA79 VPN PANEL${cyan}                        ║${neutral}"
-    echo -e "${cyan}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-    
-    # Peringatan jika masa aktif akan berakhir dalam 7 hari
-    if [ "$days_left" -le 7 ] && [ "$days_left" -gt 0 ]; then
-        echo -e "${red}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-        echo -e "${red}║                            ${yellow}PERINGATAN${red}                                 ║${neutral}"
-        echo -e "${red}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${red}             ⚠️ Akses Anda akan berakhir dalam ${days_left} hari!       ${neutral}"
-        echo -e ""
-        echo -e "${red}        Hubungi developer untuk perpanjangan akses.                 ${neutral}"
-        echo -e "${red}        Telegram: https://t.me/Alrescha79                               ${neutral}"
-        echo -e "${red}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-        echo -e ""
-    fi
     
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                            INFORMASI SISTEM                           ║${neutral}"
@@ -296,13 +180,6 @@ display_menu() {
     echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
     echo -e ""
 
-    echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${green}║                            INFORMASI AKSES                            ║${neutral}"
-    echo -e "${green}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "                   ${white}USER ID     : $username ${sts}${neutral}"
-    echo -e "                   ${white}MASA AKTIF  : $(datediff "$valid" "$today")${neutral}"            
-    echo -e "${green}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
     
     echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
     echo -e "${green}║                          NOTIFIKASI TELEGRAM                          ║${neutral}"

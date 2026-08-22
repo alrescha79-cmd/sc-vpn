@@ -587,58 +587,6 @@ read -n1 -s -r -p "Tekan tombol untuk kembali ke menu utama" 2>/dev/null
 return
 }
 
-cek_izin_skrip() {
-    while true; do
-        clear
-        echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
-        echo -e "${orange}║                         INFORMASI IZIN SKRIP                          ║${neutral}"
-        echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
-        echo -e "       ${neutral}${green} [1]${neutral} Cek Izin Penggunaan Skrip"
-        echo -e "       ${neutral}${green} [2]${neutral} Status Izin Penggunaan Skrip"
-        echo -e "      ${neutral} ${red} [x]${neutral} Kembali"
-        echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
-        echo -e ""
-        read -p "Pilih opsi [1-2 or x]: " pilihan
-        
-        case $pilihan in
-            1)
-                echo -e ""
-                echo -e "${blue}Menjalankan pengecekan izin lisensi lengkap...${neutral}"
-                echo -e ""
-                if command -v check-license >/dev/null 2>&1; then
-                    check-license --check
-                else
-                    echo -e "${red}Error: License monitor belum terinstall.${neutral}"
-                    echo -e "${yellow}Silakan jalankan setup script terlebih dahulu.${neutral}"
-                fi
-                echo -e ""
-                read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
-                ;;
-            2)
-                echo -e ""
-                echo -e "${blue}Menampilkan status izin lisensi...${neutral}"
-                echo -e ""
-                if command -v check-license >/dev/null 2>&1; then
-                    check-license --status
-                else
-                    echo -e "${red}Error: License monitor belum terinstall.${neutral}"
-                    echo -e "${yellow}Silakan jalankan setup script terlebih dahulu.${neutral}"
-                fi
-                echo -e ""
-                read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu"
-                ;;
-            x|X)
-                return
-                ;;
-            *)
-                echo -e "   ${red}Pilihan tidak valid!${neutral}"
-                sleep 1.5
-                ;;
-        esac
-    done
-}
-
 uninstall_panel_vpn() {
     clear
     echo -e "${red}PERINGATAN:${neutral} Fitur ini akan menghapus semua konfigurasi panel VPN dan layanan terkait."
@@ -680,14 +628,14 @@ display_features() {
             echo -e "${neutral}${green} [2]${neutral} Periksa Penggunaan BW      ║${neutral}  ${green}[10]${neutral} Perbarui Versi X-ray"
         echo -e "${neutral}${green} [3]${neutral} Cadangan Otomatis Server   ║${neutral}  ${green}[11]${neutral} Gotop (Monitor Sistem)"
         echo -e "${neutral}${green} [4]${neutral} Cadangkan/Pulihkan Server  ║${neutral}  ${green}[12]${neutral} Pengaturan Mulai Ulang Otomatis"
-        echo -e "${neutral}${green} [5]${neutral} Informasi Port             ║${neutral}  ${green}[13]${neutral} Cek Izin Skrip"
-        echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Uninstall Panel VPN"
-        echo -e "${neutral}${green} [7]${neutral} Ubah Domain Server         ║${neutral}  ${green}[15]${neutral} Mulai Ulang Server"
-        echo -e "${neutral}${green} [8]${neutral} Ubah Banner Server         ║${neutral}  ${green}[16]${neutral} Setup Cloudflare WARP"
+        echo -e "${neutral}${green} [5]${neutral} Informasi Port             ║${neutral}  ${green}[13]${neutral} Uninstall Panel VPN"
+        echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Mulai Ulang Server"
+        echo -e "${neutral}${green} [7]${neutral} Ubah Domain Server"
+        echo -e "${neutral}${green} [8]${neutral} Ubah Banner Server"
         echo -e "${neutral}                 ${red} [x]${neutral} Keluar dari Menu Sistem & Fitur${neutral}"
         echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         echo -e ""
-        echo -ne "   ${green}Pilih menu [1-16] atau ketik 'x' untuk keluar: ${neutral}"
+        echo -ne "   ${green}Pilih menu [1-14] atau ketik 'x' untuk keluar: ${neutral}"
         read menu
         case $menu in
             1) running ;;
@@ -733,35 +681,8 @@ display_features() {
                 gotop
                 ;;
             12) setting_reboot_jam_reboot ;;
-            13) cek_izin_skrip ;;
-            14) uninstall_panel_vpn ;;
-            15) read -p " Apakah Anda yakin ingin reboot server? (y/n): " ans; [[ $ans =~ ^[Yy]$ ]] && reboot ;;
-            16) 
-                # Try multiple possible locations for setup-warp.sh
-                warp_script=""
-                for path in "/usr/local/bin/setup-warp.sh" "/usr/bin/setup-warp.sh" "$(dirname "$0")/setup-warp.sh" "/root/setup-warp.sh"; do
-                    if [ -f "$path" ]; then
-                        warp_script="$path"
-                        break
-                    fi
-                done
-                
-                if [ -n "$warp_script" ]; then
-                    bash "$warp_script"
-                else
-                    echo -e "${red}Error: Script setup-warp.sh tidak ditemukan!${neutral}"
-                    echo -e "${yellow}Mencoba mendownload script...${neutral}"
-                    wget -O /tmp/setup-warp.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/setup-warp.sh 2>/dev/null
-                    if [ -f /tmp/setup-warp.sh ]; then
-                        chmod +x /tmp/setup-warp.sh
-                        bash /tmp/setup-warp.sh
-                        rm -f /tmp/setup-warp.sh
-                    else
-                        echo -e "${red}Gagal mendownload script setup-warp.sh${neutral}"
-                        sleep 3
-                    fi
-                fi
-                ;;
+            13) uninstall_panel_vpn ;;
+            14) read -p " Apakah Anda yakin ingin reboot server? (y/n): " ans; [[ $ans =~ ^[Yy]$ ]] && reboot ;;
             x|X)
                 echo -e ""
                 echo -e "${green}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"

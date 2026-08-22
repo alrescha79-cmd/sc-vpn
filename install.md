@@ -2,7 +2,7 @@
 
 ![Panel VPN Auto Installer: Xray | OVPN | SSH | SlowDNS](https://readme-typing-svg.demolab.com?font=Capriola&size=40&duration=4000&pause=450&color=F70069&background=FFFFAA00&center=true&random=false&width=600&height=100&lines=Panel+VPN+Auto+Installer;Xray+%7C+OVPN+%7C+SSH+%7C+SlowDNS)
 
-Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS, Trojan, Shadowsocks, SlowDNS, dsb) secara otomatis disertai utilitas manajemen akun dan API sederhana.
+Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS, Trojan, Shadowsocks, SlowDNS, dsb) secara otomatis disertai utilitas manajemen akun.
 
 ---
 
@@ -12,11 +12,6 @@ Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS
 - [Instalasi](#-instalasi)
 - [Informasi Penting](#️-informasi-penting)
 - [Setup Notifikasi Telegram](#setup-notifikasi-telegram)
-- [Instalasi Bot Telegram (Opsional)](#instalasi-bot-telegram-opsional)
-- [Manajemen API](#-manajemen-api)
-- [Perintah Manajemen Akun](#-perintah-manajemen-akun)
-- [Konfigurasi Auto Reboot](#-konfigurasi-auto-reboot)
-- [Manajemen API](#-manajemen-api)
 - [Perintah Manajemen Akun](#-perintah-manajemen-akun)
 - [Konfigurasi Auto Reboot](#-konfigurasi-auto-reboot)
 - [Setting Domain/Subdomain Support Wildcard di Cloudflare](#setting-domainsubdomain-support-wildcard-di-cloudflare)
@@ -38,9 +33,8 @@ Script ini membantu Anda memasang layanan SSH / VPN multi-protokol (VMess, VLESS
    Harus memiliki domain/subdomain yang mengarah ke `IP VPS Anda` (A record). Contoh: `vpn.example.com`
 4. **Akun Cloudflare (Opsional)**  
     Jika menggunakan Cloudflare, pastikan proxy dimatikan (ikon awan abu-abu) untuk domain/subdomain yang digunakan.
-5. **Akses ke Script**  
-  Pastikan Anda memiliki akses ke script ini (IP dan tengggat waktu) yang didaftarkan.
-  Hubungi saya di Telegram: [@Alrescha79](https://t.me/Alrescha79) untuk informasi lebih lanjut.
+5. **Gratis & Open Source**  
+   Script ini bersifat open source dan gratis. Tidak ada registrasi IP atau lisensi yang diperlukan untuk melakukan instalasi.
 
 ---
 
@@ -63,7 +57,7 @@ sudo su
 ```bash
 apt-get update && \
 apt-get --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd build-essential && \
-wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh && \
+wget --inet4-only --no-check-certificate -O setup.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/setup.sh && \
 chmod +x setup.sh && \
 screen -S setup ./setup.sh
 ```
@@ -94,7 +88,7 @@ Jika saat proses instalasi (Langkah 1) sesi terminal terputus, jangan jalankan u
 - Jika tidak bisa masuk ke `opsi (8) Menu Features`, keluar dari `menu` dengan `CTRL  C`. Kemudian jalankan perintah:
 
   ```bash
-  curl -o /usr/bin/features https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/features
+  curl -o /usr/bin/features https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/features
   ```
 
 - Jika ada masalah, silakan hubungi saya di Telegram: [@Alrescha79](https://t.me/Alrescha79)
@@ -115,70 +109,7 @@ Pastikan Anda berada di menu utama, jika tidak, jalankan perintah `menu`.
 ![Telegram Setup](img/setuptele.png)
 3. Masukkan `Token Bot` Telegram Anda.
 4. Masukkan `Chat ID` Telegram Anda.
-5. Klik `Enter` untuk melanjutkan, bot akan berjalan otomatis sebagai service.
-
----
-
-## Instalasi Bot Telegram (Opsional)
-
-Jika ingin mengelola akun melalui bot Telegram, ikuti langkah berikut:
-
-1. Instalasi Otomatis
-
-    ```bash
-    sysctl -w net.ipv6.conf.all.disable_ipv6=1 \
-    && sysctl -w net.ipv6.conf.default.disable_ipv6=1 \
-    && apt update -y \
-    && apt install -y git curl dos2unix \
-    && curl -L -k -sS https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bot/start2 -o start2 \
-    && dos2unix start2 \
-    && bash start2 sellvpn \
-    && [ $? -eq 0 ] && rm -f start2
-    ```
-
-2. Ikuti instruksi pada layar untuk mengonfigurasi bot Telegram Anda.
-    - Masukkan `Token Bot` Telegram
-    - Masukkan `Chat ID` Telegram
-    - Masukkan `Group ID` Telegram (jika ada)
-    - Masukkan `Nama Store` (opsional, untuk fitur pembayaran QRIS)
-    - Masukkan `Data QRIS` (opsional, untuk fitur pembayaran QRIS)
-    - Masukkan `Merchant ID` (opsional, untuk fitur pembayaran QRIS)
-    - Masukkan `API Key` (opsional, untuk fitur pembayaran QRIS)
-
-3. Setelah instalasi selesai, bot akan berjalan otomatis sebagai service.
-
-### Fitur Bot Telegram
-
-- Membuat akun baru (VMess, VLESS, Trojan, Shadowsocks, SSH)
-- Memperpanjang akun yang yang sudah ada
-- Menambah saldo akun pengguna (jika menggunakan sistem pembayaran)
-- Melihat informasi saldo pengguna
-
-### Tekhnologi yang Digunakan
-
-- Node.js
-- Sqlite3
-- Telegraf.js
-
----
-
-## 🌐 Manajemen API
-
-Skrip menyediakan instalasi REST API (Go) untuk automasi manajemen akun.
-
-### Instalasi API
-
-```bash
-wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/golang/rest-go.sh
-chmod +x rest-go.sh
-bash rest-go.sh
-```
-
-Setelah terpasang:
-
-- Binary / service biasanya ditempatkan di `/usr/local/bin` atau direktori yang ditentukan skrip.
-- Pastikan port API tidak diblok firewall (contoh: `ufw allow <PORT>` bila memakai UFW).
-- Untuk keamanan, pasang reverse proxy + limit akses (misal iptables / fail2ban).
+5. Klik `Enter` untuk melanjutkan, notifikasi akan berjalan otomatis.
 
 ---
 

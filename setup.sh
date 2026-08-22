@@ -207,239 +207,12 @@ isp=$(curl -s ipinfo.io/org | cut -d " " -f 2-10)
 domain=$(cat /etc/xray/domain)
 ip=$(wget -qO- ipinfo.io/ip)
 
-# Mendapatkan data izin dan user info
-echo -e "${blue}Mengunduh data otorisasi...${neutral}"
-data=$(curl -s --connect-timeout 10 --max-time 30 https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/izin)
-
-# Cek apakah data berhasil diunduh
-if [ -z "$data" ]; then
-    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${red}║                          KONEKSI GAGAL                         ║${neutral}"
-    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${red}           Gagal mengunduh data otorisasi dari GitHub                    ${neutral}"
-    echo -e "${red}                                                                         ${neutral}"
-    echo -e "${red}           Ada beberapa kemungkinan penyebab:                            ${neutral}"
-    echo -e "${red}             • Tidak ada koneksi internet                                ${neutral}"
-    echo -e "${red}             • Server GitHub tidak dapat dijangkau                       ${neutral}"
-    echo -e "${red}             • Firewall memblokir koneksi                                ${neutral}"
-    echo -e "${red}                                                                         ${neutral}"
-    echo -e "${red}           Silahkan periksa koneksi Anda dan coba lagi                   ${neutral}"
-    echo -e "${red}           Jika masalah berlanjut, hubungi:                              ${neutral}"
-    echo -e "${red}           📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-    echo -e "${red}           📧 Email: anggun@cakson.my.id                                 ${neutral}"
-    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-    echo -e "${yellow}Instalasi dibatalkan karena gagal mengunduh data.${neutral}"
-    exit 1
-fi
-
-# Cek apakah format data valid (format: ### User Date IP)
-if ! echo "$data" | grep -q "^###.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.*[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+"; then
-    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${red}║                    KESALAHAN FORMAT DATA                       ║${neutral}"
-    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${red}  Format data otorisasi dari GitHub tidak valid                 ${neutral}"
-    echo -e "${red}                                                                ${neutral}"
-    echo -e "${red}  Jika masalah berlanjut, hubungi:                              ${neutral}"
-    echo -e "${red}  📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-    echo -e "${red}  📧 Email: anggun@cakson.my.id                                 ${neutral}"
-    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-    echo -e "${yellow}Instalasi dibatalkan karena kesalahan format data.${neutral}"
-    exit 1
-fi
-
-# Parsing data sesuai format baru: ### User Date IP
-user_line=$(echo "$data" | grep "$ip")
-if [ -n "$user_line" ]; then
-    user_id=$(echo "$user_line" | awk '{print $2}')
-    exp_date=$(echo "$user_line" | awk '{print $3}')
-    user_ip=$(echo "$user_line" | awk '{print $4}')
-else
-    user_id=""
-    exp_date=""
-    user_ip=""
-fi
-
-# Validasi IP dalam daftar izin
-echo -e "${blue}Memeriksa otorisasi IP...${neutral}"
-if [ -z "$user_id" ]; then
-    # Log unauthorized access attempt
-    mkdir -p /var/log/setup
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] UNAUTHORIZED ACCESS ATTEMPT - IP: $ip, ISP: $isp, City: $city" >> /var/log/setup/unauthorized.log
-    
-    # Send Telegram notification for unauthorized access
-    system_info=$(get_system_info)
-    IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch attempt_time <<< "$system_info"
-    
-    unauthorized_message="🚨 <b>AKSES TIDAK SAH TERDETEKSI!</b>
-
-⚠️ <b>Detail Percobaan Akses:</b>
-🆔 IP Address: <code>${server_ip}</code>
-⏰ Waktu Percobaan: <code>${attempt_time}</code>
-📂 Repository : <code>https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/setup.sh</code>
-
-
-🌍 <b>Lokasi Server:</b>
-🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
-🏢 ISP: <code>${server_org}</code>
-🕐 Timezone: <code>${server_timezone}</code>
-
-💻 <b>Sistem yang Digunakan:</b>
-🖥️ Hostname: <code>${server_hostname}</code>
-📦 OS: <code>${server_os}</code>
-🔧 Kernel: <code>${server_kernel}</code>
-
-❌ <b>Status:</b> Akses ditolak - IP tidak terdaftar
-📝 <b>Tindakan:</b> Percobaan akses telah dicatat
-🔒 <b>Keamanan:</b> Script telah dihentikan
-
-📞 <b>Admin:</b> @Alrescha79"
-
-    send_telegram_notification "$unauthorized_message" "HTML" "unauthorized"
-    
-    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${red}║                           AKSES DITOLAK                        ║${neutral}"
-    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${red}  Alamat IP Anda (${ip}) tidak terdaftar dalam daftar izin      ${neutral}"
-    echo -e "${red}                                                                ${neutral}"
-    echo -e "${red}  Silakan hubungi pengembang untuk mendapatkan akses:           ${neutral}"
-    echo -e "${red}  📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-    echo -e "${red}  📧 Email: anggun@cakson.my.id                                 ${neutral}"
-    echo -e "${red}                                                                ${neutral}"
-    echo -e "${red}  Untuk meminta akses, harap berikan informasi:                 ${neutral}"
-    echo -e "${red}    • Alamat IP VPS: ${ip}                                      ${neutral}"
-    echo -e "${red}    • Tujuan penggunaan script                                  ${neutral}"
-    echo -e "${red}    • Lokasi server: ${city}                                    ${neutral}"
-    echo -e "${red}    • Provider: ${isp}                                          ${neutral}"
-    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-    echo -e "${yellow}Instalasi dibatalkan karena IP tidak terdaftar.${neutral}"
-    echo -e "${gray}Upaya akses ini telah dicatat untuk tujuan keamanan.${neutral}"
-    echo -e "${gray}Script akan keluar dalam 10 detik...${neutral}"
-    sleep 10
-    exit 1
-fi
-
-# Validasi tanggal kadaluarsa
-current_date=$(date +%Y-%m-%d)
-if [[ "$exp_date" < "$current_date" ]]; then
-    # Log expired access attempt
-    mkdir -p /var/log/setup
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] EXPIRED ACCESS ATTEMPT - User: $user_id, IP: $ip, Expired: $exp_date" >> /var/log/setup/expired.log
-    
-    # Send Telegram notification for expired access
-    system_info=$(get_system_info)
-    IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch attempt_time <<< "$system_info"
-    
-    expired_message="⏰ <b>AKSES KADALUARSA TERDETEKSI!</b>
-
-📊 <b>Detail Pengguna:</b>
-👤 User ID: <code>${user_id}</code>
-🆔 IP Address: <code>${server_ip}</code>
-⏰ Waktu Percobaan: <code>${attempt_time}</code>
-📅 Tanggal Kadaluarsa: <code>${exp_date}</code>
-📅 Tanggal Sekarang: <code>${current_date}</code>
-
-🌍 <b>Lokasi Server:</b>
-🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
-🏢 ISP: <code>${server_org}</code>
-
-💻 <b>Sistem:</b>
-🖥️ Hostname: <code>${server_hostname}</code>
-📦 OS: <code>${server_os}</code>
-
-❌ <b>Status:</b> Akses ditolak - Lisensi telah expired
-📝 <b>Tindakan:</b> Percobaan akses telah dicatat
-💰 <b>Solusi:</b> Perpanjang lisensi untuk melanjutkan
-
-📞 <b>Perpanjangan:</b> @Alrescha79"
-
-    send_telegram_notification "$expired_message" "HTML" "expired"
-    
-    echo -e "${red}╔════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${red}║                        AKSES KADALUARSA                        ║${neutral}"
-    echo -e "${red}╠════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${red}  Akses untuk IP Anda telah kadaluarsa                          ${neutral}"
-    echo -e "${red}                                                                ${neutral}"
-    echo -e "${red}  Detail akses:                                                 ${neutral}"
-    echo -e "${red}    • User ID: ${user_id}                                       ${neutral}"
-    echo -e "${red}    • IP Address: ${ip}                                         ${neutral}"
-    echo -e "${red}    • Tanggal Kadaluarsa: ${exp_date}                           ${neutral}"
-    echo -e "${red}    • Tanggal Hari Ini: ${current_date}                         ${neutral}"
-    echo -e "${red}                                                                ${neutral}"
-    echo -e "${red}  Untuk memperpanjang akses, hubungi:                           ${neutral}"
-    echo -e "${red}  📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-    echo -e "${red}  📧 Email: anggun@cakson.my.id                                 ${neutral}"
-    echo -e "${red}╚════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-    echo -e "${yellow}Instalasi dibatalkan karena akses telah kadaluarsa.${neutral}"
-    echo -e "${gray}Script akan keluar dalam 10 detik...${neutral}"
-    sleep 10
-    exit 1
-fi
-
-# Hitung sisa hari akses
-days_left=$(( ( $(date -d "$exp_date" +%s) - $(date -d "$current_date" +%s) ) / 86400 ))
-
-# Log authorized access
-mkdir -p /var/log/setup
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] AUTHORIZED ACCESS - User: $user_id, IP: $ip, Expires: $exp_date, Days Left: $days_left" >> /var/log/setup/authorized.log
-
-system_info=$(get_system_info)
-IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch install_time <<< "$system_info"
-
-telegram_message="🚀 <b>Alrescha79 VPN Script - Instalasi Dimulai</b>
-
-📊 <b>Detail Pengguna:</b>
-👤 User ID: <code>${user_id}</code>
-🆔 IP Address: <code>${server_ip}</code>
-⏰ Waktu Instalasi: <code>${install_time}</code>
-📅 Masa Berlaku: <code>${exp_date}</code>
-⏳ Sisa Waktu: <code>${days_left} hari</code>
-
-🌍 <b>Informasi Server:</b>
-🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
-🏢 ISP: <code>${server_org}</code>
-🕐 Timezone: <code>${server_timezone}</code>
-🖥️ Hostname: <code>${server_hostname}</code>
-
-💻 <b>Sistem Operasi:</b>
-📦 OS: <code>${server_os}</code>
-🔧 Kernel: <code>${server_kernel}</code>
-🏗️ Architecture: <code>${server_arch}</code>
-
-🔧 <b>Status:</b> Instalasi sedang berlangsung...
-📞 <b>Support:</b> @Alrescha79"
-
-send_telegram_notification "$telegram_message" "HTML" "start"
-
-echo -e "${green}╔════════════════════════════════════════════════════════════════╗${neutral}"
-echo -e "${green}║                          AKSES DITERIMA                        ║${neutral}"
-echo -e "${green}╠════════════════════════════════════════════════════════════════╣${neutral}"
-echo -e "${green}  ✓ Otorisasi IP berhasil diverifikasi                         ${neutral}"
-echo -e "${green}  ✓ User ID: ${user_id}                                        ${neutral}"
-echo -e "${green}  ✓ IP Address: ${ip}                                          ${neutral}"
-echo -e "${green}  ✓ Masa Berlaku: ${exp_date}                                  ${neutral}"
-echo -e "${green}  ✓ Sisa Waktu: ${days_left} hari                              ${neutral}"
-echo -e "${green}  ✓ Lokasi: ${city}                                            ${neutral}"
-echo -e "${green}  ✓ ISP: ${isp}                                                ${neutral}"
-echo -e "${green}  ✓ Silakan Tunggu Proses Instalasi...                        ${neutral}"
-echo -e "${green}╚════════════════════════════════════════════════════════════════╝${neutral}"
+# Instalasi open source - tidak memerlukan lisensi
+echo -e "${green}═══════════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${green}                     SELAMAT DATANG DI PANEL VPN OPEN SOURCE              ${neutral}"
+echo -e "${green}═══════════════════════════════════════════════════════════════════════════${neutral}"
+echo -e "${yellow}                  Copyright (C) github.com/alrescha79-cmd/sc-vpn${neutral}"
 echo -e ""
-
-# Peringatan jika akses akan habis dalam 7 hari
-if [ "$days_left" -le 7 ]; then
-    echo -e "${yellow}╔════════════════════════════════════════════════════════════════╗${neutral}"
-    echo -e "${yellow}║                            PERINGATAN                          ║${neutral}"
-    echo -e "${yellow}╠════════════════════════════════════════════════════════════════╣${neutral}"
-    echo -e "${yellow}  Akses Anda akan berakhir dalam ${days_left} hari!             ${neutral}"
-    echo -e "${yellow}  Segera hubungi developer untuk perpanjangan akses.            ${neutral}"
-    echo -e "${yellow}  📱 Telegram: https://t.me/Alrescha79                          ${neutral}"
-    echo -e "${yellow}╚════════════════════════════════════════════════════════════════╝${neutral}"
-    echo -e ""
-fi
-
 echo -e "${blue}Melanjutkan dengan instalasi...${neutral}"
 sleep 2
 
@@ -612,7 +385,7 @@ fi
 
 # Install Node.js jika belum ada
 if ! dpkg -s nodejs >/dev/null 2>&1; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - || echo -e "${red}Failed to download Node.js setup${neutral}"
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - || echo -e "${red}Failed to download Node.js setup${neutral}"
     apt-get install -y nodejs || echo -e "${red}Failed to install Node.js${neutral}"
     npm install -g npm@latest
 else
@@ -622,9 +395,9 @@ fi
 # Install vnstat jika belum ada
 if ! dpkg -s vnstat >/dev/null 2>&1; then
     apt-get install -y vnstat || echo -e "${red}Failed to install vnstat${neutral}"
-    wget -q https://humdi.net/vnstat/vnstat-2.9.tar.gz
-    tar zxvf vnstat-2.9.tar.gz || echo -e "${red}Failed to extract vnstat${neutral}"
-    cd vnstat-2.9 || echo -e "${red}Failed to enter vnstat-2.9 directory${neutral}"
+    wget -q https://humdi.net/vnstat/vnstat-2.13.tar.gz
+    tar zxvf vnstat-2.13.tar.gz || echo -e "${red}Failed to extract vnstat${neutral}"
+    cd vnstat-2.13 || echo -e "${red}Failed to enter vnstat-2.13 directory${neutral}"
     ./configure --prefix=/usr --sysconfdir=/etc >/dev/null 2>&1 && make >/dev/null 2>&1 && make install >/dev/null 2>&1
     cd || echo -e "${red}Failed to return to home directory${neutral}"
     net=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
@@ -641,8 +414,8 @@ else
     echo -e "${green}vnstat is already installed, skipping...${neutral}"
 fi
 
-rm -f /root/vnstat-2.9.tar.gz >/dev/null 2>&1 || echo -e "${red}Failed to delete vnstat-2.6.tar.gz file${neutral}"
-rm -rf /root/vnstat-2.9 >/dev/null 2>&1 || echo -e "${red}Failed to delete vnstat-2.6 directory${neutral}"
+rm -f /root/vnstat-2.13.tar.gz >/dev/null 2>&1 || echo -e "${red}Failed to delete vnstat-2.13.tar.gz file${neutral}"
+rm -rf /root/vnstat-2.13 >/dev/null 2>&1 || echo -e "${red}Failed to delete vnstat-2.13 directory${neutral}"
 
 ln -fs /usr/share/zoneinfo/$timezone /etc/localtime
 
@@ -887,6 +660,11 @@ else
     echo -e "${red}Failed to download shadowsocks${neutral}"
 fi
 
+# Stabilize Xray runtime logging to reduce I/O pressure under load.
+for cfg in /etc/xray/vmess/config.json /etc/xray/vless/config.json /etc/xray/trojan/config.json /etc/xray/shadowsocks/config.json; do
+    [ -f "$cfg" ] && sed -i 's/"loglevel"[[:space:]]*:[[:space:]]*"debug"/"loglevel": "warning"/g' "$cfg"
+done
+
 # Download UDP custom binary
 if wget -O /usr/bin/udp "$udp_url" >/dev/null 2>&1 && chmod +x /usr/bin/udp >/dev/null 2>&1; then
     echo -e "${green}Successfully downloaded udp-custom-linux-amd64${neutral}"
@@ -911,6 +689,24 @@ fi
 wget --no-check-certificate -O /opt/bbr.sh https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/bbr.sh
 chmod 755 /opt/bbr.sh
 /opt/bbr.sh
+
+# Enforce conservative network stability sysctl values after bbr profile.
+set_sysctl_value() {
+    local key="$1"
+    local value="$2"
+    local escaped_key
+    escaped_key=$(printf '%s\n' "$key" | sed 's/[.[\*^$()+?{}|]/\\&/g')
+    if grep -Eq "^${escaped_key}[[:space:]]*=" /etc/sysctl.conf; then
+        sed -i "s|^${escaped_key}[[:space:]]*=.*|${key}=${value}|" /etc/sysctl.conf
+    else
+        echo "${key}=${value}" >>/etc/sysctl.conf
+    fi
+}
+set_sysctl_value "net.ipv4.tcp_mtu_probing" "1"
+set_sysctl_value "net.ipv4.tcp_keepalive_time" "300"
+set_sysctl_value "net.ipv4.tcp_keepalive_intvl" "30"
+set_sysctl_value "net.ipv4.tcp_keepalive_probes" "5"
+sysctl -p >/dev/null 2>&1 || true
 
 # Get network interface
 interface=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
@@ -952,7 +748,7 @@ fi
 
 # Install Xray
 if ! command -v xray >/dev/null 2>&1; then
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version 1.8.7
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data
 else
     echo -e "${green}Xray is already installed, skipping installation${neutral}"
 fi
@@ -1159,7 +955,9 @@ cat /dev/null >~/.bash_history && history -c
 cat >/etc/cron.d/daily_reboot <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-0 5 * * * root /sbin/reboot
+# Disabled by default to avoid disrupting active VPN sessions.
+# Set AUTO_DAILY_REBOOT=true and rerun setup if you want this enabled.
+# 0 5 * * * root /sbin/reboot
 EOF
 
 cat >/etc/cron.d/logclear <<EOF
@@ -1181,7 +979,8 @@ LimitNOFILE=1000000"
 restart="Restart=on-failure
 RestartPreventExitStatus=23"
 wanted_by="WantedBy=multi-user.target"
-after="After=network.target nss-lookup.target"
+after="After=network-online.target nss-lookup.target"
+wants="Wants=network-online.target"
 documentation="Documentation=https://t.me/gerhanatunnell"
 
 create_service() {
@@ -1192,6 +991,7 @@ create_service() {
 [Unit]
 Description=${description} %i
 ${documentation}
+${wants}
 ${after}
 [Service]
 User=www-data
@@ -1383,129 +1183,27 @@ wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/pack
 cd 
 rm -rf package-gohide.sh
 
-# cd
-# echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-# echo -e "${green}   Install golang bye Alrescha79       ${neutral}"
-# echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
 
-
-# cd
-# wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/backend/install-go.sh && chmod +x install-go.sh && ./install-go.sh
-# rm -rf install-go.sh
-# cd
-
-if [ -d "/root/rmck" ]; then
-    rm -rf /root/rmck
-fi
-
-# Install License Monitor
-echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-echo -e "${green}                    Installing License Monitor           ${neutral}"
-echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-
-# Download license monitor files
-license_monitor_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/check-license.sh"
-license_service_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/license-monitor.service"
-license_timer_url="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/license-monitor.timer"
-
-echo -e "${yellow}Downloading license monitor files...${neutral}"
-
-# Download main script
-if wget -O /usr/bin/check-license "$license_monitor_url" >/dev/null 2>&1; then
-    chmod +x /usr/bin/check-license
-    echo -e "${green}✓ License monitor script downloaded and installed${neutral}"
-else
-    echo -e "${red}✗ Failed to download license monitor script${neutral}"
-fi
-
-# Download systemd service file
-if wget -O /etc/systemd/system/license-monitor.service "$license_service_url" >/dev/null 2>&1; then
-    echo -e "${green}✓ License monitor service file installed${neutral}"
-else
-    echo -e "${red}✗ Failed to download license monitor service file${neutral}"
-fi
-
-# Download systemd timer file
-if wget -O /etc/systemd/system/license-monitor.timer "$license_timer_url" >/dev/null 2>&1; then
-    echo -e "${green}✓ License monitor timer file installed${neutral}"
-else
-    echo -e "${red}✗ Failed to download license monitor timer file${neutral}"
-fi
-
-# Configure systemd
-echo -e "${yellow}Configuring license monitor service...${neutral}"
-systemctl daemon-reload
-
-if systemctl enable license-monitor.timer >/dev/null 2>&1; then
-    echo -e "${green}✓ License monitor timer enabled${neutral}"
-else
-    echo -e "${red}✗ Failed to enable license monitor timer${neutral}"
-fi
-
-if systemctl start license-monitor.timer >/dev/null 2>&1; then
-    echo -e "${green}✓ License monitor timer started${neutral}"
-else
-    echo -e "${red}✗ Failed to start license monitor timer${neutral}"
-fi
-
-
-# Save current license info for monitoring
-echo "VALID|$user_id|$exp_date|$days_left" > /var/log/setup/license_status
-echo "SERVICES_RUNNING" > /var/log/setup/services_status
-
-echo -e "${green}✓ License Monitor successfully installed and configured${neutral}"
-echo -e "${gray}  - Automatic license checking every hour${neutral}"
-echo -e "${gray}  - Services will be managed based on license status${neutral}"
-echo -e "${gray}  - Telegram notifications enabled${neutral}"
-echo -e "${blue}══════════════════════════════════════════════════════════════════════${neutral}"
-
-# Send license monitor installation notification
-license_monitor_message="🔧 <b>License Monitor Installed</b>
-
-🎯 <b>Fitur Aktif:</b>
-✅ Pengecekan lisensi otomatis setiap jam
-✅ Auto-stop layanan saat lisensi expired
-✅ Auto-start layanan saat lisensi diperpanjang
-✅ Notifikasi Telegram real-time
-
-📊 <b>Status Saat Ini:</b>
-👤 User ID: <code>${user_id}</code>
-📅 Expired: <code>${exp_date}</code>
-⏳ Sisa: <code>${days_left} hari</code>
-
-🛠️ <b>Perintah Monitor:</b>
-<code>check-license --status</code>
-<code>systemctl status license-monitor.timer</code>
-
-🔒 <b>Keamanan:</b> Server dilindungi otomatis"
-
-send_telegram_notification "$license_monitor_message" "HTML" "general"
 
 clear
 
 completion_time=$(date '+%Y-%m-%d %H:%M:%S %Z')
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "Not configured")
+system_info=$(get_system_info)
+IFS='|' read -r server_ip server_city server_region server_country server_org server_timezone server_hostname server_os server_kernel server_arch install_time <<< "$system_info"
 
-completion_message="✅ <b>Alrescha79 VPN Script - Instalasi Selesai</b>
+completion_message="✅ <b>VPN Panel - Instalasi Selesai</b>
 
-📊 <b>Detail Pengguna:</b>
-👤 User ID: <code>${user_id}</code>
-🆔 IP Address: <code>${server_ip}</code>
+📊 <b>Informasi Server:</b>
 🌐 Domain: <code>${domain}</code>
 ⏰ Waktu Selesai: <code>${completion_time}</code>
-
-🌍 <b>Informasi Server:</b>
 🏙️ Lokasi: <code>${server_city}, ${server_region}, ${server_country}</code>
 🏢 ISP: <code>${server_org}</code>
-🖥️ Hostname: <code>${server_hostname}</code>
-
-💻 <b>Sistem:</b>
-📦 OS: <code>${server_os}</code>
+💻 Sistem: <code>${server_os}</code>
 🔧 Kernel: <code>${server_kernel}</code>
 
 🎉 <b>Status:</b> Instalasi berhasil diselesaikan!
 🔄 <b>Selanjutnya:</b> Server akan restart dalam beberapa saat
-📞 <b>Support:</b> @Alrescha79
 
 🚀 Server VPN siap digunakan setelah restart!"
 

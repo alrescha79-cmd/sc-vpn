@@ -16,7 +16,6 @@ ip_url="https://ip.yha.my.id/ip"
 city=$(cat /etc/xray/city 2>/dev/null || echo "Unknown city")
 pubkey=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "Pubkey not available")
 domain=$(cat /etc/xray/domain 2>/dev/null || hostname -f)
-# uuid=$(cat /proc/sys/kernel/random/uuid)
 
 clear
 
@@ -40,9 +39,7 @@ while true; do
     fi
 done
 
-
-read -p "Password: " uuid
-
+uuid=$(cat /proc/sys/kernel/random/uuid)
 
 until [[ $duration =~ ^[0-9]+$ ]]; do
     read -p "   Active period (days): " duration

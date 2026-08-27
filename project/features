@@ -602,7 +602,7 @@ uninstall_panel_vpn() {
     echo -e ""
     echo -e "${neutral} ${green}Step 2:${neutral} Jalankan perintah berikut:"
     echo -e "${neutral}                                                                       ${neutral}"
-    echo -e "${neutral} ${blue}wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/dev/uninstall.sh && chmod +x uninstall.sh && sudo ./uninstall.sh${neutral} "
+    echo -e "${neutral} ${blue}wget https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/main/uninstall.sh && chmod +x uninstall.sh && sudo ./uninstall.sh${neutral} "
     echo -e ""
     echo -e "${orange}╠═══════════════════════════════════════════════════════════════════════╣${neutral}"
     echo -e "${neutral} ${yellow}CATATAN PENTING:${neutral}"

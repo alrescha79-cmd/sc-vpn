@@ -14,8 +14,8 @@ check_system_compatibility() {
 read -p "Langkah 1: Ganti refs/heads/dev ke refs/heads/main ? (y/n) " confirm
 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
   echo "-> Sedang mengganti teks..."
-  find . -type f -exec grep -l "/alrescha79-cmd/sc-vpn/refs/heads/dev/" {} \; \
-    | xargs sed -i 's|/alrescha79-cmd/sc-vpn/refs/heads/dev/|/alrescha79-cmd/sc-vpn/refs/heads/main/|g'
+  find . -type f -exec grep -l "/alrescha79-cmd/sc-vpn/refs/heads/main/" {} \; \
+    | xargs sed -i 's|/alrescha79-cmd/sc-vpn/refs/heads/main/|/alrescha79-cmd/sc-vpn/refs/heads/main/|g'
   echo "--> Selesai langkah 1."
 else
   echo "--> Langkah 1 dilewati."

@@ -10,7 +10,7 @@ neutral="\e[0m"
 bold="\e[1m"
 
 # GitHub repository info
-GITHUB_BASE="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev"
+GITHUB_BASE="https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main"
 
 echo -e "${blue}${bold}═══════════════════════════════════════════════════════════════════════${neutral}"
 echo -e "${blue}${bold}             MENERAPKAN UPDATE TERBARU DARI GITHUB           ${neutral}"

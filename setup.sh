@@ -32,6 +32,12 @@ TELEGRAM_TIMEOUT=10
 if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
     echo -e "${green}✓ Konfigurasi Telegram berhasil dimuat${neutral}"
     echo -e "${gray}Notifikasi akan dikirim ke admin script${neutral}" >/dev/stderr
+    # Default notifikasi telegram: pakai bot bawaan setup.sh untuk semua notifikasi akun
+    # sampai admin mengubah via menu -> Setup Bot Telegram
+    if [ ! -f /root/.vars ]; then
+        echo "bot_token=\"$TELEGRAM_BOT_TOKEN\"" >/root/.vars
+        echo "telegram_id=\"$TELEGRAM_CHAT_ID\"" >>/root/.vars
+    fi
 else
     echo -e "${yellow}⚠ Konfigurasi Telegram tidak valid${neutral}"
     TELEGRAM_BOT_TOKEN=""

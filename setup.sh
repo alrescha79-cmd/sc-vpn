@@ -557,6 +557,9 @@ else
     echo -e "${yellow}dropbear_conf_url is not set, skipping download of dropbear_dss_host_key${neutral}"
 fi
 
+# Pastikan direktori privilege separation sshd selalu ada (fix Ubuntu 24.04 socket issue)
+[ ! -d /run/sshd ] && mkdir -p /run/sshd && chmod 0755 /run/sshd
+
 # Konfigurasi SSHD non-destruktif: pertahankan konfigurasi & port custom bawaan VPS
 if [ -n "$sshd_conf_url" ]; then
     if [ -f /etc/ssh/sshd_config ] && [ ! -f /etc/ssh/sshd_config.vpnbackup ]; then

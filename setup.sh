@@ -716,6 +716,17 @@ set_sysctl_value "net.ipv4.tcp_mtu_probing" "1"
 set_sysctl_value "net.ipv4.tcp_keepalive_time" "300"
 set_sysctl_value "net.ipv4.tcp_keepalive_intvl" "30"
 set_sysctl_value "net.ipv4.tcp_keepalive_probes" "5"
+
+# Optimasi Buffer UDP / VoIP / Gaming low latency & anti-drop
+set_sysctl_value "net.core.default_qdisc" "fq_codel"
+set_sysctl_value "net.core.rmem_max" "16777216"
+set_sysctl_value "net.core.wmem_max" "16777216"
+set_sysctl_value "net.core.rmem_default" "262144"
+set_sysctl_value "net.core.wmem_default" "262144"
+set_sysctl_value "net.core.netdev_max_backlog" "10000"
+set_sysctl_value "net.ipv4.udp_rmem_min" "16384"
+set_sysctl_value "net.ipv4.udp_wmem_min" "16384"
+set_sysctl_value "net.ipv4.ip_local_port_range" "1024 65535"
 sysctl -p >/dev/null 2>&1 || true
 
 # Get network interface
@@ -905,8 +916,8 @@ fi
 cat >/usr/bin/config.json <<EOF
 {
     "listen": ":2100",
-    "stream_buffer": 33554432,
-    "receive_buffer": 83886080,
+    "stream_buffer": 16777216,
+    "receive_buffer": 16777216,
     "auth": {
         "mode": "passwords"
     }

@@ -57,7 +57,7 @@ wget -q -O trialtrojan "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/
 wget -q -O trialvmess "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialvmess"
 wget -q -O trialvless "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialvless"
 wget -q -O trialssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialssh"
-wget -q -O trialshadowsoks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialshadowsoks"
+wget -q -O trialshadowsocks "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/trialshadowsocks"
 
 wget -q -O exp-warning "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/dev/project/exp-warning"
 
@@ -87,7 +87,7 @@ chmod +x exp
 chmod +x features
 chmod +x limitip
 chmod +x limitssh
-chmod +x clearlog
+chmod +x logclear
 
 chmod +x menu
 chmod +x menussh

@@ -350,7 +350,7 @@ packages=(
     screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq
     tmux python3 python3-pip lsb-release gawk
     libncursesw5-dev libgdbm-dev tk-dev libffi-dev libbz2-dev checkinstall
-    openvpn easy-rsa dropbear
+    openvpn easy-rsa dropbear fail2ban
 )
 for package in "${packages[@]}"; do
     if ! dpkg -s "$package" >/dev/null 2>&1; then
@@ -557,12 +557,27 @@ else
     echo -e "${yellow}dropbear_conf_url is not set, skipping download of dropbear_dss_host_key${neutral}"
 fi
 
-# Download SSHD config
+# Konfigurasi SSHD non-destruktif: pertahankan konfigurasi & port custom bawaan VPS
 if [ -n "$sshd_conf_url" ]; then
-    [ -f /etc/ssh/sshd_config ] && rm /etc/ssh/sshd_config
-    wget -q -O /etc/ssh/sshd_config "$sshd_conf_url" >/dev/null 2>&1 || echo -e "${red}Failed to download sshd_config${neutral}"
+    if [ -f /etc/ssh/sshd_config ] && [ ! -f /etc/ssh/sshd_config.vpnbackup ]; then
+        cp /etc/ssh/sshd_config /etc/ssh/sshd_config.vpnbackup
+    fi
+    # Tambahkan port VPN hanya jika belum terdaftar (jangan hapus port custom user)
+    for vpn_port in 22 2222 2223; do
+        grep -qE "^[[:space:]]*Port[[:space:]]+$vpn_port([[:space:]]|$)" /etc/ssh/sshd_config || echo "Port $vpn_port" >> /etc/ssh/sshd_config
+    done
+    grep -qE "^[[:space:]]*Port" /etc/ssh/sshd_config || echo "Port 22" >> /etc/ssh/sshd_config
+    # Isi direktif autentikasi hanya jika belum didefinisikan, agar public key & password tetap berfungsi
+    grep -qE "^[[:space:]]*PermitRootLogin" /etc/ssh/sshd_config || echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+    grep -qE "^[[:space:]]*PubkeyAuthentication" /etc/ssh/sshd_config || echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+    grep -qE "^[[:space:]]*PasswordAuthentication" /etc/ssh/sshd_config || echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+    # Validasi konfigurasi; pulihkan backup jika ternyata rusak
+    if command -v sshd >/dev/null 2>&1 && ! sshd -t 2>/dev/null && [ -f /etc/ssh/sshd_config.vpnbackup ]; then
+        cp /etc/ssh/sshd_config.vpnbackup /etc/ssh/sshd_config
+        echo -e "${red}sshd_config tidak valid, konfigurasi asli dipulihkan${neutral}"
+    fi
 else
-    echo -e "${yellow}sshd_conf_url is not set, skipping download of sshd_config${neutral}"
+    echo -e "${yellow}sshd_conf_url is not set, skipping SSH config${neutral}"
 fi
 
 # Download Banner
@@ -572,12 +587,11 @@ else
     echo -e "${yellow}banner_url is not set, skipping download of gerhanatunnel.txt${neutral}"
 fi
 
-# Download Common Password
-if [ -n "$common_password_url" ]; then
-    [ -f /etc/pam.d/common-password ] && rm /etc/pam.d/common-password
+# Download Common Password (hanya jika belum ada; jangan timpa konfigurasi bawaan sistem)
+if [ -n "$common_password_url" ] && [ ! -f /etc/pam.d/common-password ]; then
     wget -O /etc/pam.d/common-password "$common_password_url" >/dev/null 2>&1 || echo -e "${red}Failed to download common-password${neutral}"
 else
-    echo -e "${yellow}common_password_url is not set, skipping download of common-password${neutral}"
+    echo -e "${yellow}common-password sudah ada, konfigurasi bawaan dipertahankan${neutral}"
 fi
 
 # Download ws.py
@@ -585,13 +599,6 @@ if [ -n "$ws_py_url" ]; then
     wget -O /usr/bin/ws.py "$ws_py_url" >/dev/null 2>&1 && chmod +x /usr/bin/ws.py || echo -e "${red}Failed to download ws.py${neutral}"
 else
     echo -e "${yellow}ws_py_url is not set, skipping download of ws.py${neutral}"
-fi
-
-# Permission for common-password
-if [ -f /etc/pam.d/common-password ]; then
-    chmod +x /etc/pam.d/common-password || echo -e "${red}Failed to give execute permission to common-password${neutral}"
-else
-    echo -e "${yellow}/etc/pam.d/common-password not found, skipping permission change${neutral}"
 fi
 
 # Download and prepare Gotop
@@ -930,11 +937,6 @@ menu
 EOF
 chmod 644 /root/.profile
 
-cat >/root/.bashrc <<EOF
-cat /dev/null > ~/.bash_history && history -c
-EOF
-chmod 644 /root/.bashrc
-
 cat >/etc/shells <<EOF
 /bin/sh
 /bin/bash
@@ -1120,7 +1122,7 @@ npm i --prefix /usr/bin express express-fileupload
 
 # Swap RAM
 swap_file="/swapfile"
-swap_size="5G"
+swap_size="1G"
 if [ ! -f "$swap_file" ]; then
     fallocate -l $swap_size $swap_file
     chmod 600 $swap_file
@@ -1131,6 +1133,36 @@ if [ ! -f "$swap_file" ]; then
 else
     echo -e "${yellow}Swap file already exists, skipping swap RAM addition${neutral}"
 fi
+
+# Konfigurasi fail2ban untuk melindungi SSH (ban permanen setelah 3x gagal)
+if ! dpkg -s fail2ban >/dev/null 2>&1; then
+    apt-get install -y fail2ban || echo -e "${red}Failed to install fail2ban${neutral}"
+fi
+
+# Deteksi port SSH yang aktif (pertahankan port custom user, bukan hardcode 22)
+ssh_ports=$(grep -hE "^[[:space:]]*Port[[:space:]]+" /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | awk '{print $2}' | sort -u | tr '\n' ',' | sed 's/,$//')
+[ -z "$ssh_ports" ] && ssh_ports="22"
+
+mkdir -p /etc/fail2ban
+cat >/etc/fail2ban/jail.local <<EOF
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1
+bantime = -1
+findtime = 600
+maxretry = 3
+
+[sshd]
+enabled = true
+backend = systemd
+port = ${ssh_ports}
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = -1
+EOF
+
+systemctl enable fail2ban >/dev/null 2>&1
+systemctl restart fail2ban
 
 sudo systemctl daemon-reload
 services=(

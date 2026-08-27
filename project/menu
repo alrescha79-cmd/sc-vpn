@@ -12,6 +12,10 @@ purple="\e[38;5;141m"
 bold_white="\e[1;37m"
 reset="\e[0m"
 pink="\e[38;5;205m"
+white="\e[38;5;15m"
+cyan="\e[38;5;87m"
+magenta="\e[38;5;205m"
+gray="\e[38;5;245m"
 
 # warna gelap
 dark_gray="\e[38;5;240m"

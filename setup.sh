@@ -172,6 +172,17 @@ if [ -z "$1" ]; then
 else
     domain="$1"
 fi
+
+# Re-exec via nohup: instalasi tetap lanjut meski koneksi SSH terputus.
+# Progres pantau: tail -f /root/setup-install.log
+if [ -z "$SC_VPN_DETACHED" ] && [ -t 0 ]; then
+    log=/root/setup-install.log
+    SC_VPN_DETACHED=1 nohup bash "$(readlink -f "$0")" "$domain" </dev/null >"$log" 2>&1 &
+    echo -e "${green}Instalasi berjalan di background (aman dari koneksi putus).${neutral}"
+    echo -e "${yellow}Pantau progres: tail -f $log${neutral}"
+    exit 0
+fi
+
 # Cek IP domain dan VPS
 vps_ip=$(curl -s ipinfo.io/ip)
 domain_ip=$(getent ahosts "$domain" | awk '{print $1}' | head -n 1)

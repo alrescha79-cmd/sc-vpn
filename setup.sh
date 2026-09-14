@@ -178,7 +178,8 @@ fi
 if [ -z "$SC_VPN_DETACHED" ] && [ -t 0 ]; then
     log=/root/setup-install.log
     SC_VPN_DETACHED=1 nohup bash "$(readlink -f "$0")" "$domain" </dev/null >"$log" 2>&1 &
-    echo -e "${green}Instalasi berjalan di background (aman dari koneksi putus).${neutral}"
+    echo -e "${green}Instalasi berjalan di latar belakang dan tetap lanjut meskipun koneksi SSH terputus.${neutral}"
+    echo -e "${yellow}Instalasi akan selesai kurang dari 20 menit, tergantung kecepatan VPS.${neutral}"
     echo -e "${yellow}Pantau progres: tail -f $log${neutral}"
     exit 0
 fi

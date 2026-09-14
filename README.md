@@ -161,6 +161,8 @@ Otomatis reboot VPS setiap hari pada jam 05:00 WIB. Anda dapat mengubah jadwal i
 | Kanal | Link |
 |-------|------|
 | Telegram | [Hubungi di Telegram](https://t.me/Alrescha79) |
+| Bot Telegram | [bot-vpn](https://github.com/alrescha79-cmd/bot-vpn) |
+| Web Dashboard VPN | [dashboard-vpn](https://github.com/alrescha79-cmd/dashboard-vpn) |
 | Email | [Kirim Email](mailto:anggun@cakson.my.id) |
 
 ---

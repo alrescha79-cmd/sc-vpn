@@ -231,6 +231,12 @@ for file in "${files[@]}"; do
     chmod 777 "$file"
 done
 
+# Xray berjalan sebagai www-data dan harus bisa menulis log.
+chown www-data:www-data /var/log/xray/access.log /var/log/xray/error.log
+chmod 664 /var/log/xray/access.log /var/log/xray/error.log
+chown www-data:www-data /var/log/xray
+chmod 775 /var/log/xray
+
 # Atur akses eksekusi ke beberapa direktori
 chmod +x /var/log/xray /etc/xray /etc/haproxy /etc/xray/vmess /etc/xray/vless /etc/xray/trojan /etc/xray/shadowsocks /etc/xray/ssh
 

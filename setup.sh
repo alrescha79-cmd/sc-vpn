@@ -802,11 +802,35 @@ else
 fi
 
 # Install Xray
-if ! command -v xray >/dev/null 2>&1; then
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data
-else
-    echo -e "${green}Xray is already installed, skipping installation${neutral}"
+xray_bin=/usr/local/bin/xray
+if [ ! -x "$xray_bin" ]; then
+    xray_installer=$(mktemp /tmp/xray-install.XXXXXX.sh) || {
+        echo -e "${red}Gagal membuat file installer Xray${neutral}"
+        exit 1
+    }
+    if ! curl -fLsS https://github.com/XTLS/Xray-install/raw/main/install-release.sh -o "$xray_installer"; then
+        rm -f "$xray_installer"
+        echo -e "${red}Gagal mengunduh installer Xray${neutral}"
+        exit 1
+    fi
+    if ! bash "$xray_installer" install; then
+        rm -f "$xray_installer"
+        echo -e "${red}Instalasi Xray gagal${neutral}"
+        exit 1
+    fi
+    rm -f "$xray_installer"
 fi
+
+if [ ! -x "$xray_bin" ]; then
+    echo -e "${red}Binary Xray tidak ditemukan di $xray_bin setelah instalasi${neutral}"
+    exit 1
+fi
+
+if ! "$xray_bin" version; then
+    echo -e "${red}Binary Xray gagal dijalankan${neutral}"
+    exit 1
+fi
+echo -e "${green}Xray siap di $xray_bin${neutral}"
 
 if [ ! -d "/root/.acme.sh" ]; then
     mkdir /root/.acme.sh
@@ -1060,6 +1084,7 @@ create_service "vless" "GerhanaTunnel Server Xray Instance" "/usr/local/bin/xray
 create_service "trojan" "GerhanaTunnel Server Xray Instance" "/usr/local/bin/xray run -config /etc/xray/trojan/%i.json"
 create_service "shadowsocks" "GerhanaTunnel Server Shadowsocks Instance" "/usr/local/bin/xray run -config /etc/xray/shadowsocks/%i.json"
 
+mkdir -p /etc/systemd/system/xray@.service.d
 cat >/etc/systemd/system/xray@.service.d/10-donot_touch_single_conf.conf <<EOF
 [Service]
 ExecStart=

@@ -173,15 +173,31 @@ else
     domain="$1"
 fi
 
-# Re-exec via nohup: instalasi tetap lanjut meski koneksi SSH terputus.
-# Progres pantau: tail -f /root/setup-install.log
+# Pilih apakah instalasi berjalan di terminal atau tetap lanjut setelah SSH terputus.
 if [ -z "$SC_VPN_DETACHED" ] && [ -t 0 ]; then
-    log=/root/setup-install.log
-    SC_VPN_DETACHED=1 nohup bash "$(readlink -f "$0")" "$domain" </dev/null >"$log" 2>&1 &
-    echo -e "${green}Instalasi berjalan di latar belakang dan tetap lanjut meskipun koneksi SSH terputus.${neutral}"
-    echo -e "${yellow}Instalasi akan selesai kurang dari 20 menit, tergantung kecepatan VPS.${neutral}"
-    echo -e "${yellow}Pantau progres: tail -f $log${neutral}"
-    exit 0
+    while true; do
+        echo
+        echo -e "${yellow}Pilih mode instalasi:${neutral}"
+        echo "1. Latar belakang (direkomendasikan; instalasi tetap berjalan jika koneksi SSH terputus)"
+        echo "2. Normal (proses tampil di terminal; instalasi terhenti jika koneksi SSH terputus)"
+        read -r -p "Masukkan pilihan [1/2]: " install_mode
+        case "$install_mode" in
+            1)
+                log=/root/setup-install.log
+                SC_VPN_DETACHED=1 nohup bash "$(readlink -f "$0")" "$domain" </dev/null >"$log" 2>&1 &
+                echo -e "${green}Instalasi berjalan di latar belakang dan tetap lanjut meskipun koneksi SSH terputus.${neutral}"
+                echo -e "${yellow}Pantau progres: tail -f $log${neutral}"
+                exit 0
+                ;;
+            2)
+                echo -e "${green}Instalasi berjalan di terminal ini. Jangan tutup koneksi SSH sampai selesai.${neutral}"
+                break
+                ;;
+            *)
+                echo -e "${red}Pilihan tidak valid. Masukkan 1 atau 2.${neutral}"
+                ;;
+        esac
+    done
 fi
 
 # Cek IP domain dan VPS

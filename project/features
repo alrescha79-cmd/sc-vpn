@@ -151,6 +151,16 @@ echo -e ""
 read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu utama"
 return
 }
+manage_hostnames() {
+    if [[ ! -x /usr/bin/manage-hostnames ]]; then
+        echo -e "${red}Pengelola hostname belum terpasang. Jalankan update panel terlebih dahulu.${neutral}"
+        read -n 1 -s -r -p "Tekan tombol untuk kembali"
+        return 1
+    fi
+    /usr/bin/manage-hostnames
+    read -n 1 -s -r -p "Tekan tombol untuk kembali ke menu"
+}
+
 change_domain() {
 clear
 echo -e "${orange}╔═══════════════════════════════════════════════════════════════════════╗${neutral}"
@@ -632,10 +642,11 @@ display_features() {
         echo -e "${neutral}${green} [6]${neutral} Mulai Ulang Semua Layanan  ║${neutral}  ${green}[14]${neutral} Mulai Ulang Server"
         echo -e "${neutral}${green} [7]${neutral} Ubah Domain Server"
         echo -e "${neutral}${green} [8]${neutral} Ubah Banner Server"
+        echo -e "${neutral}${green} [15]${neutral} Kelola Hostname Bertingkat"
         echo -e "${neutral}                 ${red} [x]${neutral} Keluar dari Menu Sistem & Fitur${neutral}"
         echo -e "${orange}╚═══════════════════════════════════════════════════════════════════════╝${neutral}"
         echo -e ""
-        echo -ne "   ${green}Pilih menu [1-14] atau ketik 'x' untuk keluar: ${neutral}"
+        echo -ne "   ${green}Pilih menu [1-15] atau ketik 'x' untuk keluar: ${neutral}"
         read menu
         case $menu in
             1) running ;;
@@ -646,6 +657,7 @@ display_features() {
             6) restart_services ;;
             7) change_domain ;;
             8) nano /etc/gerhanatunnel.txt; clear ;;
+            15) manage_hostnames ;;
             9) echo -e "${red}PERINGATAN:${neutral} Fitur ini masih ${yellow}eksperimental${neutral}. Bisa menyebabkan kerusakan sistem panel VPN."; read -p " Lanjutkan pembaruan Dropbear? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; dropbear_update ;;
             10) echo -e "${red}PERINGATAN:${neutral} Pembaruan versi Xray masih ${yellow}eksperimental${neutral}. Pastikan Anda punya backup."; read -p " Lanjutkan update Xray? (y/n): " ans; [[ ! $ans =~ ^[Yy]$ ]] && continue; xray_update ;;
             11)

@@ -35,6 +35,7 @@ wget -q -O dellvmess "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/re
 
 wget -q -O exp "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/exp"
 wget -q -O features "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/features"
+wget -q -O manage-hostnames "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/manage-hostnames"
 wget -q -O limitip "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/limitip"
 wget -q -O limitssh "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/limitssh"
 wget -q -O logclear "https://raw.githubusercontent.com/alrescha79-cmd/sc-vpn/refs/heads/main/project/logclear"
@@ -85,6 +86,8 @@ chmod +x dellvmess
 
 chmod +x exp
 chmod +x features
+chmod +x manage-hostnames
+install -m 755 manage-hostnames /usr/bin/manage-hostnames
 chmod +x limitip
 chmod +x limitssh
 chmod +x logclear

@@ -246,6 +246,7 @@ vpn_menu_scripts=(
     "/usr/bin/dellvmess"
     "/usr/bin/exp"
     "/usr/bin/features"
+    "/usr/bin/manage-hostnames"
     "/usr/bin/limitip"
     "/usr/bin/limitssh"
     "/usr/bin/logclear"

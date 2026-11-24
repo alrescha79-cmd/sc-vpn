@@ -192,17 +192,25 @@ rm -rf /tmp/cron.txt
 
 ---
 
-## Setting Domain/Subdomain Support Wildcard di Cloudflare
+## Hostname Bertingkat dan Sertifikat Wildcard Cloudflare
 
-1. Masuk ke dashboard Cloudflare.
-2. Pilih domain/subdomain yang digunakan.
-3. Masuk ke tab `DNS`.
-4. Tambahkan A record:
-   - Type: `A`
-   - Name: `@` (atau `*` untuk wildcard)
-   - IPv4 address: `IP VPS Anda`
-   - Proxy status: `DNS only` (ikon awan abu-abu)
-5. Simpan perubahan.
+Contoh hostname bertingkat: `bug.com.vpn.example.com`. Record `*.vpn.example.com` dapat mengarah ke VPS, tetapi sertifikat `*.vpn.example.com` **tidak** mencakup nama bertingkat itu. Daftarkan setiap hostname agar sertifikat mencantumkan nama tersebut secara eksplisit.
+
+### DNS Cloudflare
+
+1. Buat A record `vpn` dengan alamat IPv4 VPS.
+2. Buat A record `*.vpn` dengan alamat IPv4 VPS untuk hostname turunannya.
+3. Gunakan `DNS only` untuk koneksi langsung ke VPS. Record spesifik dapat diperlukan jika ada DNS record lebih spesifik yang mengalahkan wildcard.
+
+### Daftarkan hostname
+
+1. Buat Cloudflare API Token khusus zona dengan izin `Zone:DNS:Edit` dan `Zone:Zone:Read`.
+2. Pastikan VPS dapat mencapai Cloudflare API dan port 443 VPS tidak memblokir validasi ACME HTTP-01 saat instalasi awal.
+3. Buka menu `Features` lalu pilih `15. Kelola Hostname Bertingkat`.
+4. Tambahkan nama lengkap, misalnya `bug.com.vpn.example.com`. Token diminta saat penerbitan sertifikat, tidak disimpan oleh pengelola.
+5. Menu memperbarui sertifikat melalui DNS-01. Setiap nama terdaftar ditambahkan sebagai SAN sertifikat; hapus hostname lalu terbitkan ulang untuk menghapusnya.
+
+Sertifikat memuat semua nama terdaftar. Let’s Encrypt membatasi jumlah SAN per sertifikat dan penerbitan berulang; daftarkan nama seperlunya. Penghapusan daftar lokal tidak mencabut sertifikat yang sudah diterbitkan.
 
 ![Screenshot Cloudflare DNS](img/wc.png)
 

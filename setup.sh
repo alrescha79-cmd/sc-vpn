@@ -204,9 +204,8 @@ fi
 vps_ip=$(curl -s ipinfo.io/ip)
 domain_ip=$(getent ahosts "$domain" | awk '{print $1}' | head -n 1)
 if [ "$domain_ip" != "$vps_ip" ]; then
-    echo -e "${red}Domain yang Anda masukkan tidak mengarah ke IP VPS Anda (${vps_ip}).${neutral}"
-    echo -e "${yellow}Pastikan domain sudah di-pointing ke IP VPS: ${vps_ip}${neutral}"
-    echo -e "${gray}Script akan tetap melanjutkan instalasi...${neutral}"
+    echo -e "${red}Domain yang Anda masukkan tidak mengarah langsung ke IP VPS Anda (${vps_ip}).${neutral}"
+    echo -e "${yellow}Untuk Cloudflare proxy, validasi SSL tetap dilanjutkan melalui HTTP-01.${neutral}"
     sleep 3
 fi
 
@@ -854,11 +853,15 @@ fi
 domain=$(cat /etc/xray/domain)
 /root/.acme.sh/acme.sh --upgrade --auto-upgrade
 /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-/root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256
-/root/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key --ecc
-cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/yha.pem
-chown www-data:www-data /etc/xray/xray.key
-chown www-data:www-data /etc/xray/xray.crt
+/root/.acme.sh/acme.sh --issue -d "$domain" --standalone -k ec-256 || {
+    echo -e "${red}Gagal menerbitkan sertifikat untuk $domain${neutral}"
+    exit 1
+}
+install -m 600 /dev/null /etc/xray/hostnames
+cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/yha.pem
+/root/.acme.sh/acme.sh --install-cert -d "$domain" --ecc \
+    --fullchain-file /etc/xray/xray.crt --key-file /etc/xray/xray.key \
+    --reloadcmd 'cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/yha.pem && chown www-data:www-data /etc/xray/xray.crt /etc/xray/xray.key && chmod 640 /etc/xray/xray.key && systemctl reload haproxy && systemctl reload nginx'
 
 mkdir -p /usr/lib/openvpn/ || echo -e "${red}Failed to create directory /usr/lib/openvpn/${neutral}"
 if [ -d "/etc/openvpn/" ]; then

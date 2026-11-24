@@ -1,0 +1,95 @@
+#!/bin/bash
+
+set -euo pipefail
+
+DOMAIN_FILE=/etc/xray/domain
+HOSTS_FILE=/etc/xray/hostnames
+ACME=/root/.acme.sh/acme.sh
+
+fail() {
+    printf 'Error: %s\n' "$1" >&2
+    exit 1
+}
+
+[[ $EUID -eq 0 ]] || fail 'Jalankan sebagai root.'
+[[ -r $DOMAIN_FILE ]] || fail 'Domain utama belum dikonfigurasi.'
+[[ -x $ACME ]] || fail 'acme.sh belum terpasang.'
+
+base_domain=$(tr -d '\r\n' < "$DOMAIN_FILE" | tr '[:upper:]' '[:lower:]')
+install -m 600 /dev/null "$HOSTS_FILE" 2>/dev/null || chmod 600 "$HOSTS_FILE"
+touch "$HOSTS_FILE"
+
+valid_hostname() {
+    local host=${1%.}
+    [[ $host == *.* && $host == *."$base_domain" ]] || return 1
+    [[ $host =~ ^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$ ]] || return 1
+    [[ ${#host} -le 253 ]]
+}
+
+list_hosts() {
+    { printf '%s\n' "$base_domain"; sort -u "$HOSTS_FILE"; }
+}
+
+issue_certificate() {
+    [[ -s /root/.acme.sh/dnsapi/dns_cf.sh ]] || fail 'Plugin dns_cf tidak ditemukan pada instalasi acme.sh.'
+    [[ -n ${CF_Token:-} ]] || {
+        read -r -s -p 'Cloudflare API Token (Zone DNS Edit): ' CF_Token
+        printf '\n'
+    }
+    [[ -n $CF_Token ]] || fail 'Token Cloudflare kosong.'
+    export CF_Token
+    local args=(--issue --dns dns_cf -d "$base_domain")
+    while IFS= read -r host; do
+        [[ -z $host ]] || args+=(-d "$host")
+    done < "$HOSTS_FILE"
+    "$ACME" --set-default-ca --server letsencrypt
+    "$ACME" "${args[@]}" --keylength ec-256
+    "$ACME" --install-cert -d "$base_domain" --ecc \
+        --fullchain-file /etc/xray/xray.crt \
+        --key-file /etc/xray/xray.key \
+        --reloadcmd 'cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/yha.pem && chown www-data:www-data /etc/xray/xray.crt /etc/xray/xray.key && chmod 640 /etc/xray/xray.key && systemctl reload haproxy && systemctl reload nginx'
+    cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/yha.pem
+    chown www-data:www-data /etc/xray/xray.crt /etc/xray/xray.key
+    chmod 640 /etc/xray/xray.key
+    systemctl reload haproxy
+    systemctl reload nginx
+    unset CF_Token
+}
+
+while true; do
+    printf '\nDomain dasar: %s\n' "$base_domain"
+    printf 'Hostname terdaftar:\n'
+    list_hosts
+    printf '\n1. Tambah hostname\n2. Hapus hostname\n3. Perbarui sertifikat\nx. Keluar\n'
+    read -r -p 'Pilih: ' choice
+    case $choice in
+        1)
+            read -r -p 'Hostname lengkap: ' host
+            host=${host%.}
+            host=${host,,}
+            valid_hostname "$host" || { printf 'Hostname harus berada di bawah %s.\n' "$base_domain"; continue; }
+            grep -Fxq "$host" "$HOSTS_FILE" && { printf 'Hostname sudah terdaftar.\n'; continue; }
+            printf '%s\n' "$host" >> "$HOSTS_FILE"
+            sort -u -o "$HOSTS_FILE" "$HOSTS_FILE"
+            if issue_certificate; then
+                printf 'Hostname dan sertifikat berhasil diperbarui.\n'
+            else
+                grep -Fxv "$host" "$HOSTS_FILE" > "${HOSTS_FILE}.tmp" || true
+                mv "${HOSTS_FILE}.tmp" "$HOSTS_FILE"
+                chmod 600 "$HOSTS_FILE"
+                printf 'Penerbitan sertifikat gagal; hostname dibatalkan.\n' >&2
+            fi
+            ;;
+        2)
+            read -r -p 'Hostname yang dihapus: ' host
+            if ! grep -Fxq "$host" "$HOSTS_FILE"; then printf 'Hostname tidak ditemukan.\n'; continue; fi
+            grep -Fxv "$host" "$HOSTS_FILE" > "${HOSTS_FILE}.tmp" || true
+            mv "${HOSTS_FILE}.tmp" "$HOSTS_FILE"
+            chmod 600 "$HOSTS_FILE"
+            issue_certificate
+            ;;
+        3) issue_certificate ;;
+        x|X) exit 0 ;;
+        *) printf 'Pilihan tidak valid.\n' ;;
+    esac
+done
